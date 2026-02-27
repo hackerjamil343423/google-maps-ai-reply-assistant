@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -332,6 +333,7 @@ async function parseJsonSafe<T>(res: Response): Promise<T | null> {
 }
 
 export default function Home() {
+  const { language, setLanguage, ready: languageReady } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -586,100 +588,67 @@ export default function Home() {
         }}
       >
         <div className="relative flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2 w-40">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/brand/wakkelni-logo.png"
-            alt="Wakkelni Stars Logo"
-            className="h-10 w-auto object-contain"
-          />
-        </Link>
+          <Link href="/" className="flex items-center space-x-2 w-40">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/brand/wakkelni-logo.png"
+              alt="Wakkelni Stars Logo"
+              className="h-10 w-auto object-contain"
+            />
+          </Link>
 
-        {/* Desktop Nav Links */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex space-x-10">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`transition-colors ${
-                link.href === "/"
-                  ? "text-[#4E4E5E]"
-                  : "text-[#4E4E5E]/50 hover:text-[#4E4E5E]/70"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Desktop CTA Buttons */}
-        <div className="hidden md:flex items-center space-x-2">
-          {isAuthenticated ? (
-            <Link
-              href="/dashboard/overview"
-              className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/GetStarted?mode=login"
-                className="text-[#040404] hover:text-[#5F30EB] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/GetStarted?mode=signup"
-                className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
-              >
-                Get Started
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-[#040404] cursor-pointer z-10"
-          aria-label="Toggle menu"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M4 5h16" />
-            <path d="M4 12h16" />
-            <path d="M4 19h16" />
-          </svg>
-        </button>
-
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[#FFFFFFF2] backdrop-blur-md border border-[#5F30EB22] rounded-3xl flex flex-col items-center py-6 space-y-4 md:hidden z-50">
+          {/* Desktop Nav Links */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex space-x-10">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[#4E4E5E] hover:text-[#040404] transition-colors"
-                onClick={() => setMenuOpen(false)}
+                className={`transition-colors ${
+                  link.href === "/"
+                    ? "text-[#4E4E5E]"
+                    : "text-[#4E4E5E]/50 hover:text-[#4E4E5E]/70"
+                }`}
               >
                 {link.label}
               </Link>
             ))}
+          </div>
+
+          {/* Desktop CTA Buttons */}
+          <div className="hidden md:flex items-center space-x-2">
+            <div className="relative">
+              <select
+                value={language}
+                onChange={(event) =>
+                  setLanguage(event.target.value === "ar" ? "ar" : "en")
+                }
+                disabled={!languageReady}
+                aria-label="Language selector"
+                className="h-10 rounded-full border border-[#5F30EB33] bg-white/90 pl-3 pr-8 text-sm text-[#4E4E5E] focus:outline-none focus:ring-2 focus:ring-[#5F30EB66] disabled:opacity-60 cursor-pointer appearance-none"
+              >
+                <option value="en">English</option>
+                <option value="ar">Arabic</option>
+              </select>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5F30EB]"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </div>
             {isAuthenticated ? (
               <Link
                 href="/dashboard/overview"
-                className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
               >
                 Dashboard
               </Link>
@@ -687,20 +656,111 @@ export default function Home() {
               <>
                 <Link
                   href="/GetStarted?mode=login"
-                  className="text-[#040404] hover:text-[#5F30EB] transition-colors"
+                  className="text-[#040404] hover:text-[#5F30EB] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/GetStarted?mode=signup"
-                  className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                  className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
                 >
                   Get Started
                 </Link>
               </>
             )}
           </div>
-        )}
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden text-[#040404] cursor-pointer z-10"
+            aria-label="Toggle menu"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 5h16" />
+              <path d="M4 12h16" />
+              <path d="M4 19h16" />
+            </svg>
+          </button>
+
+          {/* Mobile Menu */}
+          {menuOpen && (
+            <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[#FFFFFFF2] backdrop-blur-md border border-[#5F30EB22] rounded-3xl flex flex-col items-center py-6 space-y-4 md:hidden z-50">
+              <div className="w-[180px] relative">
+                <select
+                  value={language}
+                  onChange={(event) =>
+                    setLanguage(event.target.value === "ar" ? "ar" : "en")
+                  }
+                  disabled={!languageReady}
+                  aria-label="Language selector"
+                  className="w-full h-10 rounded-full border border-[#5F30EB33] bg-white/90 pl-3 pr-8 text-sm text-[#4E4E5E] focus:outline-none focus:ring-2 focus:ring-[#5F30EB66] disabled:opacity-60 cursor-pointer appearance-none"
+                >
+                  <option value="en">English</option>
+                  <option value="ar">Arabic</option>
+                </select>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5F30EB]"
+                  aria-hidden="true"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-[#4E4E5E] hover:text-[#040404] transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard/overview"
+                  className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/GetStarted?mode=login"
+                    className="text-[#040404] hover:text-[#5F30EB] transition-colors"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/GetStarted?mode=signup"
+                    className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </nav>
 

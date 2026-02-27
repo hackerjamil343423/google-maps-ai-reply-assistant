@@ -6,20 +6,14 @@ import { AR_STATIC_MAP } from "@/lib/i18n/ar-static-map";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label"] as const;
-const CACHE_STORAGE_KEY = "i18n_ar_cache_v1";
-
-type TranslationApiResponse = {
-  translations?: Record<string, string>;
-};
-
-function shouldSkipText(text: string) {
-  const trimmed = text.trim();
-  if (!trimmed) return true;
-  if (trimmed.length > 500) return true;
-  if (/^[0-9\s.,:/\-+()%]+$/.test(trimmed)) return true;
-  if (/^https?:\/\//i.test(trimmed)) return true;
-  return false;
-}
+const REPLACEABLE_AR_ENTRIES = Object.entries(AR_STATIC_MAP)
+  .filter(([source, translated]) => {
+    if (!source || !translated) return false;
+    if (!/[A-Za-z]/.test(source)) return false;
+    // Skip single-character keys to avoid accidental substitutions.
+    return source.length > 1;
+  })
+  .sort((a, b) => b[0].length - a[0].length);
 
 function normalizeText(value: string) {
   return value.replace(/\s+/g, " ").trim();
@@ -58,119 +52,44 @@ export default function AutoTranslate() {
   const attrOriginalRef = useRef(new WeakMap<Element, Map<string, string>>());
   const observerRef = useRef<MutationObserver | null>(null);
   const applyingRef = useRef(false);
-  const pendingTextsRef = useRef(new Set<string>());
-  const flushTimerRef = useRef<number | null>(null);
-  const cacheRef = useRef<Record<string, string>>({});
-  const applyFnRef = useRef<(root: Node) => void>(() => {});
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(CACHE_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, string>;
-      cacheRef.current = parsed;
-    } catch {
-      cacheRef.current = {};
-    }
-  }, []);
-
-  const persistCache = useCallback(() => {
-    try {
-      window.localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(cacheRef.current));
-    } catch {
-      // Ignore storage quota errors.
-    }
-  }, []);
-
-  const translateBatch = useCallback(
-    async (texts: string[]) => {
-      if (texts.length === 0) return;
-      if (language !== "ar") return;
-
-      try {
-        const res = await fetch("/api/i18n/translate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            texts,
-            target: "ar",
-          }),
-        });
-
-        const json = (await res.json().catch(() => null)) as
-          | TranslationApiResponse
-          | null;
-        if (!res.ok || !json?.translations) {
-          return;
-        }
-
-        let changed = false;
-        for (const [source, translated] of Object.entries(json.translations)) {
-          if (!translated || translated === source) continue;
-          cacheRef.current[source] = translated;
-          changed = true;
-        }
-
-        if (changed) {
-          persistCache();
-          applyFnRef.current(document.body);
-        }
-      } catch {
-        // Keep source text if translation service fails.
-      }
-    },
-    [language, persistCache]
-  );
-
-  const flushPending = useCallback(() => {
-    flushTimerRef.current = null;
-    const items = [...pendingTextsRef.current].slice(0, 120);
-    if (items.length === 0) return;
-
-    for (const item of items) {
-      pendingTextsRef.current.delete(item);
-    }
-
-    void translateBatch(items).finally(() => {
-      if (pendingTextsRef.current.size > 0 && !flushTimerRef.current) {
-        flushTimerRef.current = window.setTimeout(() => {
-          flushPending();
-        }, 180);
-      }
-    });
-  }, [translateBatch]);
-
-  const scheduleFlush = useCallback(() => {
-    if (language !== "ar") return;
-    if (flushTimerRef.current) return;
-    flushTimerRef.current = window.setTimeout(() => {
-      flushPending();
-    }, 180);
-  }, [flushPending, language]);
 
   const resolveArabic = useCallback(
     (source: string) => {
       const normalized = normalizeText(source);
       if (!normalized) return source;
+      if (/^https?:\/\//i.test(normalized)) return source;
 
       if (AR_STATIC_MAP[normalized]) {
         return AR_STATIC_MAP[normalized];
       }
 
-      if (cacheRef.current[normalized]) {
-        return cacheRef.current[normalized];
+      const noColon = normalized.endsWith(":")
+        ? normalized.slice(0, -1).trim()
+        : normalized;
+      if (noColon !== normalized && AR_STATIC_MAP[noColon]) {
+        return `${AR_STATIC_MAP[noColon]}:`;
       }
 
-      if (!shouldSkipText(normalized)) {
-        pendingTextsRef.current.add(normalized);
-        scheduleFlush();
+      const noPeriod = normalized.endsWith(".")
+        ? normalized.slice(0, -1).trim()
+        : normalized;
+      if (noPeriod !== normalized && AR_STATIC_MAP[noPeriod]) {
+        return `${AR_STATIC_MAP[noPeriod]}.`;
+      }
+
+      // Deterministic dictionary phrase replacement for dynamic strings.
+      let replaced = normalized;
+      for (const [key, value] of REPLACEABLE_AR_ENTRIES) {
+        if (!replaced.includes(key)) continue;
+        replaced = replaced.split(key).join(value);
+      }
+      if (replaced !== normalized) {
+        return replaced;
       }
 
       return source;
     },
-    [scheduleFlush]
+    []
   );
 
   const applyTranslationsFn = useCallback(
@@ -239,7 +158,6 @@ export default function AutoTranslate() {
     },
     [language, ready, resolveArabic]
   );
-  applyFnRef.current = applyTranslationsFn;
 
   const observerConfig = useMemo<MutationObserverInit>(
     () => ({
@@ -255,14 +173,7 @@ export default function AutoTranslate() {
     observerRef.current?.disconnect();
     applyTranslationsFn(document.body);
 
-    if (language !== "ar") {
-      pendingTextsRef.current.clear();
-      if (flushTimerRef.current) {
-        window.clearTimeout(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
-      return;
-    }
+    if (language !== "ar") return;
 
     observerRef.current = new MutationObserver((mutations) => {
       if (applyingRef.current) return;
@@ -282,10 +193,6 @@ export default function AutoTranslate() {
 
     return () => {
       observerRef.current?.disconnect();
-      if (flushTimerRef.current) {
-        window.clearTimeout(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
     };
   }, [applyTranslationsFn, language, observerConfig, ready]);
 

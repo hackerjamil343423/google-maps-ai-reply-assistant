@@ -301,9 +301,11 @@ export default function DemoPage() {
                 {/* Right Column — Form */}
                 <div className="flex flex-col items-center w-full justify-center space-y-6">
                   {/* Star Rating Selector */}
-                  <div className="w-full">
-                    <p className="text-xs text-[#4E4E5E] mb-2">Review rating</p>
-                    <div className="flex gap-1">
+                  <div
+                    className="w-full rounded-xl border border-[#5F30EB22] bg-[#F8F9FF] p-4"
+                  >
+                    <p className="mb-3 text-xs font-medium text-[#5F30EB]">Review rating</p>
+                    <div className="flex gap-1.5">
                       {STAR_RATINGS.map((star) => {
                         const filled = star <= (hoveredStar || starRating);
                         return (
@@ -314,15 +316,15 @@ export default function DemoPage() {
                             onClick={() => setStarRating(star)}
                             onMouseEnter={() => setHoveredStar(star)}
                             onMouseLeave={() => setHoveredStar(0)}
-                            className="cursor-pointer transition-transform hover:scale-110"
+                            className="cursor-pointer rounded-lg p-1 transition-all hover:scale-110 hover:bg-[#5F30EB10] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5F30EB66]"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="36"
                               height="36"
                               viewBox="0 0 24 24"
-                              fill={filled ? "#FFD700" : "none"}
-                              stroke={filled ? "#FFD700" : "#555"}
+                              fill={filled ? "#F5C518" : "none"}
+                              stroke={filled ? "#F5C518" : "#B7B3D9"}
                               strokeWidth="1.5"
                               aria-hidden="true"
                             >
