@@ -92,6 +92,11 @@ function AssistantMarkdown({ content, isRtl }: { content: string; isRtl: boolean
             {children}
           </a>
         ),
+        pre: ({ children }) => (
+          <pre className="mb-2 max-w-full overflow-x-auto rounded-xl bg-[#141625] p-3 text-xs text-[#F0F3FF] last:mb-0">
+            {children}
+          </pre>
+        ),
         code: ({ children, className }) => {
           const isInline = !className;
           if (isInline) {
@@ -103,7 +108,7 @@ function AssistantMarkdown({ content, isRtl }: { content: string; isRtl: boolean
           }
 
           return (
-            <code className="block overflow-x-auto rounded-xl bg-[#141625] p-3 text-xs text-[#F0F3FF]">
+            <code className="text-xs text-[#F0F3FF]">
               {children}
             </code>
           );
@@ -271,11 +276,11 @@ export default function AssistantChatWidget() {
 
       {open && (
         <div
-          className={`fixed bottom-24 z-[80] h-[72vh] max-h-[680px] w-[calc(100vw-24px)] max-w-[390px] rounded-3xl border border-[#E6E9F8] bg-[#F6F7FBF5] shadow-[0_14px_40px_rgba(4,4,4,0.12)] backdrop-blur-xl ${
+          className={`fixed bottom-24 z-[80] h-[72vh] max-h-[680px] w-[calc(100vw-24px)] max-w-[390px] overflow-hidden rounded-3xl border border-[#E6E9F8] bg-[#F6F7FBF5] shadow-[0_14px_40px_rgba(4,4,4,0.12)] backdrop-blur-xl ${
             isRtl ? "left-3 md:left-5" : "right-3 md:right-5"
           }`}
         >
-          <div className="flex h-full flex-col p-3">
+          <div className="flex h-full min-h-0 flex-col p-3">
             <div className="mb-3 flex items-center justify-between">
               <div className="relative inline-flex rounded-full bg-[#EDEDF3] p-1">
                 <button
@@ -357,7 +362,7 @@ export default function AssistantChatWidget() {
             </div>
 
             {tab === "history" ? (
-              <div className="brand-scrollbar flex-1 space-y-2 overflow-y-auto rounded-2xl border border-[#E6E9F8] bg-white/70 p-3">
+              <div className="brand-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto rounded-2xl border border-[#E6E9F8] bg-white/70 p-3">
                 {loading && (
                   <p className="text-sm text-[#6A6A82]">Loading history...</p>
                 )}
@@ -388,10 +393,10 @@ export default function AssistantChatWidget() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-1 flex-col">
+              <div className="flex min-h-0 flex-1 flex-col">
                 <div
                   ref={scrollRef}
-                  className="brand-scrollbar mb-3 flex-1 space-y-3 overflow-y-auto rounded-2xl border border-[#E6E9F8] bg-white/70 p-3"
+                  className="brand-scrollbar mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-2xl border border-[#E6E9F8] bg-white/70 p-3"
                 >
                   {messages.length === 0 ? (
                     <div className="space-y-4 pt-8 text-center">
@@ -441,12 +446,12 @@ export default function AssistantChatWidget() {
                     messages.map((item, index) => (
                       <div
                         key={`${item.id || "local"}-${index}`}
-                        className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                        className={`max-w-[88%] break-words rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                           item.role === "user"
                             ? `ml-auto ${
                                 isRtl ? "text-right" : "text-left"
                               } bg-[#5F30EB] text-white`
-                            : "bg-white text-[#32324A] border border-[#E6E9F8]"
+                            : "overflow-hidden border border-[#E6E9F8] bg-white text-[#32324A]"
                         }`}
                       >
                         {item.role === "assistant" ? (
