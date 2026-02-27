@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const NAV_LINKS = [
@@ -274,10 +274,244 @@ const PRICING_PLANS = [
   },
 ];
 
+type BusinessSuggestion = {
+  id: string;
+  name: string;
+  address: string;
+  label: string;
+};
+
+type BusinessSearchResponse = {
+  results?: BusinessSuggestion[];
+  error?: string;
+};
+
+type BusinessReview = {
+  id: string;
+  authorName: string;
+  rating: number;
+  text: string;
+  publishedAt: string | null;
+};
+
+type BusinessReviewsResponse = {
+  business?: {
+    id: string;
+    name: string;
+    address: string;
+    rating: number | null;
+    userRatingCount: number | null;
+  };
+  reviews?: BusinessReview[];
+  error?: string;
+};
+
+type GenerateReplyResponse = {
+  reply?: string;
+  source?: "openai" | "template";
+  error?: string;
+};
+
+type LandingPreviewItem = {
+  id: string;
+  authorName: string;
+  rating: number;
+  review: string;
+  reply: string;
+  source: "openai" | "template" | null;
+  loading: boolean;
+  error: string;
+};
+
+async function parseJsonSafe<T>(res: Response): Promise<T | null> {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [searchResults, setSearchResults] = useState<BusinessSuggestion[]>([]);
+  const [selectedBusiness, setSelectedBusiness] =
+    useState<BusinessSuggestion | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [previewItems, setPreviewItems] = useState<LandingPreviewItem[]>([]);
+
+  const searchRequestIdRef = useRef(0);
+  const previewRequestIdRef = useRef(0);
+
+  const fetchBusinessSuggestions = useCallback(async (query: string) => {
+    const res = await fetch(
+      `/api/public/business-search?q=${encodeURIComponent(query)}`,
+      { cache: "no-store" }
+    );
+    const json = await parseJsonSafe<BusinessSearchResponse>(res);
+
+    if (!res.ok) {
+      throw new Error(json?.error || "Failed to search businesses.");
+    }
+
+    return json?.results ?? [];
+  }, []);
+
+  const loadBusinessPreview = useCallback(async (business: BusinessSuggestion) => {
+    const requestId = ++previewRequestIdRef.current;
+    setSelectedBusiness(business);
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreviewItems([]);
+
+    try {
+      const reviewsRes = await fetch(
+        `/api/public/business-reviews?placeId=${encodeURIComponent(business.id)}`,
+        { cache: "no-store" }
+      );
+      const reviewsJson = await parseJsonSafe<BusinessReviewsResponse>(reviewsRes);
+
+      if (!reviewsRes.ok) {
+        throw new Error(
+          reviewsJson?.error || "Failed to load reviews for this business."
+        );
+      }
+
+      const reviews = (reviewsJson?.reviews ?? []).slice(0, 3);
+      if (reviews.length === 0) {
+        setPreviewError(
+          "No public reviews found for this business yet. Try another listing."
+        );
+        return;
+      }
+
+      if (requestId !== previewRequestIdRef.current) {
+        return;
+      }
+
+      setPreviewItems(
+        reviews.map((review) => ({
+          id: review.id,
+          authorName: review.authorName,
+          rating: review.rating,
+          review: review.text,
+          reply: "",
+          source: null,
+          loading: true,
+          error: "",
+        }))
+      );
+
+      await Promise.all(
+        reviews.map(async (review) => {
+          const replyRes = await fetch("/api/generate-reply", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              review: review.text,
+              reviewerName: review.authorName,
+              starRating: review.rating,
+              businessName: business.name,
+            }),
+          });
+
+          const replyJson = await parseJsonSafe<GenerateReplyResponse>(replyRes);
+
+          if (requestId !== previewRequestIdRef.current) {
+            return;
+          }
+
+          setPreviewItems((current) =>
+            current.map((item) => {
+              if (item.id !== review.id) {
+                return item;
+              }
+
+              if (!replyRes.ok || !replyJson?.reply) {
+                return {
+                  ...item,
+                  loading: false,
+                  error:
+                    replyJson?.error || "Failed to generate reply for this review.",
+                };
+              }
+
+              return {
+                ...item,
+                loading: false,
+                reply: replyJson.reply,
+                source: replyJson.source ?? null,
+                error: "",
+              };
+            })
+          );
+        })
+      );
+    } catch (error) {
+      if (requestId !== previewRequestIdRef.current) {
+        return;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to load reviews and generate replies.";
+      setPreviewError(message);
+    } finally {
+      if (requestId === previewRequestIdRef.current) {
+        setPreviewLoading(false);
+      }
+    }
+  }, []);
+
+  const handleSearchSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const query = searchValue.trim();
+
+      if (query.length < 2) {
+        setSearchError("Type at least 2 characters to search.");
+        return;
+      }
+
+      setSearchError("");
+      setSearchResults([]);
+
+      if (
+        selectedBusiness &&
+        (query === selectedBusiness.label || query === selectedBusiness.name)
+      ) {
+        void loadBusinessPreview(selectedBusiness);
+        return;
+      }
+
+      setSearchLoading(true);
+      try {
+        const results = await fetchBusinessSuggestions(query);
+        if (results.length === 0) {
+          setSearchError("No matching businesses found. Try a more specific name.");
+          return;
+        }
+
+        const topResult = results[0];
+        setSearchValue(topResult.label);
+        setSearchResults([]);
+        void loadBusinessPreview(topResult);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to search businesses.";
+        setSearchError(message);
+      } finally {
+        setSearchLoading(false);
+      }
+    },
+    [fetchBusinessSuggestions, loadBusinessPreview, searchValue, selectedBusiness]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -296,6 +530,50 @@ export default function Home() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const query = searchValue.trim();
+
+    if (selectedBusiness && query === selectedBusiness.label) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    const requestId = ++searchRequestIdRef.current;
+    const timer = setTimeout(() => {
+      setSearchLoading(true);
+      void fetchBusinessSuggestions(query)
+        .then((results) => {
+          if (requestId !== searchRequestIdRef.current) {
+            return;
+          }
+          setSearchResults(results);
+        })
+        .catch(() => {
+          if (requestId !== searchRequestIdRef.current) {
+            return;
+          }
+          setSearchResults([]);
+        })
+        .finally(() => {
+          if (requestId !== searchRequestIdRef.current) {
+            return;
+          }
+          setSearchLoading(false);
+        });
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [fetchBusinessSuggestions, searchValue, selectedBusiness]);
 
   return (
     <div className="min-h-screen bg-[#0B090A] text-white">
@@ -467,7 +745,7 @@ export default function Home() {
             <form
               className="w-full flex flex-col md:flex-row items-center gap-3 bg-[#1b1c1c] rounded-lg md:rounded-full p-3 relative"
               role="search"
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleSearchSubmit}
             >
               <input
                 type="text"
@@ -475,16 +753,57 @@ export default function Home() {
                 className="w-full bg-transparent text-white rounded-full px-4 py-3 focus:outline-none placeholder:text-gray-400"
                 aria-label="Search business reviews"
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setSearchValue(next);
+                  if (selectedBusiness && next !== selectedBusiness.label) {
+                    setSelectedBusiness(null);
+                  }
+                }}
               />
               <button
                 type="submit"
+                disabled={searchLoading || previewLoading}
                 className="w-full md:w-auto cursor-pointer bg-white text-black px-6 py-3 font-bold rounded-lg md:rounded-full transition hover:bg-[#00FFE9] disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Submit search"
               >
-                Go!
+                {searchLoading || previewLoading ? "Loading..." : "Go!"}
               </button>
             </form>
+
+            {(searchLoading || searchResults.length > 0) && (
+              <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#131313] overflow-hidden">
+                {searchLoading && (
+                  <div className="px-4 py-3 text-sm text-gray-400">
+                    Searching businesses...
+                  </div>
+                )}
+                {!searchLoading &&
+                  searchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      type="button"
+                      onClick={() => {
+                        setSearchValue(result.label);
+                        setSearchResults([]);
+                        setSearchError("");
+                        void loadBusinessPreview(result);
+                      }}
+                      className="w-full text-left px-4 py-3 border-t border-white/5 hover:bg-[#1d1d1d] transition-colors"
+                    >
+                      <p className="text-sm text-white font-medium">{result.name}</p>
+                      {result.address && (
+                        <p className="text-xs text-gray-400 mt-1">{result.address}</p>
+                      )}
+                    </button>
+                  ))}
+              </div>
+            )}
+
+            {searchError && (
+              <p className="text-sm text-red-400 text-center max-w-3xl">{searchError}</p>
+            )}
+
             <div className="text-center text-gray-300 max-w-2xl px-4">
               <p className="mb-2">
                 Don&apos;t just take our word for it. Watch our AI write a
@@ -492,10 +811,81 @@ export default function Home() {
               </p>
               <p>
                 Try It For FREE! Enter your business name as it appears on
-                Google above and watch the AI respond to 5 of your reviews
+                Google above and watch the AI respond to 3 of your reviews
                 instantly. No credit card required.
               </p>
             </div>
+
+            {(previewLoading || previewError || previewItems.length > 0) && (
+              <div className="w-full max-w-5xl mt-4 rounded-2xl border border-white/10 bg-[#101010] p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+                  <h3 className="text-lg md:text-xl font-semibold text-white">
+                    Live Review Reply Preview
+                  </h3>
+                  {selectedBusiness && (
+                    <p className="text-xs md:text-sm text-[#00FFE9]">
+                      {selectedBusiness.name}
+                    </p>
+                  )}
+                </div>
+
+                {previewLoading && previewItems.length === 0 && (
+                  <p className="text-sm text-gray-400">
+                    Loading reviews and generating replies...
+                  </p>
+                )}
+
+                {previewError && (
+                  <p className="text-sm text-red-400 mb-3">{previewError}</p>
+                )}
+
+                {previewItems.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {previewItems.map((item) => (
+                      <article
+                        key={item.id}
+                        className="rounded-xl border border-white/10 bg-[#171717] p-4 text-left"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <p className="text-sm text-white font-medium truncate">
+                            {item.authorName}
+                          </p>
+                          <p className="text-xs text-[#00FFE9]">
+                            {"★".repeat(Math.max(1, Math.min(5, item.rating)))}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-300 leading-relaxed mb-4">
+                          {item.review}
+                        </p>
+
+                        <div className="rounded-lg border border-[#00FFE930] bg-[#00FFE90D] p-3 min-h-[110px]">
+                          {item.loading && (
+                            <p className="text-xs text-gray-300">
+                              Generating AI reply...
+                            </p>
+                          )}
+                          {!item.loading && item.error && (
+                            <p className="text-xs text-red-300">{item.error}</p>
+                          )}
+                          {!item.loading && !item.error && (
+                            <>
+                              <p className="text-xs text-white leading-relaxed">
+                                {item.reply}
+                              </p>
+                              {item.source && (
+                                <p className="text-[10px] uppercase tracking-wide text-[#00FFE9] mt-2">
+                                  Source: {item.source}
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
