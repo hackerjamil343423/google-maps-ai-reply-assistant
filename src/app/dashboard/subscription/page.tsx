@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
 import DashboardShell from "@/components/DashboardShell";
 
 const PLANS = [
@@ -10,38 +11,107 @@ const PLANS = [
     price: "$15",
     accounts: "Up to 1 account",
     note: "Unlimited AI replies",
-    current: false,
   },
   {
     name: "Multi-Location",
     price: "$49",
     accounts: "Up to 5 accounts",
     note: "Unlimited AI replies",
-    current: false,
   },
   {
     name: "Agency Max",
     price: "$199",
     accounts: "Up to 60 accounts",
     note: "Unlimited AI replies",
-    current: false,
   },
-];
+] as const;
 
-const TRIAL_END = "3/2/2026";
-const CONNECTED = 0;
-const MAX_ACCOUNTS = 1;
+type PlanName = (typeof PLANS)[number]["name"] | "free";
+
+interface SubscriptionState {
+  plan: PlanName;
+  status: "trialing" | "active" | "past_due" | "canceled";
+  price: string;
+  trialEndsAt: string;
+  nextBillingAt: string;
+  connectedAccounts: number;
+  maxAccounts: number;
+  aiReplies: number;
+  reviewsManaged: number;
+}
+
+const FALLBACK_STATE: SubscriptionState = {
+  plan: "free",
+  status: "trialing",
+  price: "$0",
+  trialEndsAt: "N/A",
+  nextBillingAt: "N/A",
+  connectedAccounts: 0,
+  maxAccounts: 1,
+  aiReplies: 0,
+  reviewsManaged: 0,
+};
 
 export default function SubscriptionPage() {
+  const [data, setData] = useState<SubscriptionState>(FALLBACK_STATE);
+  const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
-  const [upgraded, setUpgraded] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
 
-  async function handleUpgrade(planName: string) {
-    setUpgrading(planName);
-    await new Promise((r) => setTimeout(r, 1200));
-    setUpgraded(planName);
-    setUpgrading(null);
+  async function loadSubscription() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/subscription", { cache: "no-store" });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(payload?.error || "Failed to load subscription.");
+      }
+      setData({
+        ...FALLBACK_STATE,
+        ...payload,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load subscription.");
+    } finally {
+      setLoading(false);
+    }
   }
+
+  useEffect(() => {
+    void loadSubscription();
+  }, []);
+
+  const activePlanLabel = useMemo(() => {
+    if (data.plan === "free") return "free";
+    return data.plan;
+  }, [data.plan]);
+
+  async function handleUpgrade(planName: (typeof PLANS)[number]["name"]) {
+    setUpgrading(planName);
+    setError("");
+    try {
+      const res = await fetch("/api/subscription", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planName }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(payload?.error || "Failed to update plan.");
+      }
+      setNotice(`Plan upgraded to ${planName}.`);
+      setTimeout(() => setNotice(""), 3000);
+      await loadSubscription();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update plan.");
+    } finally {
+      setUpgrading(null);
+    }
+  }
+
+  const trialing = data.status === "trialing";
 
   return (
     <DashboardShell activeHref="/dashboard/subscription">
@@ -52,7 +122,20 @@ export default function SubscriptionPage() {
         >
           <h1 className="text-3xl font-bold text-white mb-8">Subscription Management</h1>
 
-          {/* ── Current Plan ── */}
+          {loading && (
+            <div className="mb-6 text-sm text-gray-400">Loading subscription…</div>
+          )}
+          {notice && (
+            <div className="mb-6 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm">
+              {notice}
+            </div>
+          )}
+          {error && (
+            <div className="mb-6 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           <div
             className="rounded-2xl border border-[#ffffff]/20 p-6 mb-8"
             style={{ background: "rgba(11,9,10,0.2)" }}
@@ -60,7 +143,7 @@ export default function SubscriptionPage() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-xl font-semibold text-white">Current Plan</h2>
               <span className="px-3 py-1 rounded-full text-sm font-medium text-blue-400 bg-blue-500/10 border border-blue-500/20">
-                {upgraded ? "Active" : "Trialing"}
+                {trialing ? "Trialing" : "Active"}
               </span>
             </div>
 
@@ -74,7 +157,7 @@ export default function SubscriptionPage() {
                     </svg>
                   ),
                   label: "Plan",
-                  value: upgraded ?? "free",
+                  value: activePlanLabel,
                 },
                 {
                   icon: (
@@ -84,9 +167,7 @@ export default function SubscriptionPage() {
                     </svg>
                   ),
                   label: "Price",
-                  value: upgraded
-                    ? PLANS.find((p) => p.name === upgraded)?.price + "/month"
-                    : "$0/month",
+                  value: `${data.price}/month`,
                 },
                 {
                   icon: (
@@ -97,7 +178,7 @@ export default function SubscriptionPage() {
                     </svg>
                   ),
                   label: "Next Billing",
-                  value: upgraded ? "Mar 2, 2026" : "N/A",
+                  value: data.nextBillingAt,
                 },
                 {
                   icon: (
@@ -110,7 +191,7 @@ export default function SubscriptionPage() {
                     </svg>
                   ),
                   label: "Trial Ends",
-                  value: TRIAL_END,
+                  value: data.trialEndsAt,
                 },
               ].map((item) => (
                 <div key={item.label} className="flex items-center space-x-3">
@@ -124,8 +205,7 @@ export default function SubscriptionPage() {
             </div>
           </div>
 
-          {/* ── Trial banner ── */}
-          {!upgraded && (
+          {trialing && (
             <div
               className="rounded-2xl p-6 mb-8 border border-blue-500/20"
               style={{ background: "linear-gradient(to right, rgba(59,130,246,0.08), rgba(168,85,247,0.08))" }}
@@ -150,19 +230,18 @@ export default function SubscriptionPage() {
                       </div>
                     ))}
                   </div>
-                  <p className="mt-3 text-blue-400 font-medium text-sm">Trial ends: {TRIAL_END}</p>
+                  <p className="mt-3 text-blue-400 font-medium text-sm">Trial ends: {data.trialEndsAt}</p>
                 </div>
                 <Link
                   href="/pricing"
                   className="flex-shrink-0 bg-[#00FFE9] text-black px-6 py-3 rounded-xl font-semibold hover:bg-[#00FFE9]/80 transition-colors text-sm"
                 >
-                  Choose Plan
+                  Compare Plans
                 </Link>
               </div>
             </div>
           )}
 
-          {/* ── Usage statistics ── */}
           <div
             className="rounded-2xl border border-[#ffffff]/20 p-6 mb-8"
             style={{ background: "rgba(11,9,10,0.2)" }}
@@ -172,13 +251,16 @@ export default function SubscriptionPage() {
             <div className="mb-5">
               <div className="flex justify-between text-sm text-gray-400 mb-2">
                 <span>Connected Accounts</span>
-                <span>{CONNECTED} / {MAX_ACCOUNTS}</span>
+                <span>{data.connectedAccounts} / {data.maxAccounts}</span>
               </div>
               <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
                 <div
                   className="h-2 rounded-full transition-all duration-700"
                   style={{
-                    width: `${(CONNECTED / MAX_ACCOUNTS) * 100}%`,
+                    width: `${Math.min(
+                      100,
+                      (data.connectedAccounts / Math.max(data.maxAccounts, 1)) * 100
+                    )}%`,
                     background: "linear-gradient(to right, #00FFE9, #00B4D8)",
                   }}
                 />
@@ -187,10 +269,10 @@ export default function SubscriptionPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: "Connected",      value: CONNECTED,           color: "text-green-400" },
-                { label: "Remaining",      value: MAX_ACCOUNTS - CONNECTED, color: "text-white" },
-                { label: "AI Replies",     value: 0,                   color: "text-[#00FFE9]" },
-                { label: "Reviews Managed",value: 0,                   color: "text-[#00FFE9]" },
+                { label: "Connected", value: data.connectedAccounts, color: "text-green-400" },
+                { label: "Remaining", value: Math.max(0, data.maxAccounts - data.connectedAccounts), color: "text-white" },
+                { label: "AI Replies", value: data.aiReplies, color: "text-[#00FFE9]" },
+                { label: "Reviews Managed", value: data.reviewsManaged, color: "text-[#00FFE9]" },
               ].map((s) => (
                 <div key={s.label} className="text-center rounded-xl border border-[#ffffff10] p-4"
                   style={{ background: "rgba(11,9,10,0.3)" }}>
@@ -201,7 +283,6 @@ export default function SubscriptionPage() {
             </div>
           </div>
 
-          {/* ── Upgrade plans ── */}
           <div
             className="rounded-2xl border border-[#ffffff]/20 p-6"
             style={{ background: "rgba(11,9,10,0.2)" }}
@@ -210,22 +291,22 @@ export default function SubscriptionPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {PLANS.map((plan) => {
-                const isUpgraded = upgraded === plan.name;
+                const isCurrent = data.plan === plan.name;
                 const isUpgrading = upgrading === plan.name;
                 return (
                   <div
                     key={plan.name}
                     className="relative p-6 rounded-xl border flex flex-col min-h-[200px] transition-all duration-300 hover:border-[#00FFE9]/50"
                     style={{
-                      background: isUpgraded
+                      background: isCurrent
                         ? "rgba(0,255,233,0.05)"
                         : "rgba(11,9,10,0.2)",
-                      border: isUpgraded
+                      border: isCurrent
                         ? "1px solid rgba(0,255,233,0.4)"
                         : "1px solid rgba(255,255,255,0.15)",
                     }}
                   >
-                    {isUpgraded && (
+                    {isCurrent && (
                       <div className="absolute top-3 right-3 text-xs font-medium px-2 py-0.5 rounded-full bg-[#00FFE9]/15 text-[#00FFE9] border border-[#00FFE9]/30">
                         Current
                       </div>
@@ -240,12 +321,12 @@ export default function SubscriptionPage() {
                       <p className="text-gray-500 text-xs mt-1">{plan.note}</p>
                     </div>
                     <button
-                      onClick={() => !isUpgraded && handleUpgrade(plan.name)}
-                      disabled={isUpgrading || isUpgraded}
+                      onClick={() => !isCurrent && handleUpgrade(plan.name)}
+                      disabled={isCurrent || isUpgrading}
                       className="w-full py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                       style={{
-                        background: isUpgraded ? "rgba(0,255,233,0.15)" : "#00FFE9",
-                        color: isUpgraded ? "#00FFE9" : "#000",
+                        background: isCurrent ? "rgba(0,255,233,0.15)" : "#00FFE9",
+                        color: isCurrent ? "#00FFE9" : "#000",
                         opacity: isUpgrading ? 0.7 : 1,
                       }}
                     >
@@ -257,7 +338,7 @@ export default function SubscriptionPage() {
                           </svg>
                           Processing…
                         </>
-                      ) : isUpgraded ? (
+                      ) : isCurrent ? (
                         "✓ Active Plan"
                       ) : (
                         "Upgrade"

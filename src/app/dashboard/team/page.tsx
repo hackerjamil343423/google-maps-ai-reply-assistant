@@ -1,136 +1,208 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import DashboardShell from "@/components/DashboardShell";
 
 type Role = "VIEWER" | "EDITOR" | "MANAGER";
 type MemberStatus = "active" | "pending";
+type MemberKind = "active" | "invitation";
 
 interface TeamMember {
-  id: number;
+  id: string;
+  kind: MemberKind;
   email: string;
   role: Role;
   business: string;
   status: MemberStatus;
   joinedAt: string;
-  initials: string;
-  avatarColor: string;
+  canEditRole: boolean;
+  canRemove: boolean;
 }
 
-const ROLE_LABELS: Record<Role, string> = {
-  VIEWER:  "Viewer",
-  EDITOR:  "Editor",
-  MANAGER: "Manager",
-};
-
 const ROLE_COLORS: Record<Role, string> = {
-  VIEWER:  "text-gray-400 bg-gray-500/10 border-gray-500/20",
-  EDITOR:  "text-blue-400 bg-blue-500/10 border-blue-500/20",
+  VIEWER: "text-gray-400 bg-gray-500/10 border-gray-500/20",
+  EDITOR: "text-blue-400 bg-blue-500/10 border-blue-500/20",
   MANAGER: "text-[#00FFE9] bg-[#00FFE9]/10 border-[#00FFE9]/20",
 };
 
 const STATUS_COLORS: Record<MemberStatus, string> = {
-  active:  "text-green-400 bg-green-500/10 border-green-500/20",
+  active: "text-green-400 bg-green-500/10 border-green-500/20",
   pending: "text-orange-400 bg-orange-500/10 border-orange-500/20",
 };
 
-const MOCK_MEMBERS: TeamMember[] = [
-  {
-    id: 1,
-    email: "sarah@acmecafe.com",
-    role: "MANAGER",
-    business: "Acme Café",
-    status: "active",
-    joinedAt: "Jan 10, 2025",
-    initials: "SA",
-    avatarColor: "#7C3AED",
-  },
-  {
-    id: 2,
-    email: "james@acmecafe.com",
-    role: "EDITOR",
-    business: "Acme Café",
-    status: "active",
-    joinedAt: "Feb 1, 2025",
-    initials: "JA",
-    avatarColor: "#0284C7",
-  },
-  {
-    id: 3,
-    email: "nina@downtown.biz",
-    role: "VIEWER",
-    business: "Downtown Bistro",
-    status: "pending",
-    joinedAt: "—",
-    initials: "NI",
-    avatarColor: "#059669",
-  },
-];
-
 const inputCls =
   "w-full px-3 py-2 rounded-md text-[#C3C3C3] focus:outline-none focus:ring-2 focus:ring-[#00FFE9] focus:border-transparent transition-all";
-const inputStyle = { background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.15)" };
+const inputStyle = {
+  background: "#1a1a1a",
+  border: "1px solid rgba(255,255,255,0.15)",
+};
+
+const AVATAR_COLORS = [
+  "#7C3AED",
+  "#0284C7",
+  "#059669",
+  "#D97706",
+  "#DC2626",
+  "#0891B2",
+];
+
+function getAvatarColor(seed: string) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitials(email: string) {
+  const local = email.split("@")[0] || email;
+  const words = local.split(/[._-]+/).filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+  return local.slice(0, 2).toUpperCase();
+}
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMember[]>(MOCK_MEMBERS);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [businesses, setBusinesses] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [business, setBusiness] = useState("");
   const [role, setRole] = useState<Role>("EDITOR");
+  const [loadingMembers, setLoadingMembers] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [removingId, setRemovingId] = useState<number | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  async function loadMembers() {
+    setLoadingMembers(true);
+    setError("");
+    try {
+      const res = await fetch("/api/team/members", { cache: "no-store" });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || "Failed to load team members.");
+      }
+      const data = await res.json();
+      const nextBusinesses = Array.isArray(data.businesses) ? data.businesses : [];
+      const firstBusiness = nextBusinesses[0] ?? "Primary Workspace";
+
+      setMembers(Array.isArray(data.members) ? data.members : []);
+      setBusinesses(nextBusinesses.length ? nextBusinesses : [firstBusiness]);
+      setBusiness((prev) => prev || firstBusiness);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load team members.");
+    } finally {
+      setLoadingMembers(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadMembers();
+  }, []);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !business) { setError("Please fill in all fields."); return; }
-    setError(""); setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800));
-    const initials = email.slice(0, 2).toUpperCase();
-    const colors = ["#7C3AED","#0284C7","#059669","#D97706","#DC2626","#0891B2"];
-    const newMember: TeamMember = {
-      id: Date.now(),
-      email,
-      role,
-      business,
-      status: "pending",
-      joinedAt: "—",
-      initials,
-      avatarColor: colors[Math.floor(Math.random() * colors.length)],
-    };
-    setMembers((prev) => [...prev, newMember]);
-    setSuccess(`Invitation sent to ${email}`);
-    setEmail(""); setBusiness(""); setRole("EDITOR");
-    setSubmitting(false);
-    setTimeout(() => setSuccess(""), 4000);
+    if (!email || !business) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    setError("");
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/team/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, business, role }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(payload?.error || "Failed to send invitation.");
+      }
+      setSuccess(
+        payload?.status === "active"
+          ? `${email} added to workspace.`
+          : `Invitation sent to ${email}.`
+      );
+      setEmail("");
+      setRole("EDITOR");
+      setTimeout(() => setSuccess(""), 4000);
+      await loadMembers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send invitation.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  async function handleRemove(id: number) {
-    setRemovingId(id);
-    await new Promise((r) => setTimeout(r, 600));
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-    setRemovingId(null);
+  async function handleRemove(member: TeamMember) {
+    if (!member.canRemove) return;
+    setRemovingId(member.id);
+    try {
+      const res = await fetch("/api/team/members", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberId: member.id,
+          kind: member.kind,
+        }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(payload?.error || "Failed to remove member.");
+      }
+      setMembers((prev) => prev.filter((m) => m.id !== member.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove member.");
+    } finally {
+      setRemovingId(null);
+    }
   }
 
-  function handleRoleChange(id: number, newRole: Role) {
-    setMembers((prev) => prev.map((m) => m.id === id ? { ...m, role: newRole } : m));
+  async function handleRoleChange(member: TeamMember, newRole: Role) {
+    if (!member.canEditRole) return;
+    try {
+      const res = await fetch("/api/team/members/role", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberId: member.id,
+          kind: member.kind,
+          role: newRole,
+        }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(payload?.error || "Failed to update role.");
+      }
+      setMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, role: newRole } : m))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update role.");
+    }
   }
 
   return (
     <DashboardShell activeHref="/dashboard/team">
       <div className="h-full">
-        <div className="p-2 md:p-4 max-w-5xl mx-auto min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a2a transparent" }}>
-
-          {/* Header */}
+        <div
+          className="p-2 md:p-4 max-w-5xl mx-auto min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a2a transparent" }}
+        >
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#C3C3C3] mb-2">Team Management</h1>
             <p className="text-[#B0B0B0]">Invite and manage team members for your businesses</p>
           </div>
 
-          {/* ── Invite form ── */}
-          <div className="rounded-xl border border-[#ffffff]/20 p-6 mb-8"
-            style={{ background: "rgba(11,9,10,0.2)" }}>
+          <div
+            className="rounded-xl border border-[#ffffff]/20 p-6 mb-8"
+            style={{ background: "rgba(11,9,10,0.2)" }}
+          >
             <h2 className="text-xl font-semibold text-[#C3C3C3] mb-4">Invite Team Member</h2>
 
             {success && (
@@ -142,32 +214,43 @@ export default function TeamPage() {
                 {success}
               </div>
             )}
+
             {error && (
-              <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-sm">{error}</div>
+              <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+                {error}
+              </div>
             )}
 
             <form onSubmit={handleInvite} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-[#B0B0B0] mb-1">Email Address</label>
                   <input
-                    required type="email" placeholder="team@example.com"
-                    className={inputCls} style={inputStyle}
-                    value={email} onChange={(e) => setEmail(e.target.value)}
+                    required
+                    type="email"
+                    placeholder="team@example.com"
+                    className={inputCls}
+                    style={inputStyle}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {/* Business */}
+
                 <div>
                   <label className="block text-sm font-medium text-[#B0B0B0] mb-1">Business</label>
                   <div className="relative">
                     <select
-                      required className={`${inputCls} appearance-none cursor-pointer pr-8`} style={inputStyle}
-                      value={business} onChange={(e) => setBusiness(e.target.value)}>
-                      <option value="" className="bg-[#1a1a1a]">Select Business</option>
-                      <option value="Acme Café" className="bg-[#1a1a1a]">Acme Café</option>
-                      <option value="Downtown Bistro" className="bg-[#1a1a1a]">Downtown Bistro</option>
-                      <option value="The Corner Bakery" className="bg-[#1a1a1a]">The Corner Bakery</option>
+                      required
+                      className={`${inputCls} appearance-none cursor-pointer pr-8`}
+                      style={inputStyle}
+                      value={business}
+                      onChange={(e) => setBusiness(e.target.value)}
+                    >
+                      {businesses.map((item) => (
+                        <option key={item} value={item} className="bg-[#1a1a1a]">
+                          {item}
+                        </option>
+                      ))}
                     </select>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                       fill="none" stroke="#00FFE9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -176,15 +259,19 @@ export default function TeamPage() {
                     </svg>
                   </div>
                 </div>
-                {/* Role */}
+
                 <div>
                   <label className="block text-sm font-medium text-[#B0B0B0] mb-1">Role</label>
                   <div className="relative">
                     <select
-                      required className={`${inputCls} appearance-none cursor-pointer pr-8`} style={inputStyle}
-                      value={role} onChange={(e) => setRole(e.target.value as Role)}>
-                      <option value="VIEWER"  className="bg-[#1a1a1a]">Viewer — Can view reviews</option>
-                      <option value="EDITOR"  className="bg-[#1a1a1a]">Editor — Can view and reply to reviews</option>
+                      required
+                      className={`${inputCls} appearance-none cursor-pointer pr-8`}
+                      style={inputStyle}
+                      value={role}
+                      onChange={(e) => setRole(e.target.value as Role)}
+                    >
+                      <option value="VIEWER" className="bg-[#1a1a1a]">Viewer — Can view reviews</option>
+                      <option value="EDITOR" className="bg-[#1a1a1a]">Editor — Can view and reply to reviews</option>
                       <option value="MANAGER" className="bg-[#1a1a1a]">Manager — Full team management access</option>
                     </select>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -196,9 +283,12 @@ export default function TeamPage() {
                 </div>
               </div>
 
-              <button type="submit" disabled={submitting}
+              <button
+                type="submit"
+                disabled={submitting}
                 className="px-6 py-2 rounded-md font-medium text-[#0B090A] hover:opacity-80 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
-                style={{ background: "#00FFE9" }}>
+                style={{ background: "#00FFE9" }}
+              >
                 {submitting ? (
                   <>
                     <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -220,7 +310,6 @@ export default function TeamPage() {
             </form>
           </div>
 
-          {/* ── Members list ── */}
           <div className="rounded-xl border border-[#ffffff]/20 overflow-hidden"
             style={{ background: "rgba(11,9,10,0.2)" }}>
             <div className="p-6 border-b border-[#ffffff]/20 flex items-center justify-between">
@@ -231,7 +320,9 @@ export default function TeamPage() {
             </div>
 
             <div className="divide-y divide-[#ffffff]/10">
-              {members.length === 0 ? (
+              {loadingMembers ? (
+                <div className="p-10 text-center text-[#B0B0B0]">Loading team members…</div>
+              ) : members.length === 0 ? (
                 <div className="p-10 text-center text-[#B0B0B0]">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
@@ -245,36 +336,38 @@ export default function TeamPage() {
                 </div>
               ) : (
                 members.map((member) => (
-                  <div key={member.id}
+                  <div
+                    key={`${member.kind}:${member.id}`}
                     className={`p-4 md:p-5 flex flex-wrap md:flex-nowrap items-center gap-4 transition-opacity ${
                       removingId === member.id ? "opacity-40" : "opacity-100"
-                    }`}>
-                    {/* Avatar */}
+                    }`}
+                  >
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
-                      style={{ background: member.avatarColor }}>
-                      {member.initials}
+                      style={{ background: getAvatarColor(member.email) }}>
+                      {getInitials(member.email)}
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-[#C3C3C3] font-medium text-sm truncate">{member.email}</p>
-                      <p className="text-gray-500 text-xs truncate">{member.business} · Joined {member.joinedAt}</p>
+                      <p className="text-gray-500 text-xs truncate">
+                        {member.business} · Joined {member.joinedAt}
+                      </p>
                     </div>
 
-                    {/* Status badge */}
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full border flex-shrink-0 ${STATUS_COLORS[member.status]}`}>
                       {member.status === "active" ? "Active" : "Pending"}
                     </span>
 
-                    {/* Role selector */}
                     <div className="relative flex-shrink-0">
                       <select
                         value={member.role}
-                        onChange={(e) => handleRoleChange(member.id, e.target.value as Role)}
-                        className={`text-xs font-medium px-2.5 py-1 rounded-full border appearance-none cursor-pointer pr-6 ${ROLE_COLORS[member.role]}`}
-                        style={{ background: "transparent" }}>
-                        <option value="VIEWER"  className="bg-[#1a1a1a] text-gray-300">Viewer</option>
-                        <option value="EDITOR"  className="bg-[#1a1a1a] text-gray-300">Editor</option>
+                        disabled={!member.canEditRole}
+                        onChange={(e) => handleRoleChange(member, e.target.value as Role)}
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full border appearance-none cursor-pointer pr-6 disabled:opacity-50 disabled:cursor-not-allowed ${ROLE_COLORS[member.role]}`}
+                        style={{ background: "transparent" }}
+                      >
+                        <option value="VIEWER" className="bg-[#1a1a1a] text-gray-300">Viewer</option>
+                        <option value="EDITOR" className="bg-[#1a1a1a] text-gray-300">Editor</option>
                         <option value="MANAGER" className="bg-[#1a1a1a] text-gray-300">Manager</option>
                       </select>
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
@@ -284,12 +377,12 @@ export default function TeamPage() {
                       </svg>
                     </div>
 
-                    {/* Remove */}
                     <button
-                      onClick={() => handleRemove(member.id)}
-                      disabled={removingId === member.id}
+                      onClick={() => handleRemove(member)}
+                      disabled={removingId === member.id || !member.canRemove}
                       title="Remove member"
-                      className="flex-shrink-0 p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-40">
+                      className="flex-shrink-0 p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />

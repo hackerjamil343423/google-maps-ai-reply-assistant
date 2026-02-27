@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { authClient } from "@/lib/auth-client";
 
 function EyeIcon({ open }: { open: boolean }) {
   if (open) {
@@ -75,10 +77,11 @@ function GoogleIcon() {
 }
 
 function GetStartedContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const mode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const isLogin = mode === "login";
 
-  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [email, setEmail] = useState("");
@@ -86,22 +89,17 @@ function GetStartedContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Sync mode when URL param changes
-  useEffect(() => {
-    const m = searchParams.get("mode");
-    if (m === "signup") setMode("signup");
-    else setMode("login");
-  }, [searchParams]);
-
-  const isLogin = mode === "login";
-
   function switchMode() {
-    setMode((prev) => (prev === "login" ? "signup" : "login"));
+    const nextMode = isLogin ? "signup" : "login";
+    router.replace(`/GetStarted?mode=${nextMode}`);
     setError("");
     setPassword("");
     setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirm(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -114,14 +112,50 @@ function GetStartedContent() {
     }
 
     setLoading(true);
-    // TODO: connect to your auth backend
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    setError(
-      isLogin
-        ? "Invalid email or password. Please try again."
-        : "Account creation coming soon. Stay tuned!"
-    );
+    try {
+      if (isLogin) {
+        const res = await authClient.signIn.email({
+          email,
+          password,
+        });
+        if (res.error) {
+          setError(res.error.message ?? "Invalid email or password.");
+          return;
+        }
+      } else {
+        const res = await authClient.signUp.email({
+          name,
+          email,
+          password,
+        });
+        if (res.error) {
+          setError(res.error.message ?? "Failed to create your account.");
+          return;
+        }
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Authentication failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleAuth() {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+    } catch {
+      setError("Google sign-in failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   return (
@@ -273,8 +307,10 @@ function GetStartedContent() {
               )}
 
               {/* Google OAuth */}
-              <a
-                href="/api/auth/google"
+              <button
+                type="button"
+                onClick={handleGoogleAuth}
+                disabled={googleLoading}
                 className="flex items-center justify-center gap-3 py-4 w-full mt-4 rounded-lg border text-gray-300 hover:opacity-90 transition-opacity"
                 style={{
                   background: "rgba(11,9,10,0.07)",
@@ -283,9 +319,13 @@ function GetStartedContent() {
               >
                 <GoogleIcon />
                 <span>
-                  {isLogin ? "or Continue with Gmail" : "Sign up with Gmail"}
+                  {googleLoading
+                    ? "Redirecting..."
+                    : isLogin
+                      ? "or Continue with Gmail"
+                      : "Sign up with Gmail"}
                 </span>
-              </a>
+              </button>
 
               {/* Submit */}
               <button

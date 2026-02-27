@@ -1,0 +1,41 @@
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { memoryAdapter } from "better-auth/adapters/memory";
+import { drizzle } from "drizzle-orm/neon-http";
+
+import * as schema from "@/lib/db/schema";
+import { env } from "@/lib/env";
+
+const DEV_AUTH_SECRET =
+  "dev-only-secret-change-before-production-1234567890";
+
+const socialProviders =
+  env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    ? {
+        google: {
+          clientId: env.GOOGLE_CLIENT_ID,
+          clientSecret: env.GOOGLE_CLIENT_SECRET,
+          accessType: "offline" as const,
+          prompt: "consent" as const,
+        },
+      }
+    : undefined;
+
+const database = env.DATABASE_URL
+  ? drizzleAdapter(drizzle(env.DATABASE_URL, { schema }), {
+      provider: "pg",
+      schema,
+    })
+  : memoryAdapter({});
+
+export const auth = betterAuth({
+  database,
+  baseURL:
+    env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  basePath: "/api/auth",
+  secret: env.BETTER_AUTH_SECRET ?? DEV_AUTH_SECRET,
+  emailAndPassword: {
+    enabled: true,
+  },
+  socialProviders,
+});

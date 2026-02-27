@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
 
 const inputCls =
@@ -12,11 +12,48 @@ const inputStyle = {
 
 const labelCls = "block text-sm text-gray-400 mb-1.5";
 
+function EyeToggle({ show, onToggle }: { show: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer transition-colors"
+      aria-label={show ? "Hide password" : "Show password"}>
+      {show ? (
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
+          <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+          <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
+          <path d="m2 2 20 20" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+function SaveFeedback({ saved, label = "Saved successfully" }: { saved: boolean; label?: string }) {
+  if (!saved) return null;
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/25 text-green-400 text-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+      {label}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   /* ── Profile fields ── */
-  const [firstName, setFirstName]   = useState("Admin");
-  const [lastName,  setLastName]    = useState("User");
-  const [email,     setEmail]       = useState("admin@example.com");
+  const [firstName, setFirstName]   = useState("");
+  const [lastName,  setLastName]    = useState("");
+  const [email,     setEmail]       = useState("");
   const [phone,     setPhone]       = useState("");
   const [company,   setCompany]     = useState("");
   const [website,   setWebsite]     = useState("");
@@ -33,18 +70,75 @@ export default function ProfilePage() {
   /* ── UI state ── */
   const [savingProfile,  setSavingProfile]  = useState(false);
   const [savedProfile,   setSavedProfile]   = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [profileError,   setProfileError]   = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [savedPassword,  setSavedPassword]  = useState(false);
   const [pwError,        setPwError]        = useState("");
 
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "A";
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (!res.ok) {
+          throw new Error("Failed to load profile");
+        }
+        const data = await res.json();
+        if (!active) return;
+        setFirstName(data.firstName || "");
+        setLastName(data.lastName || "");
+        setEmail(data.email || "");
+        setPhone(data.phone || "");
+        setCompany(data.company || "");
+        setWebsite(data.website || "");
+        setBio(data.bio || "");
+      } catch {
+        if (active) setProfileError("Failed to load profile.");
+      } finally {
+        if (active) setLoadingProfile(false);
+      }
+    }
+
+    void loadProfile();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function handleProfileSave(e: React.FormEvent) {
     e.preventDefault();
-    setSavingProfile(true); setSavedProfile(false);
-    await new Promise((r) => setTimeout(r, 900));
-    setSavingProfile(false); setSavedProfile(true);
-    setTimeout(() => setSavedProfile(false), 3500);
+    setSavingProfile(true);
+    setSavedProfile(false);
+    setProfileError("");
+    try {
+      const res = await fetch("/api/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phone,
+          company,
+          website,
+          bio,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || "Failed to save profile.");
+      }
+      setSavedProfile(true);
+      setTimeout(() => setSavedProfile(false), 3500);
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : "Failed to save profile.");
+    } finally {
+      setSavingProfile(false);
+    }
   }
 
   async function handlePasswordSave(e: React.FormEvent) {
@@ -52,48 +146,32 @@ export default function ProfilePage() {
     setPwError("");
     if (newPw !== confirmPw) { setPwError("New passwords do not match."); return; }
     if (newPw.length < 8)    { setPwError("Password must be at least 8 characters."); return; }
-    setSavingPassword(true); setSavedPassword(false);
-    await new Promise((r) => setTimeout(r, 900));
-    setSavingPassword(false); setSavedPassword(true);
-    setCurrentPw(""); setNewPw(""); setConfirmPw("");
-    setTimeout(() => setSavedPassword(false), 3500);
-  }
+    setSavingPassword(true);
+    setSavedPassword(false);
+    try {
+      const res = await fetch("/api/me/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: currentPw,
+          newPassword: newPw,
+        }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(payload?.error || "Failed to update password.");
+      }
 
-  function EyeToggle({ show, onToggle }: { show: boolean; onToggle: () => void }) {
-    return (
-      <button type="button" onClick={onToggle}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer transition-colors"
-        aria-label={show ? "Hide password" : "Show password"}>
-        {show ? (
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
-            <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
-            <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
-            <path d="m2 2 20 20" />
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        )}
-      </button>
-    );
-  }
-
-  function SaveFeedback({ saved, label = "Saved successfully" }: { saved: boolean; label?: string }) {
-    if (!saved) return null;
-    return (
-      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/25 text-green-400 text-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-        {label}
-      </div>
-    );
+      setSavedPassword(true);
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+      setTimeout(() => setSavedPassword(false), 3500);
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : "Failed to update password.");
+    } finally {
+      setSavingPassword(false);
+    }
   }
 
   return (
@@ -107,6 +185,16 @@ export default function ProfilePage() {
           }}
         >
           <h2 className="text-xl md:text-2xl font-medium mb-8">Profile</h2>
+
+          {loadingProfile && (
+            <div className="mb-5 text-sm text-gray-400">Loading profile…</div>
+          )}
+
+          {profileError && (
+            <div className="mb-5 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+              {profileError}
+            </div>
+          )}
 
           <div className="max-w-2xl space-y-10">
 

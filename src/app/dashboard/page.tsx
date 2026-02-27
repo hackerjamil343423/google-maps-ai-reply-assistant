@@ -1,20 +1,200 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import DashboardShell from "@/components/DashboardShell";
 
-export default function DashboardPage() {
-  const [connecting, setConnecting] = useState(false);
-  const [connected, setConnected] = useState(false);
+type GoogleStatus = {
+  configured: boolean;
+  linkedAccount: boolean;
+  connected: boolean;
+  business: {
+    id: string;
+    name: string;
+    googleLocationId: string;
+  } | null;
+  requiredScopes: string[];
+};
 
-  function handleConnect() {
-    setConnecting(true);
-    setTimeout(() => {
-      setConnecting(false);
-      setConnected(true);
-    }, 1500);
+type ReviewSummary = {
+  total: number;
+  replied: number;
+  pending: number;
+};
+
+async function parseJsonSafe<T>(res: Response): Promise<T | null> {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    return null;
   }
+}
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [status, setStatus] = useState<GoogleStatus | null>(null);
+  const [summary, setSummary] = useState<ReviewSummary>({
+    total: 0,
+    replied: 0,
+    pending: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const handledOauthCallback = useRef(false);
+
+  const loadStatus = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    const statusRes = await fetch("/api/google/status", { cache: "no-store" });
+    const statusJson = await parseJsonSafe<GoogleStatus & { error?: string }>(statusRes);
+
+    if (!statusRes.ok || !statusJson) {
+      setError(statusJson?.error || "Failed to load Google connection status.");
+      setLoading(false);
+      return;
+    }
+
+    setStatus(statusJson);
+
+    const reviewRes = await fetch("/api/reviews?status=all&page=1&per_page=1", {
+      cache: "no-store",
+    });
+    const reviewJson = await parseJsonSafe<{
+      summary?: ReviewSummary;
+    }>(reviewRes);
+
+    if (reviewRes.ok && reviewJson?.summary) {
+      setSummary(reviewJson.summary);
+    }
+
+    setLoading(false);
+  }, []);
+
+  const connectAndSync = useCallback(async () => {
+    setConnecting(true);
+    setSyncing(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const connectRes = await fetch("/api/google/connect", {
+        method: "POST",
+      });
+      const connectJson = await parseJsonSafe<{ error?: string }>(connectRes);
+      if (!connectRes.ok) {
+        setError(connectJson?.error || "Failed to connect Google Business Profile.");
+        return;
+      }
+
+      const syncRes = await fetch("/api/google/sync-reviews", {
+        method: "POST",
+      });
+      const syncJson = await parseJsonSafe<{ error?: string; synced?: number }>(syncRes);
+      if (!syncRes.ok) {
+        setError(syncJson?.error || "Connected, but review sync failed.");
+        return;
+      }
+
+      setNotice(`Google connected successfully. Synced ${syncJson?.synced ?? 0} reviews.`);
+      await loadStatus();
+    } finally {
+      setConnecting(false);
+      setSyncing(false);
+    }
+  }, [loadStatus]);
+
+  const startGoogleLinkFlow = useCallback(async () => {
+    setConnecting(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const res = await fetch("/api/auth/link-social", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          provider: "google",
+          callbackURL: "/dashboard?google=linked",
+          scopes: status?.requiredScopes,
+        }),
+      });
+
+      const json = await parseJsonSafe<{ url?: string; error?: { message?: string } }>(res);
+
+      if (!res.ok || !json?.url) {
+        setError(json?.error?.message || "Failed to start Google OAuth flow.");
+        return;
+      }
+
+      window.location.href = json.url;
+    } finally {
+      setConnecting(false);
+    }
+  }, [status?.requiredScopes]);
+
+  async function handleConnect() {
+    if (!status) return;
+
+    if (!status.configured) {
+      setError("Google OAuth is not configured in environment variables.");
+      return;
+    }
+
+    if (!status.linkedAccount) {
+      await startGoogleLinkFlow();
+      return;
+    }
+
+    await connectAndSync();
+  }
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    if (searchParams.get("google") !== "linked" || handledOauthCallback.current) {
+      return;
+    }
+    handledOauthCallback.current = true;
+
+    void (async () => {
+      await connectAndSync();
+      router.replace("/dashboard");
+    })();
+  }, [connectAndSync, searchParams, router]);
+
+  const connected = Boolean(status?.connected);
+
+  const connectionLabel = useMemo(() => {
+    if (loading) {
+      return "Loading connection state...";
+    }
+
+    if (!status?.configured) {
+      return "Google OAuth env vars are missing (GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET).";
+    }
+
+    if (!status.linkedAccount) {
+      return "Google account is not linked yet.";
+    }
+
+    if (!status.connected) {
+      return "Google account linked. Click connect to load your business profile.";
+    }
+
+    return `${status.business?.name || "Business"} connected.`;
+  }, [loading, status]);
 
   return (
     <DashboardShell activeHref="/dashboard">
@@ -31,16 +211,12 @@ export default function DashboardPage() {
           </h2>
 
           <div
-            className="flex flex-col md:flex-row md:items-center gap-4 rounded-xl border border-[#1f1f1f] p-2"
+            className="flex flex-col md:flex-row md:items-center gap-4 rounded-xl border border-[#1f1f1f] p-3"
             style={{ background: "rgba(11,9,10,0.2)" }}
           >
             <input
-              readOnly={connected}
-              placeholder={
-                connected
-                  ? "✓ Business profile connected successfully!"
-                  : "No business profiles found in your Google account."
-              }
+              readOnly
+              value={connectionLabel}
               className={`flex-1 px-4 py-3 outline-none bg-transparent ${
                 connected ? "text-[#00FFE9]" : "text-gray-300"
               }`}
@@ -48,7 +224,7 @@ export default function DashboardPage() {
             />
             <button
               onClick={handleConnect}
-              disabled={connecting || connected}
+              disabled={loading || connecting || syncing || connected}
               className="px-6 py-3 rounded-xl font-medium transition-all text-black disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.03] active:scale-[0.97] cursor-pointer"
               style={{
                 background:
@@ -56,41 +232,51 @@ export default function DashboardPage() {
                 boxShadow: "0px 4.65px 9.3px 1.16px #F4F4FE40 inset",
               }}
             >
-              {connecting ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                  </svg>
-                  Connecting…
-                </span>
-              ) : connected ? (
-                "Connected ✓"
-              ) : (
-                "Connect Business Profile"
-              )}
+              {connecting || syncing ? "Connecting..." : connected ? "Connected" : "Connect Business Profile"}
             </button>
           </div>
+
+          {error && (
+            <p className="mt-4 text-sm text-red-400">{error}</p>
+          )}
+
+          {notice && (
+            <p className="mt-4 text-sm text-[#00FFE9]">{notice}</p>
+          )}
 
           {!connected && (
             <div className="mt-8 space-y-4">
               <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
-                To get started, connect your Google Business Profile so our AI
-                can automatically reply to your customer reviews.
+                Link Google first, then connect and sync reviews so AI replies can be generated and posted from real business data.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
                 {[
-                  { step: "1", title: "Connect", desc: "Link your Google Business Profile to Five Star Reply." },
-                  { step: "2", title: "Configure", desc: "Set your AI tone, filters, and approval preferences." },
-                  { step: "3", title: "Automate", desc: "Let AI reply to reviews 24/7 in your brand voice." },
-                ].map((s) => (
-                  <div key={s.step} className="rounded-2xl border border-[#ffffff15] p-5"
-                    style={{ background: "rgba(11,9,10,0.3)" }}>
+                  {
+                    step: "1",
+                    title: "Link",
+                    desc: "Link your Google account with business scope.",
+                  },
+                  {
+                    step: "2",
+                    title: "Connect",
+                    desc: "Attach the first business profile from your account.",
+                  },
+                  {
+                    step: "3",
+                    title: "Sync",
+                    desc: "Pull Google reviews into your workspace database.",
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.step}
+                    className="rounded-2xl border border-[#ffffff15] p-5"
+                    style={{ background: "rgba(11,9,10,0.3)" }}
+                  >
                     <div className="w-8 h-8 rounded-full bg-[#00FFE920] border border-[#00FFE940] flex items-center justify-center text-[#00FFE9] font-bold text-sm mb-3">
-                      {s.step}
+                      {card.step}
                     </div>
-                    <h3 className="font-semibold text-white mb-1">{s.title}</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">{s.desc}</p>
+                    <h3 className="font-semibold text-white mb-1">{card.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{card.desc}</p>
                   </div>
                 ))}
               </div>
@@ -100,27 +286,25 @@ export default function DashboardPage() {
           {connected && (
             <div className="mt-8 space-y-6">
               <div className="flex items-center gap-3 text-[#00FFE9]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
                 <span className="text-sm font-medium">
-                  Google Business Profile connected. Head to{" "}
+                  Google Business Profile connected. Go to{" "}
                   <Link href="/dashboard/overview" className="underline hover:text-white transition-colors">
                     Overview
                   </Link>{" "}
-                  to start managing replies.
+                  to manage real reviews.
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { label: "Total Reviews", value: "0", icon: "⭐" },
-                  { label: "Replied", value: "0", icon: "✅" },
-                  { label: "Pending", value: "0", icon: "⏳" },
+                  { label: "Total Reviews", value: summary.total },
+                  { label: "Replied", value: summary.replied },
+                  { label: "Pending", value: summary.pending },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-2xl border border-[#ffffff15] p-5 flex flex-col gap-2"
-                    style={{ background: "rgba(11,9,10,0.3)" }}>
-                    <span className="text-2xl">{stat.icon}</span>
+                  <div
+                    key={stat.label}
+                    className="rounded-2xl border border-[#ffffff15] p-5 flex flex-col gap-2"
+                    style={{ background: "rgba(11,9,10,0.3)" }}
+                  >
                     <span className="text-3xl font-bold text-white">{stat.value}</span>
                     <span className="text-gray-400 text-sm">{stat.label}</span>
                   </div>

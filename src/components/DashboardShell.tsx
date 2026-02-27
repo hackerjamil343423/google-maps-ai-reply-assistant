@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { authClient } from "@/lib/auth-client";
 
 /* ─── Nav items ─────────────────────────────────────────── */
 export const NAV_ITEMS = [
@@ -88,7 +91,15 @@ export const NAV_ITEMS = [
 ];
 
 /* ─── Sidebar inner ──────────────────────────────────────── */
-function SidebarInner({ activeHref, onClose }: { activeHref: string; onClose?: () => void }) {
+function SidebarInner({
+  activeHref,
+  onClose,
+  onLogout,
+}: {
+  activeHref: string;
+  onClose?: () => void;
+  onLogout: () => Promise<void>;
+}) {
   return (
     <div className="flex flex-col h-full bg-[#0B090A33] border border-[#ffffff]/20 shadow-[0_-4px_100px_21px_#efefef14_inset] py-6 rounded-3xl overflow-hidden">
       <div className="flex flex-col items-center flex-1 overflow-y-auto">
@@ -116,8 +127,11 @@ function SidebarInner({ activeHref, onClose }: { activeHref: string; onClose?: (
       </div>
 
       <div className="flex flex-col items-center pt-4 mt-auto border-t border-white/10 shrink-0">
-        <button title="Logout"
-          className="p-3 rounded-xl transition-all duration-300 cursor-pointer text-[#B0B0B0] hover:text-[#FF4E4E] hover:bg-[#FF4E4E20]">
+        <button
+          title="Logout"
+          onClick={onLogout}
+          className="p-3 rounded-xl transition-all duration-300 cursor-pointer text-[#B0B0B0] hover:text-[#FF4E4E] hover:bg-[#FF4E4E20]"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="m16 17 5-5-5-5" />
@@ -138,14 +152,62 @@ export default function DashboardShell({
   activeHref: string;
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profile, setProfile] = useState({
+    name: "Account",
+    email: "",
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    void fetch("/api/me", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{
+          firstName: string;
+          lastName: string;
+          email: string;
+        }>;
+      })
+      .then((data) => {
+        if (!mounted || !data) return;
+        const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+        setProfile({
+          name: fullName || "Account",
+          email: data.email || "",
+        });
+      })
+      .catch(() => {
+        // Keep fallback profile values.
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const initials = useMemo(() => {
+    const parts = profile.name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "A";
+    if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+    return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
+  }, [profile.name]);
+
+  async function handleLogout() {
+    await authClient.signOut();
+    setProfileOpen(false);
+    setMobileOpen(false);
+    router.push("/GetStarted?mode=login");
+    router.refresh();
+  }
 
   return (
     <div className="min-h-screen bg-[#0B090A] text-white">
       {/* Desktop sidebar */}
       <aside className="fixed top-0 left-0 h-full w-[150px] px-6 pt-6 hidden md:block z-10">
-        <SidebarInner activeHref={activeHref} />
+        <SidebarInner activeHref={activeHref} onLogout={handleLogout} />
       </aside>
 
       {/* Mobile drawer */}
@@ -153,7 +215,11 @@ export default function DashboardShell({
         <div className="fixed inset-0 z-40 flex md:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative w-[150px] h-full px-3 pt-6 pb-4 z-50">
-            <SidebarInner activeHref={activeHref} onClose={() => setMobileOpen(false)} />
+            <SidebarInner
+              activeHref={activeHref}
+              onClose={() => setMobileOpen(false)}
+              onLogout={handleLogout}
+            />
           </div>
         </div>
       )}
@@ -180,15 +246,15 @@ export default function DashboardShell({
               <button className="flex items-center cursor-pointer" aria-label="Toggle profile"
                 onClick={() => setProfileOpen(!profileOpen)}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#2A2A2A] text-white font-semibold border border-[#00FFE9]/20 select-none">
-                  A
+                  {initials}
                 </div>
               </button>
               {profileOpen && (
                 <div className="absolute right-0 top-12 w-48 rounded-xl border border-[#ffffff22] py-2 z-50"
                   style={{ background: "#141414" }}>
                   <div className="px-4 py-2 border-b border-white/10 mb-1">
-                    <p className="text-sm font-medium text-white">Admin</p>
-                    <p className="text-xs text-gray-500 truncate">admin@example.com</p>
+                    <p className="text-sm font-medium text-white">{profile.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{profile.email}</p>
                   </div>
                   <Link href="/profile"
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-[#00FFE9] hover:bg-[#00FFE910] transition-colors"
@@ -212,7 +278,7 @@ export default function DashboardShell({
                   </Link>
                   <button
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#FF4E4E] hover:bg-[#FF4E4E10] transition-colors cursor-pointer"
-                    onClick={() => setProfileOpen(false)}>
+                    onClick={handleLogout}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="m16 17 5-5-5-5" /><path d="M21 12H9" />

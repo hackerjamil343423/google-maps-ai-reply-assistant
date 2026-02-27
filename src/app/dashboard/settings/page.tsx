@@ -1,42 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
-
-const DEFAULT_PROMPT = `You are an AI assistant specializing in crafting professional, personalized responses to Google Reviews for businesses. Your goal is to create replies that are helpful, engaging, and build positive relationships with customers.
-
-RESPONSE GUIDELINES:
-1. PERSONALIZATION: Reference specific aspects of the review to show you've read and understood their feedback.
-2. GRATITUDE: Always start with sincere thanks for their review and business.
-3. ADDRESS CONCERNS: If there are complaints or suggestions, acknowledge them empathetically and explain any actions taken or planned.
-4. HIGHLIGHT POSITIVES: If the review is positive, amplify their satisfaction and invite them back.
-5. LENGTH: Keep responses concise (2-4 sentences) but comprehensive.
-6. TONE: Maintain professional tone - be warm, authentic, and approachable.
-7. CALL TO ACTION: End with an invitation for future business or continued feedback.
-8. SIGNATURE: Always close with "Best regards," followed by just the business name (without full address or location details).
-
-Remember: Each response should feel genuine, not generic. Make customers feel heard and valued.`;
-
-const TONE_OPTIONS = [
-  { value: "Professional", label: "Professional" },
-  { value: "Friendly",     label: "Friendly" },
-  { value: "Concise",      label: "Concise" },
-  { value: "Detailed",     label: "Detailed" },
-  { value: "Empathetic",   label: "Empathetic" },
-  { value: "Casual",       label: "Casual" },
-  { value: "Luxurious",    label: "Luxurious" },
-  { value: "Playful",      label: "Playful" },
-];
+import { DEFAULT_AI_PROMPT, TONE_OPTIONS } from "@/lib/ai/default-settings";
 
 type PostType = "auto" | "review";
 
 export default function SettingsPage() {
-  const [prompt, setPrompt]         = useState(DEFAULT_PROMPT);
+  const [prompt, setPrompt]         = useState(DEFAULT_AI_PROMPT);
   const [tone, setTone]             = useState("Professional");
   const [postType, setPostType]     = useState<PostType>("auto");
+  const [loadingInitial, setLoadingInitial] = useState(true);
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
-  const [charCount, setCharCount]   = useState(DEFAULT_PROMPT.length);
+  const [error, setError]           = useState("");
+  const [charCount, setCharCount]   = useState(DEFAULT_AI_PROMPT.length);
+
+  useEffect(() => {
+    let active = true;
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings", { cache: "no-store" });
+        if (!res.ok) {
+          throw new Error("Failed to load settings");
+        }
+        const data = await res.json();
+        if (!active) return;
+        const nextPrompt = data.prompt || DEFAULT_AI_PROMPT;
+        setPrompt(nextPrompt);
+        setTone(data.tone || "Professional");
+        setPostType(data.postType === "review" ? "review" : "auto");
+        setCharCount(nextPrompt.length);
+      } catch {
+        if (active) setError("Failed to load settings.");
+      } finally {
+        if (active) setLoadingInitial(false);
+      }
+    }
+
+    void loadSettings();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function handlePromptChange(v: string) {
     setPrompt(v);
@@ -48,11 +54,32 @@ export default function SettingsPage() {
     e.preventDefault();
     setSaving(true);
     setSaved(false);
-    // TODO: persist to backend
-    await new Promise((r) => setTimeout(r, 900));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3500);
+    setError("");
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          tone,
+          postType,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || "Failed to save settings.");
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3500);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to save settings.");
+      }
+    } finally {
+      setSaving(false);
+    }
   }
 
   const postLabel = postType === "auto"
@@ -70,6 +97,16 @@ export default function SettingsPage() {
           }}
         >
           <h2 className="text-xl md:text-2xl font-medium mb-6">Settings</h2>
+
+          {loadingInitial && (
+            <div className="mb-5 text-sm text-gray-400">Loading settings…</div>
+          )}
+
+          {error && (
+            <div className="mb-5 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSave} className="space-y-8 max-w-3xl">
 
@@ -98,7 +135,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-2 mt-2">
                 <button
                   type="button"
-                  onClick={() => { handlePromptChange(DEFAULT_PROMPT); }}
+                  onClick={() => { handlePromptChange(DEFAULT_AI_PROMPT); }}
                   className="text-xs text-gray-500 hover:text-[#00FFE9] transition-colors cursor-pointer underline-offset-2 hover:underline"
                 >
                   Reset to default

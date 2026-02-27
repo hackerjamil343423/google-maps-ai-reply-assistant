@@ -1,58 +1,198 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import DashboardShell from "@/components/DashboardShell";
 
-/* ─── Mock data ──────────────────────────────────────────── */
-const STATS = [
-  { label: "Total Reviews", value: 147, suffix: "", trend: "20.0+" },
-  { label: "AI Reviews",    value: 112, suffix: "", trend: "20.0+" },
-  { label: "Manual Reviews",value: 35,  suffix: "", trend: "20.0+" },
-  { label: "Five Star Reviews", value: 68, suffix: "%", trend: "20.0+" },
-];
+type ReviewStatus = "pending" | "auto" | "manual";
 
-// Monthly impact trend data (last 12 months)
-const MONTHS = ["Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb"];
-const IMPACT_DATA = [30, 42, 38, 55, 60, 72, 65, 80, 74, 88, 82, 95];
-const REVIEWS_DATA = [8, 12, 10, 15, 18, 22, 19, 25, 21, 28, 24, 30];
+type ReviewItem = {
+  id: string;
+  rating: number;
+  reviewedAt: string;
+  status: ReviewStatus;
+};
 
-const AVG_RATING = 4.3;
-const RESPONSE_RATE = 92;
+type ReviewsResponse = {
+  reviews: ReviewItem[];
+  summary: {
+    total: number;
+    avgRating: number;
+    replied: number;
+    pending: number;
+    counts: {
+      pending: number;
+      auto: number;
+      manual: number;
+    };
+  };
+};
 
-/* ─── Animated counter ───────────────────────────────────── */
-function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: string }) {
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    let start = 0;
-    const step = target / 40;
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) { setDisplay(target); clearInterval(timer); }
-      else setDisplay(Math.floor(start));
-    }, 30);
-    return () => clearInterval(timer);
-  }, [target]);
-  return <>{display}{suffix}</>;
+type RatingDistributionItem = {
+  stars: number;
+  count: number;
+  pct: number;
+};
+
+type AnalyticsData = {
+  stats: Array<{ label: string; value: number; suffix: string }>;
+  monthLabels: string[];
+  impactData: number[];
+  reviewsData: number[];
+  avgRating: number;
+  responseRate: number;
+  ratingDist: RatingDistributionItem[];
+};
+
+function buildEmptyAnalytics(): AnalyticsData {
+  const monthLabels = Array.from({ length: 12 }).map((_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (11 - index));
+    return new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
+  });
+
+  return {
+    stats: [
+      { label: "Total Reviews", value: 0, suffix: "" },
+      { label: "AI Reviews", value: 0, suffix: "" },
+      { label: "Manual Reviews", value: 0, suffix: "" },
+      { label: "Five Star Reviews", value: 0, suffix: "%" },
+    ],
+    monthLabels,
+    impactData: Array.from({ length: 12 }).map(() => 0),
+    reviewsData: Array.from({ length: 12 }).map(() => 0),
+    avgRating: 0,
+    responseRate: 0,
+    ratingDist: [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0, pct: 0 })),
+  };
 }
 
-/* ─── SVG Line Chart ─────────────────────────────────────── */
-function LineChart({ data, color = "#00FFE9", height = 260 }: {
-  data: number[]; color?: string; height?: number;
+function buildAnalyticsData(data: ReviewsResponse): AnalyticsData {
+  const totalReviews = data.summary.total;
+  const autoReviews = data.summary.counts.auto;
+  const manualReviews = data.summary.counts.manual;
+  const fiveStarCount = data.reviews.filter((item) => item.rating === 5).length;
+  const fiveStarPct = totalReviews > 0 ? Math.round((fiveStarCount / totalReviews) * 100) : 0;
+
+  const monthMeta = Array.from({ length: 12 }).map((_, index) => {
+    const date = new Date();
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+    date.setMonth(date.getMonth() - (11 - index));
+
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const label = new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
+
+    return {
+      key,
+      label,
+      total: 0,
+      replied: 0,
+    };
+  });
+
+  const monthIndexByKey = new Map(monthMeta.map((item, index) => [item.key, index]));
+
+  for (const review of data.reviews) {
+    const reviewedDate = new Date(review.reviewedAt);
+    if (Number.isNaN(reviewedDate.getTime())) continue;
+
+    const key = `${reviewedDate.getFullYear()}-${String(reviewedDate.getMonth() + 1).padStart(2, "0")}`;
+    const monthIndex = monthIndexByKey.get(key);
+    if (monthIndex === undefined) continue;
+
+    monthMeta[monthIndex].total += 1;
+    if (review.status === "auto" || review.status === "manual") {
+      monthMeta[monthIndex].replied += 1;
+    }
+  }
+
+  const ratingCounts = new Map<number, number>();
+  for (const review of data.reviews) {
+    ratingCounts.set(review.rating, (ratingCounts.get(review.rating) || 0) + 1);
+  }
+
+  const ratingDist = [5, 4, 3, 2, 1].map((stars) => {
+    const count = ratingCounts.get(stars) || 0;
+    const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
+    return { stars, count, pct };
+  });
+
+  const responseRate = totalReviews > 0 ? Math.round((data.summary.replied / totalReviews) * 100) : 0;
+
+  return {
+    stats: [
+      { label: "Total Reviews", value: totalReviews, suffix: "" },
+      { label: "AI Reviews", value: autoReviews, suffix: "" },
+      { label: "Manual Reviews", value: manualReviews, suffix: "" },
+      { label: "Five Star Reviews", value: fiveStarPct, suffix: "%" },
+    ],
+    monthLabels: monthMeta.map((item) => item.label),
+    impactData: monthMeta.map((item) => item.replied),
+    reviewsData: monthMeta.map((item) => item.total),
+    avgRating: data.summary.avgRating,
+    responseRate,
+    ratingDist,
+  };
+}
+
+function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const step = Math.max(target / 40, 1);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) {
+        setDisplay(target);
+        clearInterval(timer);
+      } else {
+        setDisplay(Math.floor(start));
+      }
+    }, 30);
+
+    return () => clearInterval(timer);
+  }, [target]);
+
+  return (
+    <>
+      {display}
+      {suffix}
+    </>
+  );
+}
+
+function LineChart({
+  data,
+  labels,
+  color = "#00FFE9",
+  height = 260,
+}: {
+  data: number[];
+  labels: string[];
+  color?: string;
+  height?: number;
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const W = 560; const H = height - 40; const PAD = 30;
-  const min = 0; const max = Math.max(...data) * 1.15;
-  const pts = data.map((v, i) => ({
-    x: PAD + (i / (data.length - 1)) * (W - PAD * 2),
-    y: H - ((v - min) / (max - min)) * (H - PAD),
+
+  const W = 560;
+  const H = height - 40;
+  const PAD = 30;
+  const min = 0;
+  const max = Math.max(1, Math.max(...data) * 1.15);
+
+  const points = data.map((value, index) => ({
+    x: PAD + (index / (data.length - 1 || 1)) * (W - PAD * 2),
+    y: H - ((value - min) / (max - min || 1)) * (H - PAD),
   }));
-  const path = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-  const area = `${path} L ${pts[pts.length - 1].x} ${H} L ${pts[0].x} ${H} Z`;
+
+  const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+  const area = `${path} L ${points[points.length - 1]?.x ?? PAD} ${H} L ${points[0]?.x ?? PAD} ${H} Z`;
 
   return (
     <svg ref={svgRef} viewBox={`0 0 ${W} ${H + 40}`} className="w-full" style={{ height }}>
-      {/* Grid lines */}
       {[0, 0.25, 0.5, 0.75, 1].map((t) => {
         const y = H - t * (H - PAD);
         return (
@@ -64,58 +204,71 @@ function LineChart({ data, color = "#00FFE9", height = 260 }: {
           </g>
         );
       })}
-      {/* Area fill */}
+
       <defs>
-        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="analyticsAreaGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.25" />
           <stop offset="100%" stopColor={color} stopOpacity="0.01" />
         </linearGradient>
       </defs>
-      <path d={area} fill="url(#areaGrad)" />
-      {/* Line */}
+
+      <path d={area} fill="url(#analyticsAreaGrad)" />
       <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Dots + hover */}
-      {pts.map((p, i) => (
-        <g key={i}
-          onMouseEnter={() => setHovered(i)}
+
+      {points.map((point, index) => (
+        <g
+          key={index}
+          onMouseEnter={() => setHovered(index)}
           onMouseLeave={() => setHovered(null)}
-          style={{ cursor: "pointer" }}>
-          <circle cx={p.x} cy={p.y} r={hovered === i ? 6 : 4}
-            fill={hovered === i ? color : "#0B090A"}
-            stroke={color} strokeWidth="2" />
-          {hovered === i && (
+          style={{ cursor: "pointer" }}
+        >
+          <circle
+            cx={point.x}
+            cy={point.y}
+            r={hovered === index ? 6 : 4}
+            fill={hovered === index ? color : "#0B090A"}
+            stroke={color}
+            strokeWidth="2"
+          />
+          {hovered === index && (
             <g>
-              <rect x={p.x - 32} y={p.y - 34} width="64" height="22" rx="4"
-                fill="#0B090A" stroke={color} strokeWidth="1" />
-              <text x={p.x} y={p.y - 19} textAnchor="middle" fontSize="11" fill={color} fontWeight="700">
-                {data[i]}
+              <rect x={point.x - 32} y={point.y - 34} width="64" height="22" rx="4" fill="#0B090A" stroke={color} strokeWidth="1" />
+              <text x={point.x} y={point.y - 19} textAnchor="middle" fontSize="11" fill={color} fontWeight="700">
+                {data[index]}
               </text>
             </g>
           )}
         </g>
       ))}
-      {/* X labels */}
-      {pts.map((p, i) => (
-        <text key={i} x={p.x} y={H + 28} textAnchor="middle" fontSize="10" fill="#666">
-          {MONTHS[i]}
+
+      {points.map((point, index) => (
+        <text key={index} x={point.x} y={H + 28} textAnchor="middle" fontSize="10" fill="#666">
+          {labels[index]}
         </text>
       ))}
     </svg>
   );
 }
 
-/* ─── Star rating display ────────────────────────────────── */
 function StarDisplay({ rating }: { rating: number }) {
   return (
     <div className="flex gap-1 justify-center">
-      {[1, 2, 3, 4, 5].map((s) => {
-        const filled = s <= Math.floor(rating);
-        const partial = !filled && s === Math.ceil(rating);
+      {[1, 2, 3, 4, 5].map((star) => {
+        const filled = star <= Math.floor(rating);
+        const partial = !filled && star === Math.ceil(rating) && rating % 1 !== 0;
+
         return (
-          <svg key={s} xmlns="http://www.w3.org/2000/svg" width="28" height="28"
-            viewBox="0 0 24 24" aria-hidden="true"
+          <svg
+            key={star}
+            xmlns="http://www.w3.org/2000/svg"
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
             fill={filled ? "#FFD700" : partial ? "url(#half)" : "none"}
-            stroke="#FFD700" strokeWidth="1.5">
+            stroke="#FFD700"
+            strokeWidth="1.5"
+          >
             <defs>
               <linearGradient id="half" x1="0" x2="1" y1="0" y2="0">
                 <stop offset="50%" stopColor="#FFD700" />
@@ -130,38 +283,77 @@ function StarDisplay({ rating }: { rating: number }) {
   );
 }
 
-/* ─── Radial progress ────────────────────────────────────── */
-function RadialProgress({ value, max = 100, color = "#00FFE9", size = 120 }: {
-  value: number; max?: number; color?: string; size?: number;
-}) {
-  const r = (size - 16) / 2;
-  const circ = 2 * Math.PI * r;
-  const pct = Math.min(value / max, 1);
+function RadialProgress({ value, size = 110 }: { value: number; size?: number }) {
+  const stroke = 10;
+  const radius = (size - stroke) / 2;
+  const circ = 2 * Math.PI * radius;
+  const offset = circ - (Math.max(0, Math.min(value, 100)) / 100) * circ;
+
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1f1f1f" strokeWidth="8" />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="8"
-        strokeDasharray={`${pct * circ} ${circ}`}
-        strokeDashoffset={0} strokeLinecap="round"
-        transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      <text x={size / 2} y={size / 2 + 6} textAnchor="middle" fontSize="20" fontWeight="700" fill={color}>
-        {value}%
-      </text>
-    </svg>
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size}>
+        <circle cx={size / 2} cy={size / 2} r={radius} stroke="#1f1f1f" strokeWidth={stroke} fill="none" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#00FFE9"
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-xl font-semibold text-[#00FFE9]">{value}%</span>
+      </div>
+    </div>
   );
 }
 
-/* ─── Rating bar ─────────────────────────────────────────── */
-const RATING_DIST = [
-  { stars: 5, count: 82, pct: 56 },
-  { stars: 4, count: 38, pct: 26 },
-  { stars: 3, count: 15, pct: 10 },
-  { stars: 2, count: 8,  pct: 5  },
-  { stars: 1, count: 4,  pct: 3  },
-];
-
-/* ─── Page ───────────────────────────────────────────────── */
 export default function AnalyticsPage() {
+  const [analytics, setAnalytics] = useState<AnalyticsData>(buildEmptyAnalytics());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const maxMonthlyReviews = useMemo(() => {
+    return Math.max(1, ...analytics.reviewsData);
+  }, [analytics.reviewsData]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAnalytics() {
+      setLoading(true);
+      setError("");
+
+      const res = await fetch("/api/reviews?status=all&page=1&per_page=500&sort=newest", {
+        cache: "no-store",
+      });
+
+      const json = (await res.json()) as ReviewsResponse & { error?: string };
+
+      if (!active) return;
+
+      if (!res.ok) {
+        setError(json.error || "Failed to load analytics data.");
+        setLoading(false);
+        return;
+      }
+
+      setAnalytics(buildAnalyticsData(json));
+      setLoading(false);
+    }
+
+    void loadAnalytics();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <DashboardShell activeHref="/dashboard/analytics">
       <div className="h-full">
@@ -174,83 +366,86 @@ export default function AnalyticsPage() {
         >
           <h2 className="text-xl md:text-2xl font-medium mb-6">Analytics</h2>
 
-          {/* ── Stat cards ── */}
+          {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+          {loading && <p className="text-sm text-gray-400 mb-4">Loading analytics...</p>}
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {STATS.map((s) => (
-              <div key={s.label}
+            {analytics.stats.map((stat) => (
+              <div
+                key={stat.label}
                 className="rounded-2xl p-5 border border-[#2a2a2a] space-y-2"
                 style={{
                   background: "rgba(11,9,10,0.2)",
                   boxShadow: "inset 0px -4px 40px 5px #0B385829",
-                }}>
-                <p className="text-white text-sm">{s.label}</p>
-                <div className="flex justify-between items-end">
-                  <h3 className="text-2xl md:text-4xl lg:text-5xl text-[#00FFE9] font-light tabular-nums">
-                    <AnimatedNumber target={s.value} suffix={s.suffix} />
-                  </h3>
-                  <p className="text-xs text-gray-500 mb-1">{s.trend}</p>
-                </div>
+                }}
+              >
+                <p className="text-white text-sm">{stat.label}</p>
+                <h3 className="text-2xl md:text-4xl lg:text-5xl text-[#00FFE9] font-light tabular-nums">
+                  <AnimatedNumber target={stat.value} suffix={stat.suffix} />
+                </h3>
               </div>
             ))}
           </div>
 
-          {/* ── Charts row ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            {/* Impact trend chart — 2 cols */}
-            <div className="lg:col-span-2 rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
+            <div
+              className="lg:col-span-2 rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
               style={{
                 background: "rgba(11,9,10,0.2)",
                 boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-              }}>
+              }}
+            >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-gray-400">Impact on Business</p>
+                <p className="text-sm text-gray-400">Monthly Replied Reviews</p>
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-[#00FFE9] inline-block" />
-                  <span className="text-xs text-gray-400">Impact Trend</span>
+                  <span className="text-xs text-gray-400">Replied Trend</span>
                 </div>
               </div>
-              <LineChart data={IMPACT_DATA} color="#00FFE9" height={240} />
+              <LineChart data={analytics.impactData} labels={analytics.monthLabels} color="#00FFE9" height={240} />
             </div>
 
-            {/* Average rating + response rate — 1 col */}
             <div className="flex flex-col gap-4">
-              <div className="rounded-2xl border border-[#1f1f1f] p-6 text-center flex-1 flex flex-col justify-center"
+              <div
+                className="rounded-2xl border border-[#1f1f1f] p-6 text-center flex-1 flex flex-col justify-center"
                 style={{
                   background: "rgba(11,9,10,0.2)",
                   boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-                }}>
+                }}
+              >
                 <p className="text-sm text-gray-400 mb-3">Average Rating</p>
-                <StarDisplay rating={AVG_RATING} />
-                <h3 className="text-4xl font-semibold text-[#00FFE9] mt-3">{AVG_RATING}</h3>
+                <StarDisplay rating={analytics.avgRating} />
+                <h3 className="text-4xl font-semibold text-[#00FFE9] mt-3">{analytics.avgRating}</h3>
                 <p className="text-xs text-gray-500 mt-1">out of 5.0</p>
               </div>
 
-              <div className="rounded-2xl border border-[#1f1f1f] p-6 text-center flex-1 flex flex-col items-center justify-center"
+              <div
+                className="rounded-2xl border border-[#1f1f1f] p-6 text-center flex-1 flex flex-col items-center justify-center"
                 style={{
                   background: "rgba(11,9,10,0.2)",
                   boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-                }}>
+                }}
+              >
                 <p className="text-sm text-gray-400 mb-3">Response Rate</p>
-                <RadialProgress value={RESPONSE_RATE} size={110} />
+                <RadialProgress value={analytics.responseRate} size={110} />
               </div>
             </div>
           </div>
 
-          {/* ── Bottom row ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Monthly reviews bar chart */}
-            <div className="rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
+            <div
+              className="rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
               style={{
                 background: "rgba(11,9,10,0.2)",
                 boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-              }}>
+              }}
+            >
               <p className="text-sm text-gray-400 mb-4">Monthly Reviews</p>
               <div className="flex items-end gap-2 h-32">
-                {REVIEWS_DATA.map((v, i) => {
-                  const maxV = Math.max(...REVIEWS_DATA);
-                  const pct = (v / maxV) * 100;
+                {analytics.reviewsData.map((value, index) => {
+                  const pct = (value / maxMonthlyReviews) * 100;
                   return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                    <div key={index} className="flex-1 flex flex-col items-center gap-1 group">
                       <div
                         className="w-full rounded-t-md transition-all duration-300 group-hover:opacity-80"
                         style={{
@@ -258,36 +453,38 @@ export default function AnalyticsPage() {
                           background: "linear-gradient(to top, #00FFE9, #00B4D8)",
                           minHeight: 4,
                         }}
-                        title={`${MONTHS[i]}: ${v}`}
+                        title={`${analytics.monthLabels[index]}: ${value}`}
                       />
-                      <span className="text-[9px] text-gray-600">{MONTHS[i]}</span>
+                      <span className="text-[9px] text-gray-600">{analytics.monthLabels[index]}</span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Rating distribution */}
-            <div className="rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
+            <div
+              className="rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
               style={{
                 background: "rgba(11,9,10,0.2)",
                 boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-              }}>
+              }}
+            >
               <p className="text-sm text-gray-400 mb-4">Rating Distribution</p>
               <div className="space-y-3">
-                {RATING_DIST.map((r) => (
-                  <div key={r.stars} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-8 flex-shrink-0">{r.stars}★</span>
+                {analytics.ratingDist.map((item) => (
+                  <div key={item.stars} className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400 w-8 flex-shrink-0">{item.stars}*</span>
                     <div className="flex-1 bg-[#1f1f1f] rounded-full h-2 overflow-hidden">
                       <div
                         className="h-2 rounded-full transition-all duration-700"
                         style={{
-                          width: `${r.pct}%`,
-                          background: r.stars >= 4 ? "#00FFE9" : r.stars === 3 ? "#D97706" : "#EF4444",
+                          width: `${item.pct}%`,
+                          background:
+                            item.stars >= 4 ? "#00FFE9" : item.stars === 3 ? "#D97706" : "#EF4444",
                         }}
                       />
                     </div>
-                    <span className="text-xs text-gray-500 w-8 text-right flex-shrink-0">{r.count}</span>
+                    <span className="text-xs text-gray-500 w-8 text-right flex-shrink-0">{item.count}</span>
                   </div>
                 ))}
               </div>
