@@ -24,6 +24,12 @@ type ReviewSummary = {
   pending: number;
 };
 
+type GoogleConnectErrorResponse = {
+  error?: string;
+  errorCode?: string;
+  action?: "relink_google" | "check_google_setup" | "none";
+};
+
 async function parseJsonSafe<T>(res: Response): Promise<T | null> {
   try {
     return (await res.json()) as T;
@@ -78,39 +84,6 @@ export default function DashboardPage() {
     setLoading(false);
   }, []);
 
-  const connectAndSync = useCallback(async () => {
-    setConnecting(true);
-    setSyncing(true);
-    setError("");
-    setNotice("");
-
-    try {
-      const connectRes = await fetch("/api/google/connect", {
-        method: "POST",
-      });
-      const connectJson = await parseJsonSafe<{ error?: string }>(connectRes);
-      if (!connectRes.ok) {
-        setError(connectJson?.error || "Failed to connect Google Business Profile.");
-        return;
-      }
-
-      const syncRes = await fetch("/api/google/sync-reviews", {
-        method: "POST",
-      });
-      const syncJson = await parseJsonSafe<{ error?: string; synced?: number }>(syncRes);
-      if (!syncRes.ok) {
-        setError(syncJson?.error || "Connected, but review sync failed.");
-        return;
-      }
-
-      setNotice(`Google connected successfully. Synced ${syncJson?.synced ?? 0} reviews.`);
-      await loadStatus();
-    } finally {
-      setConnecting(false);
-      setSyncing(false);
-    }
-  }, [loadStatus]);
-
   const startGoogleLinkFlow = useCallback(async () => {
     setConnecting(true);
     setError("");
@@ -141,6 +114,45 @@ export default function DashboardPage() {
       setConnecting(false);
     }
   }, [status?.requiredScopes]);
+
+  const connectAndSync = useCallback(async () => {
+    setConnecting(true);
+    setSyncing(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const connectRes = await fetch("/api/google/connect", {
+        method: "POST",
+      });
+      const connectJson = await parseJsonSafe<GoogleConnectErrorResponse>(connectRes);
+      if (!connectRes.ok) {
+        if (connectJson?.action === "relink_google") {
+          setNotice(connectJson.error || "Reconnecting Google permissions...");
+          await startGoogleLinkFlow();
+          return;
+        }
+
+        setError(connectJson?.error || "Failed to connect Google Business Profile.");
+        return;
+      }
+
+      const syncRes = await fetch("/api/google/sync-reviews", {
+        method: "POST",
+      });
+      const syncJson = await parseJsonSafe<{ error?: string; synced?: number }>(syncRes);
+      if (!syncRes.ok) {
+        setError(syncJson?.error || "Connected, but review sync failed.");
+        return;
+      }
+
+      setNotice(`Google connected successfully. Synced ${syncJson?.synced ?? 0} reviews.`);
+      await loadStatus();
+    } finally {
+      setConnecting(false);
+      setSyncing(false);
+    }
+  }, [loadStatus, startGoogleLinkFlow]);
 
   async function handleConnect() {
     if (!status) return;

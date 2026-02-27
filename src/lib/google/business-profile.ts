@@ -96,6 +96,12 @@ function toDate(value: string | undefined) {
 }
 
 function extractGoogleErrorMessage(body: unknown) {
+  if (typeof body === "string") {
+    const trimmed = body.trim();
+    if (trimmed) return trimmed;
+    return "Google API request failed.";
+  }
+
   if (!body || typeof body !== "object") {
     return "Google API request failed.";
   }
