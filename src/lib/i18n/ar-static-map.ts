@@ -143,4 +143,28 @@ export const AR_STATIC_MAP: Record<string, string> = {
   "Response Rate": "معدل الاستجابة",
   "Monthly Reviews": "المراجعات الشهرية",
   "Rating Distribution": "توزيع التقييمات",
+  "Get More Reviews": "احصل على المزيد من المراجعات",
+  "Share Review Link": "مشاركة رابط المراجعة",
+  "Loading review link...": "جارٍ تحميل رابط المراجعة...",
+  "Share via QR Code": "المشاركة عبر رمز QR",
+  "Review Link": "رابط المراجعة",
+  Copy: "نسخ",
+  Copied: "تم النسخ",
+  Email: "البريد الإلكتروني",
+  WhatsApp: "واتساب",
+  "Download QR Code": "تنزيل رمز QR",
+  "Downloading...": "جارٍ التنزيل...",
+  "Make it easy for customers to review": "سهّل على العملاء ترك مراجعة لـ",
+  "Paste your Google review link, then share it by email, WhatsApp, or Facebook.":
+    "الصق رابط مراجعة Google ثم شاركه عبر البريد الإلكتروني أو واتساب أو فيسبوك.",
+  "Your Google review link is loaded automatically from the connected business profile.":
+    "يتم تحميل رابط مراجعة Google تلقائيًا من ملف النشاط التجاري المتصل.",
+  "No review link available yet.": "لا يوجد رابط مراجعة متاح حتى الآن.",
+  "Connect Google Business to generate QR.": "قم بربط نشاطك التجاري على Google لإنشاء رمز QR.",
+  "Display this QR code in your store or include it in printed materials.":
+    "اعرض رمز QR هذا في متجرك أو ضمّنه في المواد المطبوعة.",
+  "You can print and share this QR code anywhere customers can scan.":
+    "يمكنك طباعة رمز QR هذا ومشاركته في أي مكان يستطيع العملاء مسحه.",
+  "Businesses with 5 or more reviews can get up to": "الأنشطة التي لديها 5 مراجعات أو أكثر يمكن أن تحصل على حتى",
+  "2x more customers": "ضعف عدد العملاء",
 };

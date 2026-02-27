@@ -25,6 +25,14 @@ interface GoogleLocationsResponse {
   }>;
 }
 
+interface GoogleLocationDetailsResponse {
+  title?: string;
+  metadata?: {
+    placeId?: string;
+    newReviewUri?: string;
+  };
+}
+
 interface GoogleReviewsResponse {
   reviews?: Array<{
     name?: string;
@@ -58,6 +66,12 @@ export interface GoogleBusinessConnection {
 export interface SyncWorkspaceReviewsResult {
   business: GoogleBusinessConnection;
   synced: number;
+}
+
+export interface WorkspaceReviewLinkResult {
+  businessName: string;
+  reviewLink: string;
+  placeId: string | null;
 }
 
 function normalizeGoogleLocationName(accountName: string, locationName: string) {
@@ -389,4 +403,61 @@ export async function postGoogleReviewReply(
       body: JSON.stringify({ comment: content }),
     }
   );
+}
+
+export async function getWorkspaceGoogleReviewLink(
+  workspaceId: string,
+  headers: Headers
+): Promise<WorkspaceReviewLinkResult> {
+  if (!db) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+
+  const business = await db.query.businesses.findFirst({
+    where: and(
+      eq(businesses.workspaceId, workspaceId),
+      eq(businesses.status, "active")
+    ),
+    orderBy: [desc(businesses.updatedAt)],
+    columns: {
+      name: true,
+      googleLocationId: true,
+    },
+  });
+
+  if (!business?.googleLocationId) {
+    throw new Error("No connected Google Business Profile found.");
+  }
+
+  const accessToken = await getGoogleAccessTokenFromHeaders(headers);
+  if (!accessToken) {
+    throw new Error("Google account is not linked or access token is unavailable.");
+  }
+
+  const readMask = new URLSearchParams({
+    readMask: "title,metadata.placeId,metadata.newReviewUri",
+  });
+
+  const location = await googleApiFetch<GoogleLocationDetailsResponse>(
+    `${GOOGLE_BUSINESS_INFO_BASE}/${business.googleLocationId}?${readMask.toString()}`,
+    accessToken
+  );
+
+  const placeId = location.metadata?.placeId?.trim() || null;
+  const newReviewUri = location.metadata?.newReviewUri?.trim() || "";
+  const reviewLink =
+    newReviewUri ||
+    (placeId
+      ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`
+      : "");
+
+  if (!reviewLink) {
+    throw new Error("Google review link is not available for this business yet.");
+  }
+
+  return {
+    businessName: location.title?.trim() || business.name,
+    reviewLink,
+    placeId,
+  };
 }
