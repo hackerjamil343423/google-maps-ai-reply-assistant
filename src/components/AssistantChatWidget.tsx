@@ -1,7 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { useLanguage } from "@/lib/i18n/language-context";
 
@@ -45,6 +47,81 @@ function formatThreadDate(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function AssistantMarkdown({ content, isRtl }: { content: string; isRtl: boolean }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p: ({ children }) => (
+          <p className="mb-2 text-sm leading-6 last:mb-0">{children}</p>
+        ),
+        ul: ({ children }) => (
+          <ul className="mb-2 list-disc space-y-1 ps-5 text-sm last:mb-0">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="mb-2 list-decimal space-y-1 ps-5 text-sm last:mb-0">{children}</ol>
+        ),
+        li: ({ children }) => <li className="leading-6">{children}</li>,
+        h1: ({ children }) => (
+          <h3 className="mb-2 text-base font-semibold leading-6 text-[#1E1D30]">
+            {children}
+          </h3>
+        ),
+        h2: ({ children }) => (
+          <h3 className="mb-2 text-base font-semibold leading-6 text-[#1E1D30]">
+            {children}
+          </h3>
+        ),
+        h3: ({ children }) => (
+          <h4 className="mb-1 text-sm font-semibold leading-6 text-[#1E1D30]">
+            {children}
+          </h4>
+        ),
+        strong: ({ children }) => (
+          <strong className="font-semibold text-[#1E1D30]">{children}</strong>
+        ),
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-[#5F30EB] underline"
+          >
+            {children}
+          </a>
+        ),
+        code: ({ children, className }) => {
+          const isInline = !className;
+          if (isInline) {
+            return (
+              <code className="rounded bg-[#EEF0FF] px-1.5 py-0.5 text-xs text-[#3D2B7E]">
+                {children}
+              </code>
+            );
+          }
+
+          return (
+            <code className="block overflow-x-auto rounded-xl bg-[#141625] p-3 text-xs text-[#F0F3FF]">
+              {children}
+            </code>
+          );
+        },
+        blockquote: ({ children }) => (
+          <blockquote
+            className={`mb-2 border-s-4 border-[#5F30EB44] bg-[#F7F2FF] px-3 py-2 text-sm text-[#4E4E62] last:mb-0 ${
+              isRtl ? "text-right" : "text-left"
+            }`}
+          >
+            {children}
+          </blockquote>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
 }
 
 export default function AssistantChatWidget() {
@@ -151,6 +228,14 @@ export default function AssistantChatWidget() {
     }
   }
 
+  function startNewChat() {
+    setTab("chat");
+    setThreadId(null);
+    setMessages([]);
+    setInput("");
+    setError("");
+  }
+
   return (
     <>
       <button
@@ -222,28 +307,53 @@ export default function AssistantChatWidget() {
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-full p-2 text-[#4E4E5E] hover:bg-[#ECECFF]"
-                aria-label="Close assistant chat"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={startNewChat}
+                  className="rounded-full p-2 text-[#4E4E5E] hover:bg-[#ECECFF]"
+                  aria-label="Start new chat"
+                  title="New chat"
                 >
-                  <path d="m18 6-12 12" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full p-2 text-[#4E4E5E] hover:bg-[#ECECFF]"
+                  aria-label="Close assistant chat"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m18 6-12 12" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {tab === "history" ? (
@@ -307,7 +417,7 @@ export default function AssistantChatWidget() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-3xl font-bold text-[#2F2E46]">Hello 👋</p>
+                        <p className="text-3xl font-bold text-[#2F2E46]">Hello</p>
                         <p className="text-[28px] font-bold text-[#2F2E46]">
                           How can I help you today?
                         </p>
@@ -321,7 +431,7 @@ export default function AssistantChatWidget() {
                             onClick={() => void sendMessage(item)}
                             className="flex w-full items-center gap-2 rounded-xl border border-[#E6E9F8] bg-white px-3 py-2 text-left text-base text-[#3D3D56] hover:border-[#5F30EB44]"
                           >
-                            <span>↗</span>
+                            <span>+</span>
                             <span>{item}</span>
                           </button>
                         ))}
@@ -339,30 +449,18 @@ export default function AssistantChatWidget() {
                             : "bg-white text-[#32324A] border border-[#E6E9F8]"
                         }`}
                       >
-                        {item.content}
+                        {item.role === "assistant" ? (
+                          <div className={isRtl ? "text-right" : "text-left"}>
+                            <AssistantMarkdown content={item.content} isRtl={isRtl} />
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap">{item.content}</p>
+                        )}
                       </div>
                     ))
                   )}
                 </div>
 
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {["Domains", "VPS", "Emails", "Account", "Payments"].map(
-                    (chip) => (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() =>
-                          setInput((prev) =>
-                            prev ? `${prev} ${chip}` : `Tell me about ${chip}`
-                          )
-                        }
-                        className="rounded-full border border-[#D8D8E8] bg-white px-3 py-1 text-sm text-[#5A5A74] hover:border-[#5F30EB55]"
-                      >
-                        {chip}
-                      </button>
-                    )
-                  )}
-                </div>
 
                 {error && (
                   <p className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
@@ -449,3 +547,4 @@ export default function AssistantChatWidget() {
     </>
   );
 }
+

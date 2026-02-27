@@ -348,3 +348,29 @@ Date: 2026-02-27
 ### Notes
 - Assistant supports guest mode (platform guidance only) and authenticated mode (account/workspace-aware replies).
 - Authenticated chat history is persisted per user + workspace.
+
+---
+
+## Phase 10 - Assistant Chat UI Readability + UX Controls (Completed)
+Date: 2026-02-27
+
+### Scope completed
+- Removed irrelevant quick chips from chat composer:
+  - Removed `Domains`, `VPS`, `Emails`, `Account`, `Payments` chip row from the assistant panel.
+- Added explicit `+` new chat action in assistant header:
+  - New control resets current thread context in the UI to start a fresh conversation.
+  - File: `src/components/AssistantChatWidget.tsx`
+- Upgraded assistant response rendering to Markdown:
+  - Added Markdown renderer with GFM support for readable lists, headings, links, inline code, and code blocks.
+  - Added safe, branded styles for Markdown elements in assistant bubbles.
+  - File: `src/components/AssistantChatWidget.tsx`
+  - Dependencies:
+    - `react-markdown`
+    - `remark-gfm`
+- Fixed text mojibake artifacts in empty-state UI copy/icons:
+  - `Hello` header text cleaned
+  - Quick-action prefix icon cleaned
+
+### Validation
+- `npm run lint`: passed
+- `npm run build`: passed
