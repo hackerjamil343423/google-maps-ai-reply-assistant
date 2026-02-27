@@ -154,6 +154,10 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "past_due",
   "canceled",
 ]);
+export const assistantMessageRoleEnum = pgEnum("assistant_message_role", [
+  "user",
+  "assistant",
+]);
 
 export const workspaces = pgTable("workspaces", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -368,6 +372,49 @@ export const auditLogs = pgTable(
   (table) => [
     index("audit_logs_workspace_id_idx").on(table.workspaceId),
     index("audit_logs_actor_user_id_idx").on(table.actorUserId),
+  ]
+);
+
+export const assistantThreads = pgTable(
+  "assistant_threads",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull().default("New chat"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("assistant_threads_workspace_id_idx").on(table.workspaceId),
+    index("assistant_threads_user_id_idx").on(table.userId),
+  ]
+);
+
+export const assistantMessages = pgTable(
+  "assistant_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => assistantThreads.id, { onDelete: "cascade" }),
+    role: assistantMessageRoleEnum("role").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("assistant_messages_thread_id_idx").on(table.threadId),
+    index("assistant_messages_created_at_idx").on(table.createdAt),
   ]
 );
 

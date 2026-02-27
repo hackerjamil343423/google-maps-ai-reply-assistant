@@ -296,3 +296,55 @@ Date: 2026-02-27
 ### Notes
 - Footer links on landing/demo/pricing now resolve correctly in production.
 - Brand logo updates are live across all pages that use `/assets/brand/wakkelni-logo.png`.
+
+---
+
+## Phase 9 - AI Assistant Chat Widget (Completed)
+Date: 2026-02-27
+
+### Scope completed
+- Added global floating AI assistant widget (Hostinger-style pattern):
+  - Bottom-corner circular launcher
+  - Expandable popup panel
+  - Chat + History tabs
+  - Quick action chips and message composer
+  - RTL-aware corner placement
+  - File: `src/components/AssistantChatWidget.tsx`
+- Integrated widget app-wide through providers:
+  - File: `src/components/AppProviders.tsx`
+- Added assistant backend API:
+  - `GET /api/assistant/chat` (load threads + messages)
+  - `POST /api/assistant/chat` (send message + generate assistant reply)
+  - File: `src/app/api/assistant/chat/route.ts`
+- Added OpenAI assistant behavior with product knowledge + user context:
+  - Platform knowledge source:
+    - `src/lib/assistant/platform-knowledge.ts`
+  - Workspace/user context builder:
+    - `src/lib/assistant/context.ts`
+- Added lightweight rate limiting for assistant requests:
+  - File: `src/lib/api/rate-limit.ts`
+- Added database models for persistence:
+  - `assistant_threads`
+  - `assistant_messages`
+  - `assistant_message_role` enum
+  - File: `src/lib/db/schema.ts`
+- Added generated migration artifacts:
+  - `drizzle/0000_foamy_triton.sql`
+  - `drizzle/meta/0000_snapshot.json`
+  - `drizzle/meta/_journal.json`
+- Added Arabic dictionary coverage for new chat UI/server strings:
+  - File: `src/lib/i18n/ar-static-map.ts`
+
+### Database migration
+- Generated SQL migration:
+  - `npm run db:generate`
+- Applied schema changes to configured Neon database:
+  - `npx drizzle-kit push --force`
+
+### Validation
+- `npm run lint`: passed
+- `npm run build`: passed
+
+### Notes
+- Assistant supports guest mode (platform guidance only) and authenticated mode (account/workspace-aware replies).
+- Authenticated chat history is persisted per user + workspace.
