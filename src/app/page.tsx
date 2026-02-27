@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const NAV_LINKS = [
@@ -277,6 +277,25 @@ const PRICING_PLANS = [
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void fetch("/api/me", { cache: "no-store" })
+      .then((res) => {
+        if (!mounted) return;
+        setIsAuthenticated(res.ok);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setIsAuthenticated(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0B090A] text-white">
@@ -310,18 +329,29 @@ export default function Home() {
 
         {/* Desktop CTA Buttons */}
         <div className="hidden md:flex items-center space-x-2">
-          <Link
-            href="/GetStarted?mode=login"
-            className="text-white hover:text-[#00FFE9] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
-          >
-            Log In
-          </Link>
-          <Link
-            href="/GetStarted?mode=signup"
-            className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
-          >
-            Get Started
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/dashboard/overview"
+              className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/GetStarted?mode=login"
+                className="text-white hover:text-[#00FFE9] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/GetStarted?mode=signup"
+                className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -361,18 +391,29 @@ export default function Home() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/GetStarted?mode=login"
-              className="text-white hover:text-[#00FFE9] transition-colors"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/GetStarted?mode=signup"
-              className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
-            >
-              Get Started
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard/overview"
+                className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/GetStarted?mode=login"
+                  className="text-white hover:text-[#00FFE9] transition-colors"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/GetStarted?mode=signup"
+                  className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         )}
       </nav>
