@@ -1,0 +1,15 @@
+export const AR_STATIC_MAP: Record<string, string> = {
+  English: "الإنجليزية",
+  Arabic: "العربية",
+  Settings: "الإعدادات",
+  "Save Settings": "حفظ الإعدادات",
+  "Loading settings…": "جارٍ تحميل الإعدادات…",
+  "Wakkelni Stars": "Wakkelni Stars",
+  Dashboard: "لوحة التحكم",
+  "Log In": "تسجيل الدخول",
+  "Get Started": "ابدأ الآن",
+  "Create Account": "إنشاء حساب",
+  "Welcome Back": "مرحبًا بعودتك",
+  "Review before publish": "مراجعة قبل النشر",
+  "Auto Post": "نشر تلقائي",
+};

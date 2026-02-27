@@ -233,3 +233,42 @@ Date: 2026-02-27
 ### Notes
 - Google integration requires valid OAuth credentials and Google Business APIs enabled on the Google Cloud project.
 - Review sync/posting depends on the user having linked Google with business scope and having accessible Business Profile locations.
+
+---
+
+## Phase 7 - App-Wide Language Switching (English/Arabic) (Completed)
+Date: 2026-02-27
+
+### Scope completed
+- Added global language infrastructure without URL-based locale routing:
+  - `src/lib/i18n/types.ts`
+  - `src/lib/i18n/language-context.tsx`
+  - Uses browser-language detection on first load (`ar` -> Arabic, otherwise English)
+  - Persists user selection in local storage
+  - Applies `html lang` + `dir` (`rtl` for Arabic)
+- Added app-level providers wrapper:
+  - `src/components/AppProviders.tsx`
+  - Integrated in `src/app/layout.tsx`
+- Added app-wide automatic translation engine:
+  - `src/components/AutoTranslate.tsx`
+  - Translates text nodes and common text attributes (`placeholder`, `title`, `aria-label`)
+  - Watches dynamic DOM updates and translates newly rendered content
+  - Keeps cache in local storage for performance
+- Added translation backend endpoint:
+  - `POST /api/i18n/translate`
+  - File: `src/app/api/i18n/translate/route.ts`
+  - Used by auto-translate engine to resolve missing Arabic strings in batches
+- Added static Arabic dictionary seed:
+  - `src/lib/i18n/ar-static-map.ts`
+- Added Language selector in Settings page:
+  - `src/app/dashboard/settings/page.tsx`
+  - Options: `English`, `Arabic`
+  - Immediate switch, no URL change
+
+### Validation
+- `npm run lint`: passed
+- `npx tsc --noEmit`: passed
+
+### Notes
+- No `/ar` or `/en` URL routing is used.
+- Default language follows browser language when no user preference is saved.
