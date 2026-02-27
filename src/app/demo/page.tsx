@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const NAV_LINKS = [
@@ -13,6 +13,7 @@ const STAR_RATINGS = [1, 2, 3, 4, 5];
 
 export default function DemoPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [review, setReview] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [starRating, setStarRating] = useState(5);
@@ -22,6 +23,24 @@ export default function DemoPage() {
   const [error, setError] = useState("");
 
   const canGenerate = review.trim().length > 0;
+
+  useEffect(() => {
+    let mounted = true;
+
+    void fetch("/api/me", { cache: "no-store" })
+      .then((res) => {
+        if (!mounted) return;
+        setIsAuthenticated(res.ok);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setIsAuthenticated(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   async function handleGenerate() {
     if (!canGenerate) return;
@@ -61,116 +80,144 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
+    <div className="landing-page min-h-screen text-[#040404]">
       {/* Navbar */}
-      <nav className="relative flex items-center justify-between px-6 lg:px-20 py-6">
-        <Link href="/" className="flex items-center space-x-2 w-40">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/brand/wakkelni-logo.png"
-            alt="Wakkelni Stars Logo"
-            className="h-10 w-auto object-contain"
-          />
-        </Link>
-
-        {/* Desktop Nav Links */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex space-x-10">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`transition-colors ${
-                link.href === "/demo"
-                  ? "text-[#4E4E5E]"
-                  : "text-[#4E4E5E]/50 hover:text-[#4E4E5E]/70"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Desktop CTA Buttons */}
-        <div className="hidden md:flex items-center space-x-2">
-          <Link
-            href="/GetStarted?mode=login"
-            className="text-[#040404] hover:text-[#5F30EB] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
-          >
-            Log In
+      <nav
+        className="landing-glass-panel fixed left-1/2 top-4 z-50 w-[92vw] max-w-[1120px] -translate-x-1/2 rounded-full px-4 py-3 md:px-6 md:py-4 lg:px-8"
+        style={{
+          boxShadow:
+            "0 12px 34px rgba(4, 4, 4, 0.1), 0 0 0 1px rgba(95, 48, 235, 0.14) inset",
+        }}
+      >
+        <div className="relative flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-2 w-40">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/brand/wakkelni-logo.png"
+              alt="Wakkelni Stars Logo"
+              className="h-10 w-auto object-contain"
+            />
           </Link>
-          <Link
-            href="/GetStarted?mode=signup"
-            className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
-          >
-            Get Started
-          </Link>
-        </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-[#040404] cursor-pointer z-10"
-          aria-label="Toggle menu"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M4 5h16" />
-            <path d="M4 12h16" />
-            <path d="M4 19h16" />
-          </svg>
-        </button>
-
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-[#FFFFFF] flex flex-col items-center py-6 space-y-4 md:hidden z-50">
+          {/* Desktop Nav Links */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex space-x-10">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[#4E4E5E] hover:text-[#040404] transition-colors"
-                onClick={() => setMenuOpen(false)}
+                className={`transition-colors ${
+                  link.href === "/demo"
+                    ? "text-[#4E4E5E]"
+                    : "text-[#4E4E5E]/50 hover:text-[#4E4E5E]/70"
+                }`}
               >
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/GetStarted?mode=login"
-              className="text-[#040404] hover:text-[#5F30EB] transition-colors"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/GetStarted?mode=signup"
-              className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
-            >
-              Get Started
-            </Link>
           </div>
-        )}
+
+          {/* Desktop CTA Buttons */}
+          <div className="hidden md:flex items-center space-x-2">
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard/overview"
+                className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/GetStarted?mode=login"
+                  className="text-[#040404] hover:text-[#5F30EB] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/GetStarted?mode=signup"
+                  className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden text-[#040404] cursor-pointer z-10"
+            aria-label="Toggle menu"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 5h16" />
+              <path d="M4 12h16" />
+              <path d="M4 19h16" />
+            </svg>
+          </button>
+
+          {/* Mobile Menu */}
+          {menuOpen && (
+            <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[#FFFFFFF2] backdrop-blur-md border border-[#5F30EB22] rounded-3xl flex flex-col items-center py-6 space-y-4 md:hidden z-50">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-[#4E4E5E] hover:text-[#040404] transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard/overview"
+                  className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/GetStarted?mode=login"
+                    className="text-[#040404] hover:text-[#5F30EB] transition-colors"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/GetStarted?mode=signup"
+                    className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* Demo Section */}
-      <section className="min-h-screen relative mb-8 md:mb-0">
+      <section className="min-h-screen relative mb-8 md:mb-0 pt-24 md:pt-28">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="landing-grid-bg absolute inset-0 opacity-70" />
+          <div className="absolute left-1/2 top-[8%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[#00E0FF33] blur-3xl" />
+          <div className="absolute left-[8%] top-[26%] h-[260px] w-[260px] rounded-full bg-[#5F30EB22] blur-3xl" />
+          <div className="absolute bottom-[10%] right-[8%] h-[320px] w-[320px] rounded-full bg-[#5F30EB1C] blur-3xl" />
+        </div>
+
         <div className="w-full relative flex justify-center py-20">
-          {/* Background effect */}
-          <div className="absolute hidden md:block inset-0 pointer-events-none">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt="effect"
-              className="w-full h-full object-cover opacity-40"
-              src="/assets/effects/effect-2.svg"
-            />
-          </div>
 
           <div className="z-10 w-[95%] lg:w-[70%]">
             {/* Header */}
