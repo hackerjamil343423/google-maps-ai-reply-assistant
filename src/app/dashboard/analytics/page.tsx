@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import DashboardShell from "@/components/DashboardShell";
+import { useLanguage } from "@/lib/i18n/language-context";
+import type { AppLanguage } from "@/lib/i18n/types";
 
 type ReviewStatus = "pending" | "auto" | "manual";
 
@@ -44,11 +46,12 @@ type AnalyticsData = {
   ratingDist: RatingDistributionItem[];
 };
 
-function buildEmptyAnalytics(): AnalyticsData {
+function buildEmptyAnalytics(language: AppLanguage): AnalyticsData {
+  const locale = language === "ar" ? "ar-EG" : "en-US";
   const monthLabels = Array.from({ length: 12 }).map((_, index) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (11 - index));
-    return new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
+    return new Intl.DateTimeFormat(locale, { month: "short" }).format(date);
   });
 
   return {
@@ -67,7 +70,8 @@ function buildEmptyAnalytics(): AnalyticsData {
   };
 }
 
-function buildAnalyticsData(data: ReviewsResponse): AnalyticsData {
+function buildAnalyticsData(data: ReviewsResponse, language: AppLanguage): AnalyticsData {
+  const locale = language === "ar" ? "ar-EG" : "en-US";
   const totalReviews = data.summary.total;
   const autoReviews = data.summary.counts.auto;
   const manualReviews = data.summary.counts.manual;
@@ -81,7 +85,7 @@ function buildAnalyticsData(data: ReviewsResponse): AnalyticsData {
     date.setMonth(date.getMonth() - (11 - index));
 
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const label = new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
+    const label = new Intl.DateTimeFormat(locale, { month: "short" }).format(date);
 
     return {
       key,
@@ -314,7 +318,10 @@ function RadialProgress({ value, size = 110 }: { value: number; size?: number })
 }
 
 export default function AnalyticsPage() {
-  const [analytics, setAnalytics] = useState<AnalyticsData>(buildEmptyAnalytics());
+  const { language } = useLanguage();
+  const [analytics, setAnalytics] = useState<AnalyticsData>(() =>
+    buildEmptyAnalytics(language)
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -328,6 +335,7 @@ export default function AnalyticsPage() {
     async function loadAnalytics() {
       setLoading(true);
       setError("");
+      setAnalytics(buildEmptyAnalytics(language));
 
       const res = await fetch("/api/reviews?status=all&page=1&per_page=500&sort=newest", {
         cache: "no-store",
@@ -343,7 +351,7 @@ export default function AnalyticsPage() {
         return;
       }
 
-      setAnalytics(buildAnalyticsData(json));
+      setAnalytics(buildAnalyticsData(json, language));
       setLoading(false);
     }
 
@@ -352,7 +360,7 @@ export default function AnalyticsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [language]);
 
   return (
     <DashboardShell activeHref="/dashboard/analytics">

@@ -127,8 +127,19 @@ export default function AutoTranslate() {
   const flushPending = useCallback(() => {
     flushTimerRef.current = null;
     const items = [...pendingTextsRef.current].slice(0, 120);
-    pendingTextsRef.current.clear();
-    void translateBatch(items);
+    if (items.length === 0) return;
+
+    for (const item of items) {
+      pendingTextsRef.current.delete(item);
+    }
+
+    void translateBatch(items).finally(() => {
+      if (pendingTextsRef.current.size > 0 && !flushTimerRef.current) {
+        flushTimerRef.current = window.setTimeout(() => {
+          flushPending();
+        }, 180);
+      }
+    });
   }, [translateBatch]);
 
   const scheduleFlush = useCallback(() => {

@@ -576,9 +576,16 @@ export default function Home() {
   }, [fetchBusinessSuggestions, searchValue, selectedBusiness]);
 
   return (
-    <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
+    <div className="landing-page min-h-screen text-[#040404]">
       {/* Navbar */}
-      <nav className="relative flex items-center justify-between px-6 lg:px-20 py-6">
+      <nav
+        className="landing-glass-panel fixed left-1/2 top-4 z-50 w-[92vw] max-w-[1120px] -translate-x-1/2 rounded-full px-4 py-3 md:px-6 md:py-4 lg:px-8"
+        style={{
+          boxShadow:
+            "0 12px 34px rgba(4, 4, 4, 0.1), 0 0 0 1px rgba(95, 48, 235, 0.14) inset",
+        }}
+      >
+        <div className="relative flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-2 w-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -658,7 +665,7 @@ export default function Home() {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-[#FFFFFF] flex flex-col items-center py-6 space-y-4 md:hidden z-50">
+          <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[#FFFFFFF2] backdrop-blur-md border border-[#5F30EB22] rounded-3xl flex flex-col items-center py-6 space-y-4 md:hidden z-50">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -694,17 +701,16 @@ export default function Home() {
             )}
           </div>
         )}
+        </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="flex pt-10 flex-col relative items-center text-[#040404] md:px-6 md:py-20 justify-center min-h-[85vh]">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/effects/effect-2.svg"
-            alt=""
-            className="w-full h-full object-cover opacity-50"
-          />
+      <section className="relative flex min-h-[85vh] flex-col items-center justify-center pt-32 text-[#040404] md:px-6 md:pb-20 md:pt-36">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="landing-grid-bg absolute inset-0 opacity-70" />
+          <div className="absolute left-1/2 top-[8%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[#00E0FF33] blur-3xl" />
+          <div className="absolute left-[8%] top-[26%] h-[260px] w-[260px] rounded-full bg-[#5F30EB22] blur-3xl" />
+          <div className="absolute bottom-[10%] right-[8%] h-[320px] w-[320px] rounded-full bg-[#5F30EB1C] blur-3xl" />
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto w-full space-y-8">
@@ -714,14 +720,7 @@ export default function Home() {
               <div className="w-20 h-px bg-gradient-to-r from-transparent to-white shadow-lg shadow-white/50" />
               <div className="w-2 h-2 rotate-45 bg-white shadow-lg shadow-white/50" />
             </div>
-            <div
-              className="px-6 md:px-12 py-2 rounded-full border border-[#5F30EB33]"
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(2,7,26,0.04) 0%, rgba(2,7,26,0.16) 100%)",
-                boxShadow: "0px 4px 8px 1px #F4F4FE40 inset",
-              }}
-            >
+            <div className="landing-glass-panel rounded-full px-6 py-2 md:px-12">
               <span className="text-[#040404] text-[12px] md:text-xl tracking-wider">
                 Auto-Reply To Your Google Reviews Using AI
               </span>
@@ -743,7 +742,7 @@ export default function Home() {
           {/* Search Form */}
           <div className="mt-6 w-full flex flex-col items-center space-y-4">
             <form
-              className="w-full flex flex-col md:flex-row items-center gap-3 bg-[#FFFFFF] rounded-lg md:rounded-full p-3 relative"
+              className="landing-glass-panel relative w-full flex flex-col items-center gap-3 rounded-lg p-3 md:flex-row md:rounded-full"
               role="search"
               onSubmit={handleSearchSubmit}
             >
@@ -772,7 +771,7 @@ export default function Home() {
             </form>
 
             {(searchLoading || searchResults.length > 0) && (
-              <div className="w-full max-w-3xl rounded-2xl border border-[#5F30EB]/12 bg-white overflow-hidden">
+              <div className="landing-glass-panel w-full max-w-3xl overflow-hidden rounded-2xl">
                 {searchLoading && (
                   <div className="px-4 py-3 text-sm text-[#6A6A82]">
                     Searching businesses...
@@ -789,7 +788,7 @@ export default function Home() {
                         setSearchError("");
                         void loadBusinessPreview(result);
                       }}
-                      className="w-full text-left px-4 py-3 border-t border-white/5 hover:bg-[#1d1d1d] transition-colors"
+                      className="w-full border-t border-[#5F30EB14] px-4 py-3 text-left transition-colors hover:bg-[#EEF2FF]"
                     >
                       <p className="text-sm text-[#040404] font-medium">{result.name}</p>
                       {result.address && (
@@ -817,7 +816,7 @@ export default function Home() {
             </div>
 
             {(previewLoading || previewError || previewItems.length > 0) && (
-              <div className="w-full max-w-5xl mt-4 rounded-2xl border border-[#5F30EB]/12 bg-white p-4 md:p-6">
+              <div className="landing-glass-panel mt-4 w-full max-w-5xl rounded-3xl p-4 md:p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
                   <h3 className="text-lg md:text-xl font-semibold text-[#040404]">
                     Live Review Reply Preview
@@ -844,7 +843,7 @@ export default function Home() {
                     {previewItems.map((item) => (
                       <article
                         key={item.id}
-                        className="rounded-xl border border-[#5F30EB]/12 bg-[#F9FAFF] p-4 text-left"
+                        className="landing-card rounded-2xl p-4 text-left"
                       >
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <p className="text-sm text-[#040404] font-medium truncate">
@@ -891,7 +890,7 @@ export default function Home() {
       </section>
 
       {/* Why Your Business Needs This */}
-      <section className="py-12 md:py-24 bg-[#F8F9FF] text-[#040404] grid place-items-center">
+      <section className="landing-section-divider py-14 md:py-24 text-[#040404] grid place-items-center">
         <div className="max-w-6xl mx-auto px-6 w-full">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
@@ -905,14 +904,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {WHY_CARDS.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-2xl border border-[#5F30EB33] p-8 text-left"
-                style={{
-                  background: "#F6F4FF",
-                  boxShadow: "0px -4px 100px 21px #EFEFEF14 inset",
-                }}
-              >
+              <div key={card.title} className="landing-card rounded-3xl p-8 text-left">
                 <div className="mb-4 text-[#5F30EB]">{card.icon}</div>
                 <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
                 <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
@@ -931,7 +923,7 @@ export default function Home() {
       </section>
 
       {/* The Cost of Silence */}
-      <section className="py-12 md:py-24 bg-[#F6F4FF] text-[#040404]">
+      <section className="landing-section-divider py-14 md:py-24 text-[#040404]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
@@ -943,14 +935,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {COST_CARDS.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-2xl border border-[#5F30EB33] p-6 text-left"
-                style={{
-                  background: "#EEF2FF",
-                  boxShadow: "0px -4px 100px 21px #EFEFEF14 inset",
-                }}
-              >
+              <div key={card.title} className="landing-card rounded-3xl p-6 text-left">
                 <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -979,7 +964,7 @@ export default function Home() {
       </section>
 
       {/* The Customers We Serve */}
-      <section className="py-12 md:py-24 bg-[#F8F9FF] text-[#040404]">
+      <section className="landing-section-divider py-14 md:py-24 text-[#040404]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
@@ -988,14 +973,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {SERVE_CARDS.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-2xl border border-[#5F30EB33] p-8 text-left"
-                style={{
-                  background: "#F6F4FF",
-                  boxShadow: "0px -4px 100px 21px #EFEFEF14 inset",
-                }}
-              >
+              <div key={card.title} className="landing-card rounded-3xl p-8 text-left">
                 <div className="mb-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={card.icon} className="w-6 h-6" alt="" />
@@ -1009,7 +987,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="py-12 md:py-24 bg-[#F6F4FF] text-[#040404]">
+      <section className="landing-section-divider py-14 md:py-24 text-[#040404]">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-5xl font-semibold mb-8 md:mb-16 mt-6">
             How It Works
@@ -1021,11 +999,7 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {HOW_CARDS.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-2xl bg-[#F6F4FF] border border-[#5F30EB33] p-8 text-left"
-                style={{ boxShadow: "0px -4px 100px 21px #EFEFEF14 inset" }}
-              >
+              <div key={card.title} className="landing-card rounded-3xl p-8 text-left">
                 <div className="mb-6 inline-flex text-[#040404]">{card.icon}</div>
                 <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
                 <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
@@ -1036,35 +1010,34 @@ export default function Home() {
       </section>
 
       {/* Join Us / CTA Banner */}
-      <section className="relative bg-[#F6F4FF] overflow-hidden py-24">
-        <div className="absolute inset-0 pointer-events-none">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/effects/join-us-effect.svg"
-            alt=""
-            className="w-full h-full object-cover opacity-30"
-          />
-        </div>
-        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-5xl font-semibold mb-6">Join Us</h2>
-          <h3 className="text-xl md:text-2xl font-medium mb-4">
-            Ready to Save Time and Rank Higher?
-          </h3>
-          <p className="text-[#4E4E5E] mb-10 text-lg">
-            Your customers are talking about you. It is time to join the
-            conversation.
-          </p>
-          <Link
-            href="/GetStarted?mode=signup"
-            className="inline-block bg-white text-black px-10 py-4 rounded-full font-semibold text-lg hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
-          >
-            Get Started
-          </Link>
+      <section className="landing-section-divider relative overflow-hidden py-16 md:py-24">
+        <div className="relative z-10 mx-auto max-w-5xl px-6">
+          <div className="landing-glass-panel relative overflow-hidden rounded-[2rem] px-8 py-12 text-center md:px-14">
+            <div className="landing-grid-bg pointer-events-none absolute inset-0 opacity-50" />
+            <div className="pointer-events-none absolute left-1/2 top-0 h-56 w-56 -translate-x-1/2 rounded-full bg-[#00E0FF2E] blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 right-10 h-44 w-44 rounded-full bg-[#5F30EB2A] blur-3xl" />
+            <div className="relative z-10">
+              <h2 className="mb-6 text-3xl font-semibold md:text-5xl">Join Us</h2>
+              <h3 className="mb-4 text-xl font-medium md:text-2xl">
+                Ready to Save Time and Rank Higher?
+              </h3>
+              <p className="mx-auto mb-10 max-w-2xl text-lg text-[#4E4E5E]">
+                Your customers are talking about you. It is time to join the
+                conversation.
+              </p>
+              <Link
+                href="/GetStarted?mode=signup"
+                className="inline-block rounded-full bg-white px-10 py-4 text-lg font-semibold text-black transition-colors hover:bg-[#5F30EB] hover:text-[#F6F4FF]"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Pricing */}
-      <section className="py-12 md:py-24 bg-[#F6F4FF] text-[#040404] relative overflow-hidden">
+      <section className="landing-section-divider relative overflow-hidden py-14 md:py-24 text-[#040404]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
@@ -1080,12 +1053,9 @@ export default function Home() {
             {PRICING_PLANS.map((plan) => (
               <div
                 key={plan.name}
-                className={`rounded-2xl border p-8 flex flex-col ${
-                  plan.highlighted
-                    ? "border-[#5F30EB] shadow-[0_0_40px_0_rgba(95,48,235,0.15)]"
-                    : "border-[#5F30EB33]"
+                className={`landing-card rounded-3xl p-8 flex flex-col ${
+                  plan.highlighted ? "ring-2 ring-[#5F30EB4D] md:-translate-y-3" : ""
                 }`}
-                style={{ background: plan.highlighted ? "#EEF2FF" : "#F6F4FF" }}
               >
                 <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
                 <p className="text-[#6A6A82] text-sm mb-6 leading-relaxed">
@@ -1125,7 +1095,7 @@ export default function Home() {
                   href="/GetStarted?mode=signup"
                   className={`block text-center py-3 rounded-full font-semibold transition-colors ${
                     plan.highlighted
-                      ? "bg-[#5F30EB] text-[#F6F4FF] hover:bg-white"
+                      ? "bg-[#5F30EB] text-[#F6F4FF] hover:bg-[#040404]"
                       : "bg-white text-black hover:bg-[#5F30EB] hover:text-[#F6F4FF]"
                   }`}
                 >
@@ -1149,15 +1119,8 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#F6F4FF] border-t border-[#5F30EB20] py-12 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/effects/footer-effect.svg"
-            alt=""
-            className="w-full h-full object-cover opacity-20"
-          />
-        </div>
+      <footer className="landing-section-divider relative overflow-hidden py-12">
+        <div className="landing-grid-bg pointer-events-none absolute inset-0 opacity-35" />
         <div className="relative z-10 max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex flex-col items-center md:items-start gap-4">

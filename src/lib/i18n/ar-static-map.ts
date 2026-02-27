@@ -12,4 +12,135 @@ export const AR_STATIC_MAP: Record<string, string> = {
   "Welcome Back": "مرحبًا بعودتك",
   "Review before publish": "مراجعة قبل النشر",
   "Auto Post": "نشر تلقائي",
+  Home: "الرئيسية",
+  Demo: "تجربة",
+  Pricing: "الأسعار",
+  "About Us": "من نحن",
+  Terms: "الشروط",
+  Privacy: "الخصوصية",
+  "Toggle menu": "تبديل القائمة",
+  "Auto-Reply To Your Google Reviews Using AI": "رد تلقائي على مراجعات Google باستخدام الذكاء الاصطناعي",
+  "Let AI respond to hundreds of your Google Business Profile reviews in your unique brand voice.":
+    "دع الذكاء الاصطناعي يرد على مئات مراجعات ملف نشاطك التجاري على Google بصوت علامتك الفريد.",
+  "Type your business name and address here": "اكتب اسم نشاطك التجاري وعنوانه هنا",
+  "Search business reviews": "ابحث في مراجعات النشاط التجاري",
+  Loading: "جارٍ التحميل",
+  "Loading...": "جارٍ التحميل...",
+  "Go!": "ابدأ!",
+  "Searching businesses...": "جارٍ البحث عن الأنشطة التجارية...",
+  "Type at least 2 characters to search.": "اكتب حرفين على الأقل للبحث.",
+  "No matching businesses found. Try a more specific name.":
+    "لم يتم العثور على أنشطة مطابقة. جرّب اسمًا أكثر تحديدًا.",
+  "Failed to search businesses.": "فشل البحث عن الأنشطة التجارية.",
+  "Failed to load reviews for this business.": "فشل تحميل مراجعات هذا النشاط التجاري.",
+  "No public reviews found for this business yet. Try another listing.":
+    "لا توجد مراجعات عامة لهذا النشاط التجاري حتى الآن. جرّب نشاطًا آخر.",
+  "Failed to generate reply for this review.": "فشل إنشاء رد لهذه المراجعة.",
+  "Failed to load reviews and generate replies.": "فشل تحميل المراجعات وإنشاء الردود.",
+  "Don't just take our word for it. Watch our AI write a perfect response for your business right now.":
+    "لا تكتفِ بكلامنا فقط. شاهد الذكاء الاصطناعي يكتب ردًا مثاليًا لنشاطك التجاري الآن.",
+  "Try It For FREE! Enter your business name as it appears on Google above and watch the AI respond to 3 of your reviews instantly. No credit card required.":
+    "جرّبها مجانًا! أدخل اسم نشاطك كما يظهر على Google بالأعلى وشاهد الذكاء الاصطناعي يرد فورًا على 3 من مراجعاتك. لا حاجة لبطاقة ائتمان.",
+  "Live Review Reply Preview": "معاينة مباشرة لردود المراجعات",
+  "Loading reviews and generating replies...": "جارٍ تحميل المراجعات وإنشاء الردود...",
+  "Generating AI reply...": "جارٍ إنشاء رد بالذكاء الاصطناعي...",
+  "Source: openai": "المصدر: OpenAI",
+  "Source: template": "المصدر: قالب",
+  "Why Your Business Needs This": "لماذا يحتاج نشاطك التجاري هذا",
+  "You might forget to respond to a customer for months, but our AI never sleeps. Responding to reviews is not just polite; it is a critical engine for growth.":
+    "قد تنسى الرد على عميل لأشهر، لكن الذكاء الاصطناعي لدينا لا ينام. الرد على المراجعات ليس مجرد لباقة؛ بل محرك أساسي للنمو.",
+  "Get Started for Free": "ابدأ مجانًا",
+  "The Cost of Silence": "تكلفة الصمت",
+  "What happens when you ignore your reviews?": "ماذا يحدث عندما تتجاهل مراجعاتك؟",
+  "The Customers We Serve": "العملاء الذين نخدمهم",
+  "How It Works": "كيف يعمل",
+  "Our AI uses an expert-built prompt system to generate personalized, thoughtful responses to every review posted on your Google Business Profile.":
+    "يستخدم الذكاء الاصطناعي لدينا نظام مطالبات صُمم بواسطة خبراء لإنشاء ردود مخصصة ومدروسة لكل مراجعة تُنشر على ملف نشاطك التجاري في Google.",
+  "Join Us": "انضم إلينا",
+  "Ready to Save Time and Rank Higher?": "جاهز لتوفير الوقت ورفع ترتيبك؟",
+  "Your customers are talking about you. It is time to join the conversation.":
+    "عملاؤك يتحدثون عنك. حان الوقت للانضمام إلى الحوار.",
+  "Ready to transform your business through AI? Understanding your review content can be tough. Simplify the process with our pre-set questions to uncover customer pain points conveniently.":
+    "جاهز لتحويل نشاطك التجاري عبر الذكاء الاصطناعي؟ قد يكون فهم محتوى المراجعات صعبًا. بسّط العملية باستخدام أسئلتنا الجاهزة لاكتشاف نقاط ألم العملاء بسهولة.",
+  "Start FREE Trial": "ابدأ التجربة المجانية",
+  "No credit card required.": "لا حاجة لبطاقة ائتمان.",
+  "Wakkelni Stars. All rights reserved.": "Wakkelni Stars. جميع الحقوق محفوظة.",
+  "Boost Your SEO": "عزّز ظهورك في محركات البحث",
+  "Google rewards activity. Businesses that respond to reviews rank higher on Google Maps and search results. Our tool ensures you never miss an opportunity to signal to Google that your business is active and relevant.":
+    "Google يكافئ النشاط. الأنشطة التي ترد على المراجعات تحصل على ترتيب أعلى في خرائط Google ونتائج البحث. أداتنا تضمن ألا تفوّت فرصة لإظهار أن نشاطك التجاري فعّال وذو صلة.",
+  "Build Trust": "ابنِ الثقة",
+  "A response shows you care. When potential customers see you engaging with feedback, it establishes immediate trust. It encourages others to leave reviews because they know there is someone listening.":
+    "الرد يُظهر اهتمامك. عندما يرى العملاء المحتملون تفاعلك مع الآراء، تتكوّن الثقة فورًا. وهذا يشجع الآخرين على ترك مراجعات لأنهم يعرفون أن هناك من يستمع.",
+  "Damage Control": "احتواء الضرر",
+  "Unhappy customers need to feel heard. Our AI helps you turn negative situations into displays of excellent customer service. Your thoughtful reply shows the world you care.":
+    "العملاء غير الراضين يحتاجون أن يشعروا بأنهم مسموعون. يساعدك الذكاء الاصطناعي لدينا على تحويل المواقف السلبية إلى أمثلة رائعة لخدمة العملاء. ردك المدروس يُظهر للجميع أنك تهتم.",
+  "The Ultimate CRM": "أفضل نظام لإدارة علاقات العملاء",
+  "Think of this as your automated Customer Relationship Management tool. Use responses to offer more information or mention current promotions - turning a simple review into an invitation for repeat business.":
+    "اعتبرها أداة مؤتمتة لإدارة علاقات العملاء. استخدم الردود لتقديم معلومات إضافية أو ذكر العروض الحالية، لتحوّل مراجعة بسيطة إلى دعوة لتكرار الشراء.",
+  "Lost Revenue": "إيرادات مفقودة",
+  "You lose potential customers who think you are inactive or indifferent.":
+    "ستخسر عملاء محتملين يعتقدون أنك غير نشط أو غير مهتم.",
+  "Lower Rankings": "ترتيب أقل",
+  "Google pushes your business down the list in favor of more active competitors.":
+    "يدفع Google نشاطك إلى أسفل القائمة لصالح المنافسين الأكثر نشاطًا.",
+  "Wasted Time": "وقت مهدور",
+  "You stare at the screen, suffering from writer's block instead of running your business.":
+    "ستحدق في الشاشة وتعاني من صعوبة الكتابة بدلًا من إدارة نشاطك التجاري.",
+  "Reputation Damage": "ضرر السمعة",
+  "Leaving negative reviews unanswered lets the angry customer control the narrative.":
+    "ترك المراجعات السلبية دون رد يسمح للعميل الغاضب بالتحكم في الصورة العامة.",
+  "Marketing Agencies": "وكالات التسويق",
+  "Stop wasting hours writing manual replies for your clients. Whitelabel our AI automation tool and resell it to your clients at a healthy margin. It is the perfect add-on to generate recurring revenue while delivering tangible SEO results.":
+    "توقف عن إهدار الساعات في كتابة ردود يدوية لعملائك. استخدم أداتنا المؤتمتة بالذكاء الاصطناعي بعلامتك الخاصة وأعد بيعها لعملائك بهامش ربح جيد. إنها الإضافة المثالية لتوليد دخل متكرر مع نتائج SEO ملموسة.",
+  "Local Businesses": "الأنشطة التجارية المحلية",
+  "This is for the restaurant owner, plumber, dentist, beauty salon, and more. You want to cut down the hours spent manually typing responses. You want to rank higher in Google Maps' \"recommended businesses\" without hiring a dedicated marketing manager.":
+    "هذا مناسب لصاحب المطعم والسباك وطبيب الأسنان وصالون التجميل وغيرهم. تريد تقليل الساعات التي تقضيها في كتابة الردود يدويًا. وتريد ترتيبًا أعلى في \"الأنشطة التجارية الموصى بها\" في خرائط Google دون توظيف مدير تسويق مخصص.",
+  "Enable Auto-Post": "فعّل النشر التلقائي",
+  "Enable Auto-Post and let AI reply instantly": "فعّل النشر التلقائي ودع الذكاء الاصطناعي يرد فورًا",
+  "Manual Approval": "موافقة يدوية",
+  "Switch to Approval Before Posting if you want to approve each response":
+    "حوّل إلى الموافقة قبل النشر إذا كنت تريد اعتماد كل رد",
+  "Customize & Edit": "تخصيص وتعديل",
+  "Edit or regenerate replies as many times as you want": "عدّل أو أعد إنشاء الردود كما تريد",
+  "Customize the AI Prompt": "تخصيص مطالبة الذكاء الاصطناعي",
+  "Set the AI tone style to: Professional, Friendly, Concise, Detailed, or Empathetic.":
+    "اضبط أسلوب نبرة الذكاء الاصطناعي إلى: احترافي، ودي، مختصر، مفصل، أو متعاطف.",
+  "Local Business": "نشاط تجاري محلي",
+  "Perfect for small businesses looking to automate their Google review responses.":
+    "مثالي للأنشطة الصغيرة التي تريد أتمتة الردود على مراجعات Google.",
+  "Single Google Business Profile": "ملف نشاط تجاري واحد على Google",
+  "Auto-Reply to Google Reviews": "رد تلقائي على مراجعات Google",
+  "Auto-Post or Manual Approval": "نشر تلقائي أو موافقة يدوية",
+  "Customizable AI Prompt": "مطالبة ذكاء اصطناعي قابلة للتخصيص",
+  "Tone Control": "التحكم بالنبرة",
+  "Star-Based Review Filtering": "تصفية المراجعات حسب عدد النجوم",
+  "Google Business Profile Integration": "تكامل مع ملف النشاط التجاري على Google",
+  "Bulk Reply Management": "إدارة الردود الجماعية",
+  "AI Rewrite Assistant": "مساعد إعادة الصياغة بالذكاء الاصطناعي",
+  "Multi-Location": "متعدد المواقع",
+  "Ideal for businesses with multiple locations needing comprehensive review management.":
+    "مثالي للأنشطة متعددة المواقع التي تحتاج إدارة شاملة للمراجعات.",
+  "Up to 5 Google Business Profiles": "حتى 5 ملفات نشاط تجاري على Google",
+  "Agency Max": "الوكالات - أقصى خطة",
+  "Ultimate solution for agencies managing multiple clients' review strategies.":
+    "الحل الأمثل للوكالات التي تدير استراتيجيات مراجعات لعدة عملاء.",
+  "Up to 60 Google Business Profiles": "حتى 60 ملف نشاط تجاري على Google",
+  "/per month": "/شهريًا",
+  "Transform customer feedback into meaningful connections. Our AI-powered platform helps businesses respond to reviews with personalized, professional replies.":
+    "حوّل آراء العملاء إلى علاقات ذات قيمة. منصتنا المدعومة بالذكاء الاصطناعي تساعد الأنشطة على الرد على المراجعات بردود مخصصة واحترافية.",
+  Facebook: "فيسبوك",
+  Analytics: "التحليلات",
+  "Loading analytics...": "جارٍ تحميل التحليلات...",
+  "Failed to load analytics data.": "فشل تحميل بيانات التحليلات.",
+  "Total Reviews": "إجمالي المراجعات",
+  "AI Reviews": "مراجعات الذكاء الاصطناعي",
+  "Manual Reviews": "مراجعات يدوية",
+  "Five Star Reviews": "مراجعات خمس نجوم",
+  "Monthly Replied Reviews": "المراجعات المُجاب عليها شهريًا",
+  "Replied Trend": "اتجاه الردود",
+  "Average Rating": "متوسط التقييم",
+  "out of 5.0": "من 5.0",
+  "Response Rate": "معدل الاستجابة",
+  "Monthly Reviews": "المراجعات الشهرية",
+  "Rating Distribution": "توزيع التقييمات",
 };
