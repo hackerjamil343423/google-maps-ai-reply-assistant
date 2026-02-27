@@ -107,7 +107,7 @@ function Badge({ label }: { label: string }) {
           boxShadow: "0px 4px 8px 1px #F4F4FE40 inset",
         }}
       >
-        <span className="text-[#040404] text-[12px] md:text-xl tracking-wider">
+        <span className="text-[#4E4E5E] text-[12px] md:text-xl tracking-wider">
           {label}
         </span>
       </div>

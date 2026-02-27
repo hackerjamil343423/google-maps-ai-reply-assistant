@@ -80,7 +80,7 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="landing-page min-h-screen text-[#040404]">
+    <div className="landing-page min-h-screen text-[#2F2E46]">
       {/* Navbar */}
       <nav
         className="landing-glass-panel fixed left-1/2 top-4 z-50 w-[92vw] max-w-[1120px] -translate-x-1/2 rounded-full px-4 py-3 md:px-6 md:py-4 lg:px-8"
@@ -236,9 +236,9 @@ export default function DemoPage() {
                     boxShadow: "0px 4px 8px 1px #F4F4FE40 inset",
                   }}
                 >
-                  <span className="text-[#040404] text-[12px] md:text-xl tracking-wider">
-                    Demo
-                  </span>
+                    <span className="text-[#4E4E5E] text-[12px] md:text-xl tracking-wider">
+                      Demo
+                    </span>
                 </div>
                 <div className="hidden md:flex items-center">
                   <div className="w-2 h-2 rotate-45 bg-white shadow-lg shadow-white/50" />
@@ -247,7 +247,7 @@ export default function DemoPage() {
               </div>
 
               <div className="space-y-4">
-                <h1 className="font-bold text-xl md:text-2xl lg:text-4xl">
+                <h1 className="font-bold text-xl md:text-2xl lg:text-4xl text-[#2F2E46]">
                   Reply With AI
                 </h1>
                 <p className="text-sm text-[#4E4E5E]">
@@ -261,9 +261,9 @@ export default function DemoPage() {
               <div
                 className="max-w-6xl w-full grid lg:grid-cols-2 gap-10 rounded-2xl p-10"
                 style={{
-                  background: "rgba(255,255,255,0.82)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  boxShadow: "inset 0px -4px 100px 21px #0B385829",
+                  background: "rgba(255,255,255,0.96)",
+                  border: "1px solid #E6E9F8",
+                  boxShadow: "0 12px 34px rgba(95, 48, 235, 0.08)",
                   backdropFilter: "blur(12px)",
                 }}
               >
@@ -278,7 +278,7 @@ export default function DemoPage() {
                         src="/assets/brand/wakkelni-logo.png"
                       />
                     </div>
-                    <h2 className="md:text-xl text-center md:text-left lg:text-2xl font-semibold text-[#040404]">
+                    <h2 className="md:text-xl text-center md:text-left lg:text-2xl font-semibold text-[#2F2E46]">
                       10x Faster Review Replies with AI
                     </h2>
                   </div>
@@ -292,7 +292,7 @@ export default function DemoPage() {
                   </p>
                   <Link
                     href="/GetStarted?mode=signup"
-                    className="bg-white text-black font-medium px-6 py-3 rounded-full w-fit hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+                    className="bg-[#5F30EB] text-white font-medium px-6 py-3 rounded-full w-fit hover:opacity-90 transition-opacity"
                   >
                     Get Started
                   </Link>
@@ -341,8 +341,8 @@ export default function DemoPage() {
                     placeholder="Paste your review here"
                     className="w-full rounded-xl p-4 text-[#3E3E52] placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-[#5F30EB] min-h-[150px]"
                     style={{
-                      background: "rgba(255,255,255,0.82)",
-                      border: "1px solid rgba(255,255,255,0.2)",
+                      background: "#FFFFFF",
+                      border: "1px solid #DDE2FF",
                       backdropFilter: "blur(12px)",
                     }}
                     value={review}
@@ -354,8 +354,8 @@ export default function DemoPage() {
                     placeholder="Enter reviewer's name (optional)"
                     className="w-full rounded-xl p-4 text-[#3E3E52] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#5F30EB]"
                     style={{
-                      background: "rgba(255,255,255,0.82)",
-                      border: "1px solid rgba(255,255,255,0.2)",
+                      background: "#FFFFFF",
+                      border: "1px solid #DDE2FF",
                       backdropFilter: "blur(12px)",
                     }}
                     type="text"
@@ -367,12 +367,12 @@ export default function DemoPage() {
                   <button
                     onClick={handleGenerate}
                     disabled={!canGenerate || loading}
-                    className="w-full cursor-pointer px-8 py-3 rounded-full text-[#040404] font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full cursor-pointer px-8 py-3 rounded-full text-white font-medium transition-all disabled:cursor-not-allowed"
                     style={{
                       background: canGenerate && !loading
                         ? "linear-gradient(135deg, #5F30EB 0%, #00E0FF 100%)"
-                        : "rgba(255,255,255,0.1)",
-                      color: canGenerate && !loading ? "#000" : "#fff",
+                        : "#E6E9F8",
+                      color: canGenerate && !loading ? "#FFFFFF" : "#8A8AA0",
                     }}
                   >
                     {loading ? (
