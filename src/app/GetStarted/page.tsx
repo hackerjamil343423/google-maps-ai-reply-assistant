@@ -147,10 +147,24 @@ function GetStartedContent() {
     setError("");
     setGoogleLoading(true);
     try {
-      await authClient.signIn.social({
+      const res = (await authClient.signIn.social({
         provider: "google",
         callbackURL: "/dashboard",
-      });
+      })) as unknown as {
+        error?: { message?: string };
+        data?: { url?: string } | null;
+        url?: string;
+      };
+
+      if (res.error) {
+        setError(res.error.message ?? "Google sign-in failed. Please try again.");
+        return;
+      }
+
+      const redirectUrl = res.data?.url ?? res.url;
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      }
     } catch {
       setError("Google sign-in failed. Please try again.");
     } finally {
@@ -180,7 +194,7 @@ function GetStartedContent() {
                 <img
                   alt="Five Star Reply Logo"
                   className="w-full h-auto"
-                  src="/assests/5 Star Branding_075028/5starlogo01.png"
+                  src="/assets/brand/logo-01.svg"
                 />
               </div>
               <p className="text-[#00FFE9] text-lg">Connect With AI</p>
@@ -409,7 +423,7 @@ export default function GetStartedPage() {
               <img
                 alt="Five Star Reply Logo"
                 className="w-full h-auto"
-                src="/assests/5 Star Branding_075028/5starlogo02.png"
+                src="/assets/brand/logo-02.svg"
               />
             </div>
           </Link>
@@ -422,3 +436,4 @@ export default function GetStartedPage() {
     </>
   );
 }
+

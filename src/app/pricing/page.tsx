@@ -134,7 +134,7 @@ export default function PricingPage() {
         <Link href="/" className="flex items-center space-x-2 w-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/5 Star Branding_075028/5starlogo02.png"
+            src="/assets/brand/logo-02.svg"
             alt="Five Star Reply Logo"
             className="w-full h-auto"
           />
@@ -400,7 +400,7 @@ export default function PricingPage() {
         <div className="absolute inset-0 pointer-events-none -z-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/images/effectimg/footereffect.webp"
+            src="/assets/effects/footer-effect.svg"
             alt=""
             className="w-full h-full object-cover opacity-20"
           />
@@ -410,7 +410,7 @@ export default function PricingPage() {
             <div className="w-40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assests/5 Star Branding_075028/5starlogo02.png"
+                src="/assets/brand/logo-02.svg"
                 alt="Five Star Reply Logo"
                 className="w-full h-auto"
               />
@@ -449,7 +449,7 @@ export default function PricingPage() {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assests/socialicon/Facebook Icon.svg"
+                src="/assets/social/facebook.svg"
                 alt="Facebook"
                 className="w-full h-full"
               />
@@ -463,3 +463,4 @@ export default function PricingPage() {
     </div>
   );
 }
+

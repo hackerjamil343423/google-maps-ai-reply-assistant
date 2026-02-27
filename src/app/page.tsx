@@ -117,12 +117,12 @@ const COST_CARDS = [
 
 const SERVE_CARDS = [
   {
-    icon: "/assests/images/serviceImages/service (1).svg",
+    icon: "/assets/service/service-1.svg",
     title: "Marketing Agencies",
     desc: "Stop wasting hours writing manual replies for your clients. Whitelabel our AI automation tool and resell it to your clients at a healthy margin. It is the perfect add-on to generate recurring revenue while delivering tangible SEO results.",
   },
   {
-    icon: "/assests/images/serviceImages/service (2).svg",
+    icon: "/assets/service/service-2.svg",
     title: "Local Businesses",
     desc: 'This is for the restaurant owner, plumber, dentist, beauty salon, and more. You want to cut down the hours spent manually typing responses. You want to rank higher in Google Maps\' "recommended businesses" without hiring a dedicated marketing manager.',
   },
@@ -304,7 +304,7 @@ export default function Home() {
         <Link href="/" className="flex items-center space-x-2 w-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/5 Star Branding_075028/5starlogo02.png"
+            src="/assets/brand/logo-02.svg"
             alt="Five Star Reply Logo"
             className="w-full h-auto"
           />
@@ -423,7 +423,7 @@ export default function Home() {
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/images/effectimg/effect2.webp"
+            src="/assets/effects/effect-2.svg"
             alt=""
             className="w-full h-full object-cover opacity-50"
           />
@@ -650,7 +650,7 @@ export default function Home() {
         <div className="absolute inset-0 pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/images/featuresImg/joinusEffect.webp"
+            src="/assets/effects/join-us-effect.svg"
             alt=""
             className="w-full h-full object-cover opacity-30"
           />
@@ -763,7 +763,7 @@ export default function Home() {
         <div className="absolute inset-0 pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/images/effectimg/footereffect.webp"
+            src="/assets/effects/footer-effect.svg"
             alt=""
             className="w-full h-full object-cover opacity-20"
           />
@@ -773,7 +773,7 @@ export default function Home() {
             <div className="flex flex-col items-center md:items-start gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assests/5 Star Branding_075028/5starlogo02.png"
+                src="/assets/brand/logo-02.svg"
                 alt="Five Star Reply Logo"
                 className="w-32 h-auto"
               />
@@ -791,7 +791,7 @@ export default function Home() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/assests/socialicon/Facebook Icon.svg"
+                  src="/assets/social/facebook.svg"
                   alt="Facebook"
                   className="w-5 h-5"
                 />
@@ -840,3 +840,4 @@ export default function Home() {
     </div>
   );
 }
+

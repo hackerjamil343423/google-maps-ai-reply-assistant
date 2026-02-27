@@ -67,7 +67,7 @@ export default function DemoPage() {
         <Link href="/" className="flex items-center space-x-2 w-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/5 Star Branding_075028/5starlogo02.png"
+            src="/assets/brand/logo-02.svg"
             alt="Five Star Reply Logo"
             className="w-full h-auto"
           />
@@ -168,7 +168,7 @@ export default function DemoPage() {
             <img
               alt="effect"
               className="w-full h-full object-cover opacity-40"
-              src="/assests/images/effectimg/effect2.webp"
+              src="/assets/effects/effect-2.svg"
             />
           </div>
 
@@ -228,7 +228,7 @@ export default function DemoPage() {
                       <img
                         alt="AI Icon"
                         className="w-full h-auto"
-                        src="/assests/5 Star Branding_075028/5starlogo01.png"
+                        src="/assets/brand/logo-01.svg"
                       />
                     </div>
                     <h2 className="md:text-xl text-center md:text-left lg:text-2xl font-semibold text-[#F4F7FF]">
@@ -427,7 +427,7 @@ export default function DemoPage() {
         <div className="absolute inset-0 pointer-events-none -z-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assests/images/effectimg/footereffect.webp"
+            src="/assets/effects/footer-effect.svg"
             alt=""
             className="w-full h-full object-cover opacity-20"
           />
@@ -437,7 +437,7 @@ export default function DemoPage() {
             <div className="w-40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assests/5 Star Branding_075028/5starlogo02.png"
+                src="/assets/brand/logo-02.svg"
                 alt="Five Star Reply Logo"
                 className="w-full h-auto"
               />
@@ -476,7 +476,7 @@ export default function DemoPage() {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assests/socialicon/Facebook Icon.svg"
+                src="/assets/social/facebook.svg"
                 alt="Facebook"
                 className="w-full h-full"
               />
@@ -490,3 +490,4 @@ export default function DemoPage() {
     </div>
   );
 }
+

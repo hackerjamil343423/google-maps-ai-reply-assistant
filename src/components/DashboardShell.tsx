@@ -105,7 +105,7 @@ function SidebarInner({
       <div className="flex flex-col items-center flex-1 overflow-y-auto">
         <Link href="/" className="w-10 h-10 flex items-center justify-center shrink-0" onClick={onClose}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt="Five Star Reply" src="/assests/5 Star Branding_075028/5StarPNG3.png"
+          <img alt="Five Star Reply" src="/assets/brand/logo-icon.svg"
             width={40} height={40} className="w-10 h-10 object-contain" />
         </Link>
 
@@ -231,7 +231,7 @@ export default function DashboardShell({
           <div className="w-40">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img alt="Five Star Reply Logo" className="w-full h-auto"
-              src="/assests/5 Star Branding_075028/5starlogo02.png" />
+              src="/assets/brand/logo-02.svg" />
           </div>
           <div className="flex items-center space-x-4">
             <button className="md:hidden p-2 rounded-lg hover:bg-[#00FFE910] transition-colors cursor-pointer"
@@ -298,3 +298,4 @@ export default function DashboardShell({
     </div>
   );
 }
+
