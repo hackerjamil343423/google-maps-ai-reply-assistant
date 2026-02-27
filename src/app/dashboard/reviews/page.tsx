@@ -431,8 +431,7 @@ export default function ReviewsPage() {
           {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
 
           <div
-            className="flex-1 overflow-y-auto space-y-4 pr-1"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a2a transparent" }}
+            className="brand-scrollbar flex-1 overflow-y-auto space-y-4 pr-1"
           >
             {loading ? (
               <p className="text-sm text-[#6A6A82]">Loading reviews...</p>

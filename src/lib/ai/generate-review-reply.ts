@@ -1,12 +1,39 @@
 import OpenAI from "openai";
 
 import { env } from "@/lib/env";
+import { TONE_OPTIONS, type ToneValue } from "@/lib/ai/default-settings";
 
 const model = env.OPENAI_MODEL ?? "gpt-4.1-mini";
 
 const openai = env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: env.OPENAI_API_KEY })
   : null;
+
+const TONE_TEMPLATES: Record<ToneValue, string> = {
+  Professional:
+    "Use polished, confident business language. Keep it clear, respectful, and trustworthy.",
+  Friendly:
+    "Sound warm, welcoming, and personal. Use approachable phrasing while staying professional.",
+  Concise:
+    "Use short, direct sentences with minimal filler. Keep the response compact and actionable.",
+  Detailed:
+    "Provide slightly richer detail and context while staying focused. Mention specific actions or follow-up steps.",
+  Empathetic:
+    "Acknowledge emotions clearly and validate the customer's experience before offering resolution or thanks.",
+  Casual:
+    "Use relaxed, natural language that still reflects good customer service and brand reliability.",
+  Luxurious:
+    "Use refined, premium language that feels elevated, attentive, and high-touch without sounding exaggerated.",
+  Playful:
+    "Use light, upbeat phrasing with subtle personality, while remaining appropriate and respectful.",
+};
+
+const VALID_TONES = new Set<string>(TONE_OPTIONS.map((item) => item.value));
+
+function normalizeTone(value?: string): ToneValue {
+  if (!value) return "Professional";
+  return VALID_TONES.has(value) ? (value as ToneValue) : "Professional";
+}
 
 export interface GenerateReplyInput {
   review: string;
@@ -28,10 +55,16 @@ export async function generateReviewReply(
   const review = input.review.trim();
   const reviewerName = input.reviewerName?.trim() || "there";
   const starRating = Number(input.starRating) || 5;
-  const tone = input.tone ?? "Professional";
+  const tone = normalizeTone(input.tone);
+  const toneTemplate = TONE_TEMPLATES[tone];
   const businessName = input.businessName ?? "our team";
 
-  const templateFallback = buildTemplateReply(review, reviewerName, starRating);
+  const templateFallback = buildTemplateReply(
+    review,
+    reviewerName,
+    starRating,
+    tone
+  );
 
   if (!openai) {
     return { reply: templateFallback, source: "template" };
@@ -39,7 +72,8 @@ export async function generateReviewReply(
 
   const systemPrompt = [
     "You write concise, human-sounding Google review replies for businesses.",
-    `Default tone: ${tone}.`,
+    `Selected tone: ${tone}.`,
+    `Tone template: ${toneTemplate}`,
     "Keep responses to 2-4 sentences.",
     "Always thank the reviewer and reference a specific detail when possible.",
     "For negative reviews: acknowledge, apologize, and offer a next step.",
@@ -79,7 +113,12 @@ export async function generateReviewReply(
   return { reply: templateFallback, source: "template" };
 }
 
-function buildTemplateReply(review: string, name: string, stars: number): string {
+function buildTemplateReply(
+  review: string,
+  name: string,
+  stars: number,
+  tone: ToneValue
+): string {
   const isPositive = stars >= 4;
   const isNeutral = stars === 3;
   const isNegative = stars <= 2;
@@ -105,7 +144,7 @@ function buildTemplateReply(review: string, name: string, stars: number): string
     }
 
     reply += "We look forward to seeing you again soon.";
-    return reply;
+    return applyToneToTemplate(reply, tone);
   }
 
   if (isNeutral) {
@@ -120,7 +159,7 @@ function buildTemplateReply(review: string, name: string, stars: number): string
     }
 
     reply += "We hope to give you a five-star experience next time.";
-    return reply;
+    return applyToneToTemplate(reply, tone);
   }
 
   if (isNegative) {
@@ -141,8 +180,42 @@ function buildTemplateReply(review: string, name: string, stars: number): string
     }
 
     reply += "Please reach out directly so we can make this right.";
-    return reply;
+    return applyToneToTemplate(reply, tone);
   }
 
-  return `Thank you for your review, ${name}. We appreciate your feedback and hope to serve you again soon.`;
+  return applyToneToTemplate(
+    `Thank you for your review, ${name}. We appreciate your feedback and hope to serve you again soon.`,
+    tone
+  );
+}
+
+function applyToneToTemplate(base: string, tone: ToneValue): string {
+  if (tone === "Concise") {
+    return base
+      .replace("We're absolutely thrilled to hear about your positive experience with us. ", "")
+      .replace("We're glad your experience was satisfactory, and we're always working to improve. ", "")
+      .replace("We're truly sorry your experience did not meet expectations. ", "We're sorry your experience did not meet expectations. ");
+  }
+
+  if (tone === "Friendly") {
+    return base.replace("Thank you so much", "Thanks so much");
+  }
+
+  if (tone === "Empathetic") {
+    return base.replace("We're sorry", "We sincerely understand and are sorry");
+  }
+
+  if (tone === "Casual") {
+    return base.replace("Thank you for taking the time to share your feedback", "Thanks for sharing your feedback");
+  }
+
+  if (tone === "Luxurious") {
+    return base.replace("Thank you", "Thank you sincerely").replace("We look forward to seeing you again soon.", "We look forward to welcoming you back again soon.");
+  }
+
+  if (tone === "Playful") {
+    return base.replace("We look forward to seeing you again soon.", "We can't wait to see you again soon.");
+  }
+
+  return base;
 }

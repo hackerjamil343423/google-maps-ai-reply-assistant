@@ -193,7 +193,7 @@ function GetStartedContent() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   alt="Wakkelni Stars Logo"
-                  className="w-full h-auto"
+                  className="h-10 w-auto object-contain"
                   src="/assets/brand/wakkelni-logo.png"
                 />
               </div>
@@ -422,7 +422,7 @@ export default function GetStartedPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt="Wakkelni Stars Logo"
-                className="w-full h-auto"
+                className="h-10 w-auto object-contain"
                 src="/assets/brand/wakkelni-logo.png"
               />
             </div>

@@ -92,7 +92,7 @@ const WHY_CARDS = [
       </svg>
     ),
     title: "The Ultimate CRM",
-    desc: "Think of this as your automated Customer Relationship Management tool. Use responses to offer more information or mention current promotions — turning a simple review into an invitation for repeat business.",
+    desc: "Think of this as your automated Customer Relationship Management tool. Use responses to offer more information or mention current promotions - turning a simple review into an invitation for repeat business.",
   },
 ];
 
@@ -584,7 +584,7 @@ export default function Home() {
           <img
             src="/assets/brand/wakkelni-logo.png"
             alt="Wakkelni Stars Logo"
-            className="w-full h-auto"
+            className="h-10 w-auto object-contain"
           />
         </Link>
 
@@ -851,7 +851,7 @@ export default function Home() {
                             {item.authorName}
                           </p>
                           <p className="text-xs text-[#5F30EB]">
-                            {"★".repeat(Math.max(1, Math.min(5, item.rating)))}
+                            {"\u2605".repeat(Math.max(1, Math.min(5, item.rating)))}
                           </p>
                         </div>
                         <p className="text-xs text-[#4F4F63] leading-relaxed mb-4">
@@ -1165,7 +1165,7 @@ export default function Home() {
               <img
                 src="/assets/brand/wakkelni-logo.png"
                 alt="Wakkelni Stars Logo"
-                className="w-32 h-auto"
+                className="h-10 w-auto object-contain"
               />
               <p className="text-[#6A6A82] text-sm max-w-xs text-center md:text-left">
                 Transform customer feedback into meaningful connections. Our
@@ -1223,7 +1223,7 @@ export default function Home() {
             </nav>
           </div>
           <div className="text-center mt-10 text-gray-600 text-xs">
-            © {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
+            &copy; {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
           </div>
         </div>
       </footer>

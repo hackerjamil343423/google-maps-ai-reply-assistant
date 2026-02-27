@@ -191,8 +191,11 @@ export default function TeamPage() {
     <DashboardShell activeHref="/dashboard/team">
       <div className="h-full">
         <div
-          className="p-2 md:p-4 max-w-5xl mx-auto min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a2a transparent" }}
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          style={{
+            background: "rgba(255,255,255,0.82)",
+            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
+          }}
         >
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#4E4E5E] mb-2">Team Management</h1>
@@ -270,9 +273,9 @@ export default function TeamPage() {
                       value={role}
                       onChange={(e) => setRole(e.target.value as Role)}
                     >
-                      <option value="VIEWER" className="bg-[#EEF2FF]">Viewer — Can view reviews</option>
-                      <option value="EDITOR" className="bg-[#EEF2FF]">Editor — Can view and reply to reviews</option>
-                      <option value="MANAGER" className="bg-[#EEF2FF]">Manager — Full team management access</option>
+                      <option value="VIEWER" className="bg-[#EEF2FF]">Viewer - Can view reviews</option>
+                      <option value="EDITOR" className="bg-[#EEF2FF]">Editor - Can view and reply to reviews</option>
+                      <option value="MANAGER" className="bg-[#EEF2FF]">Manager - Full team management access</option>
                     </select>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                       fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -295,8 +298,7 @@ export default function TeamPage() {
                       viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                     </svg>
-                    Sending…
-                  </>
+                    Sending...</>
                 ) : (
                   <>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -321,7 +323,7 @@ export default function TeamPage() {
 
             <div className="divide-y divide-[#5F30EB]/10">
               {loadingMembers ? (
-                <div className="p-10 text-center text-[#646478]">Loading team members…</div>
+                <div className="p-10 text-center text-[#646478]">Loading team members...</div>
               ) : members.length === 0 ? (
                 <div className="p-10 text-center text-[#646478]">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
@@ -350,7 +352,7 @@ export default function TeamPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-[#4E4E5E] font-medium text-sm truncate">{member.email}</p>
                       <p className="text-[#8A8AA0] text-xs truncate">
-                        {member.business} · Joined {member.joinedAt}
+                        {member.business} - Joined {member.joinedAt}
                       </p>
                     </div>
 

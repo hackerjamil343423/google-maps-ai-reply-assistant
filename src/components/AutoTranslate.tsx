@@ -15,6 +15,7 @@ type TranslationApiResponse = {
 function shouldSkipText(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return true;
+  if (trimmed.length > 500) return true;
   if (/^[0-9\s.,:/\-+()%]+$/.test(trimmed)) return true;
   if (/^https?:\/\//i.test(trimmed)) return true;
   return false;
@@ -84,6 +85,7 @@ export default function AutoTranslate() {
   const translateBatch = useCallback(
     async (texts: string[]) => {
       if (texts.length === 0) return;
+      if (language !== "ar") return;
 
       try {
         const res = await fetch("/api/i18n/translate", {
@@ -119,22 +121,23 @@ export default function AutoTranslate() {
         // Keep source text if translation service fails.
       }
     },
-    [persistCache]
+    [language, persistCache]
   );
 
   const flushPending = useCallback(() => {
     flushTimerRef.current = null;
-    const items = [...pendingTextsRef.current];
+    const items = [...pendingTextsRef.current].slice(0, 120);
     pendingTextsRef.current.clear();
     void translateBatch(items);
   }, [translateBatch]);
 
   const scheduleFlush = useCallback(() => {
+    if (language !== "ar") return;
     if (flushTimerRef.current) return;
     flushTimerRef.current = window.setTimeout(() => {
       flushPending();
     }, 180);
-  }, [flushPending]);
+  }, [flushPending, language]);
 
   const resolveArabic = useCallback(
     (source: string) => {
@@ -169,23 +172,39 @@ export default function AutoTranslate() {
 
         for (const textNode of textNodes) {
           const current = textNode.nodeValue ?? "";
+          if (language === "en") {
+            const original = textOriginalRef.current.get(textNode);
+            if (typeof original === "string" && original !== current) {
+              textNode.nodeValue = original;
+            }
+            continue;
+          }
+
           if (!textOriginalRef.current.has(textNode)) {
             textOriginalRef.current.set(textNode, current);
           }
 
           const original = textOriginalRef.current.get(textNode) ?? current;
-          if (language === "en") {
-            textNode.nodeValue = original;
-            continue;
+          const translated = resolveArabic(original);
+          if (translated !== current) {
+            textNode.nodeValue = translated;
           }
-
-          textNode.nodeValue = resolveArabic(original);
         }
 
         for (const element of elements) {
           for (const attr of TRANSLATABLE_ATTRS) {
             const current = element.getAttribute(attr);
             if (!current) continue;
+
+            if (language === "en") {
+              const attrMap = attrOriginalRef.current.get(element);
+              if (!attrMap) continue;
+              const original = attrMap.get(attr);
+              if (typeof original === "string" && original !== current) {
+                element.setAttribute(attr, original);
+              }
+              continue;
+            }
 
             if (!attrOriginalRef.current.has(element)) {
               attrOriginalRef.current.set(element, new Map());
@@ -197,12 +216,10 @@ export default function AutoTranslate() {
             }
 
             const original = attrMap.get(attr) ?? current;
-            if (language === "en") {
-              element.setAttribute(attr, original);
-              continue;
+            const translated = resolveArabic(original);
+            if (translated !== current) {
+              element.setAttribute(attr, translated);
             }
-
-            element.setAttribute(attr, resolveArabic(original));
           }
         }
       } finally {
@@ -217,7 +234,6 @@ export default function AutoTranslate() {
     () => ({
       childList: true,
       subtree: true,
-      characterData: true,
     }),
     []
   );
@@ -225,17 +241,28 @@ export default function AutoTranslate() {
   useEffect(() => {
     if (!ready || typeof document === "undefined") return;
 
+    observerRef.current?.disconnect();
     applyTranslationsFn(document.body);
 
-    observerRef.current?.disconnect();
+    if (language !== "ar") {
+      pendingTextsRef.current.clear();
+      if (flushTimerRef.current) {
+        window.clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      return;
+    }
+
     observerRef.current = new MutationObserver((mutations) => {
       if (applyingRef.current) return;
       for (const mutation of mutations) {
-        if (mutation.type === "characterData") {
-          if (mutation.target) applyTranslationsFn(mutation.target);
-          continue;
-        }
         for (const node of mutation.addedNodes) {
+          if (
+            node.nodeType !== Node.ELEMENT_NODE &&
+            node.nodeType !== Node.TEXT_NODE
+          ) {
+            continue;
+          }
           applyTranslationsFn(node);
         }
       }
@@ -249,7 +276,7 @@ export default function AutoTranslate() {
         flushTimerRef.current = null;
       }
     };
-  }, [applyTranslationsFn, observerConfig, ready]);
+  }, [applyTranslationsFn, language, observerConfig, ready]);
 
   return null;
 }

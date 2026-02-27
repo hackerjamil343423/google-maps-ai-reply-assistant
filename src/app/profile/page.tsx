@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 const inputCls =
   "w-full px-4 py-3 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all text-sm";
@@ -50,6 +51,7 @@ function SaveFeedback({ saved, label = "Saved successfully" }: { saved: boolean;
 }
 
 export default function ProfilePage() {
+  const { language, setLanguage, ready: languageReady } = useLanguage();
   /* ── Profile fields ── */
   const [firstName, setFirstName]   = useState("");
   const [lastName,  setLastName]    = useState("");
@@ -178,7 +180,7 @@ export default function ProfilePage() {
     <DashboardShell activeHref="/profile">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
           style={{
             background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
@@ -297,7 +299,57 @@ export default function ProfilePage() {
               </form>
             </section>
 
-            {/* ── Password section ── */}
+            {/* Language section */}
+            <section>
+              <h3 className="text-base font-medium text-[#4E4E5E] mb-5 pb-3 border-b border-[#5F30EB20]">
+                Language
+              </h3>
+              <div className="max-w-sm">
+                <div className="relative">
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value === "ar" ? "ar" : "en")}
+                    disabled={!languageReady}
+                    className="w-full px-4 py-3 pr-10 rounded-lg text-[#4F4F63] font-medium focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 focus:border-[#5F30EB]/50 appearance-none cursor-pointer transition-all duration-300 hover:border-[#5F30EB]/30 disabled:opacity-60"
+                    style={{
+                      background: "rgba(255,255,255,0.82)",
+                      border: "1px solid #E6E9F8",
+                      boxShadow: "inset 0px -4px 40px 5px #0B385829",
+                      backdropFilter: "blur(8px)",
+                    }}
+                  >
+                    <option value="en" className="bg-[#F6F4FF] text-[#4F4F63]">
+                      English
+                    </option>
+                    <option value="ar" className="bg-[#F6F4FF] text-[#4F4F63]">
+                      Arabic
+                    </option>
+                  </select>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#5F30EB"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-300"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </div>
+                <p className="text-xs text-[#8A8AA0] mt-2">
+                  Current language:{" "}
+                  <span className="text-[#6A6A82]">
+                    {language === "ar" ? "Arabic" : "English"}
+                  </span>
+                </p>
+              </div>
+            </section>
+            {/* Password section */}
             <section>
               <h3 className="text-base font-medium text-[#4E4E5E] mb-5 pb-3 border-b border-[#5F30EB20]">
                 Change Password

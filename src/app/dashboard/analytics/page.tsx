@@ -358,7 +358,7 @@ export default function AnalyticsPage() {
     <DashboardShell activeHref="/dashboard/analytics">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#E6E9F8] p-4 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-4 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
           style={{
             background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",

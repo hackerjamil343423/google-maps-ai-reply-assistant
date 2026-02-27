@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /* ─── Nav items ─────────────────────────────────────────── */
 export const NAV_ITEMS = [
@@ -101,15 +102,24 @@ function SidebarInner({
   onLogout: () => Promise<void>;
 }) {
   return (
-    <div className="flex flex-col h-full bg-[#F6F4FF33] border border-[#5F30EB]/20 shadow-[0_-4px_100px_21px_#efefef14_inset] py-6 rounded-3xl overflow-hidden">
-      <div className="flex flex-col items-center flex-1 overflow-y-auto">
-        <Link href="/" className="w-10 h-10 flex items-center justify-center shrink-0" onClick={onClose}>
+    <div className="flex flex-col h-full bg-[#F6F4FF33] border border-[#5F30EB]/20 shadow-[0_-4px_100px_21px_#efefef14_inset] py-4 rounded-3xl overflow-hidden">
+      <div className="brand-scrollbar flex flex-col items-center flex-1 overflow-y-auto">
+        <Link
+          href="/"
+          className="w-10 h-10 flex items-center justify-center shrink-0 mt-1"
+          onClick={onClose}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt="Wakkelni Stars" src="/assets/brand/wakkelni-logo.png"
-            width={40} height={40} className="w-10 h-10 object-contain" />
+          <img
+            alt="Wakkelni Stars"
+            src="/assets/brand/wakkelni-logo.png"
+            width={40}
+            height={40}
+            className="w-10 h-10 object-contain"
+          />
         </Link>
 
-        <nav className="flex flex-col items-center space-y-4 mt-8 mb-6">
+        <nav className="flex flex-col items-center space-y-3 mt-4 mb-4">
           {NAV_ITEMS.map((item) => {
             const isActive = activeHref === item.href;
             return (
@@ -126,7 +136,7 @@ function SidebarInner({
         </nav>
       </div>
 
-      <div className="flex flex-col items-center pt-4 mt-auto border-t border-[#5F30EB]/12 shrink-0">
+      <div className="flex flex-col items-center pt-3 mt-auto border-t border-[#5F30EB]/12 shrink-0">
         <button
           title="Logout"
           onClick={onLogout}
@@ -153,12 +163,14 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { language } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState({
     name: "Account",
     email: "",
   });
+  const isRtl = language === "ar";
 
   useEffect(() => {
     let mounted = true;
@@ -206,15 +218,23 @@ export default function DashboardShell({
   return (
     <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
       {/* Desktop sidebar */}
-      <aside className="fixed top-0 left-0 h-full w-[150px] px-6 pt-6 hidden md:block z-10">
+      <aside
+        className={`fixed top-1/2 -translate-y-1/2 h-[88vh] max-h-[860px] w-[150px] px-6 hidden md:block z-10 ${
+          isRtl ? "right-0" : "left-0"
+        }`}
+      >
         <SidebarInner activeHref={activeHref} onLogout={handleLogout} />
       </aside>
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
+        <div
+          className={`fixed inset-0 z-40 flex md:hidden ${
+            isRtl ? "justify-end" : "justify-start"
+          }`}
+        >
           <div className="absolute inset-0 bg-[#F8F9FF]/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="relative w-[150px] h-full px-3 pt-6 pb-4 z-50">
+          <div className="relative w-[150px] h-full px-3 pt-4 pb-3 z-50">
             <SidebarInner
               activeHref={activeHref}
               onClose={() => setMobileOpen(false)}
@@ -225,14 +245,13 @@ export default function DashboardShell({
       )}
 
       {/* Main */}
-      <main className="ml-0 md:pl-[150px] w-full p-4 md:p-8 lg:py-10 min-h-screen md:h-screen overflow-hidden">
+      <main
+        className={`ml-0 w-full px-4 md:px-8 pt-2 md:pt-4 pb-4 md:pb-8 min-h-screen md:h-screen overflow-hidden ${
+          isRtl ? "md:pr-[150px]" : "md:pl-[150px]"
+        }`}
+      >
         {/* Top header */}
-        <header className="flex justify-between items-center w-full mb-10">
-          <div className="w-40">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt="Wakkelni Stars Logo" className="w-full h-auto"
-              src="/assets/brand/wakkelni-logo.png" />
-          </div>
+        <header className="flex justify-end items-center w-full mb-4 md:mb-5">
           <div className="flex items-center space-x-4">
             <button className="md:hidden p-2 rounded-lg hover:bg-[#5F30EB10] transition-colors cursor-pointer"
               aria-label="Toggle menu" onClick={() => setMobileOpen(true)}>
@@ -250,7 +269,7 @@ export default function DashboardShell({
                 </div>
               </button>
               {profileOpen && (
-                <div className="absolute right-0 top-12 w-48 rounded-xl border border-[#5F30EB22] py-2 z-50"
+                <div className={`absolute top-12 w-48 rounded-xl border border-[#5F30EB22] py-2 z-50 ${isRtl ? "left-0" : "right-0"}`}
                   style={{ background: "#FFFFFF" }}>
                   <div className="px-4 py-2 border-b border-[#5F30EB]/12 mb-1">
                     <p className="text-sm font-medium text-[#040404]">{profile.name}</p>

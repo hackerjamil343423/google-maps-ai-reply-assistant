@@ -69,7 +69,7 @@ export default function DemoPage() {
           <img
             src="/assets/brand/wakkelni-logo.png"
             alt="Wakkelni Stars Logo"
-            className="w-full h-auto"
+            className="h-10 w-auto object-contain"
           />
         </Link>
 
@@ -163,7 +163,7 @@ export default function DemoPage() {
       <section className="min-h-screen relative mb-8 md:mb-0">
         <div className="w-full relative flex justify-center py-20">
           {/* Background effect */}
-          <div className="absolute hidden md:block inset-0">
+          <div className="absolute hidden md:block inset-0 pointer-events-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="effect"
@@ -227,11 +227,11 @@ export default function DemoPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         alt="AI Icon"
-                        className="w-full h-auto"
+                        className="h-10 w-auto object-contain"
                         src="/assets/brand/wakkelni-logo.png"
                       />
                     </div>
-                    <h2 className="md:text-xl text-center md:text-left lg:text-2xl font-semibold text-[#F4F7FF]">
+                    <h2 className="md:text-xl text-center md:text-left lg:text-2xl font-semibold text-[#040404]">
                       10x Faster Review Replies with AI
                     </h2>
                   </div>
@@ -439,7 +439,7 @@ export default function DemoPage() {
               <img
                 src="/assets/brand/wakkelni-logo.png"
                 alt="Wakkelni Stars Logo"
-                className="w-full h-auto"
+                className="h-10 w-auto object-contain"
               />
             </div>
             <p className="text-sm text-[#6A6A82] max-w-md leading-relaxed">
@@ -484,7 +484,7 @@ export default function DemoPage() {
           </div>
         </div>
         <div className="text-center mt-10 text-gray-600 text-xs">
-          © {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
+          &copy; {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
         </div>
       </footer>
     </div>

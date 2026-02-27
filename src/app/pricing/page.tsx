@@ -136,7 +136,7 @@ export default function PricingPage() {
           <img
             src="/assets/brand/wakkelni-logo.png"
             alt="Wakkelni Stars Logo"
-            className="w-full h-auto"
+            className="h-10 w-auto object-contain"
           />
         </Link>
 
@@ -335,7 +335,7 @@ export default function PricingPage() {
           </h2>
           <p className="text-[#6A6A82] text-sm md:text-base text-center mb-8 md:mb-12 max-w-2xl mx-auto">
             Choose a plan that fits your business needs and budget. No hidden
-            fees, no surprises—just straightforward pricing for powerful
+            fees, no surprises - just straightforward pricing for powerful
             management.
           </p>
 
@@ -412,7 +412,7 @@ export default function PricingPage() {
               <img
                 src="/assets/brand/wakkelni-logo.png"
                 alt="Wakkelni Stars Logo"
-                className="w-full h-auto"
+                className="h-10 w-auto object-contain"
               />
             </div>
             <p className="text-sm text-[#6A6A82] max-w-md leading-relaxed">
@@ -457,7 +457,7 @@ export default function PricingPage() {
           </div>
         </div>
         <div className="text-center mt-10 text-gray-600 text-xs">
-          © {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
+          &copy; {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
         </div>
       </footer>
     </div>

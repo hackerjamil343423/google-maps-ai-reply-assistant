@@ -117,13 +117,16 @@ export default function SubscriptionPage() {
     <DashboardShell activeHref="/dashboard/subscription">
       <div className="h-full">
         <div
-          className="p-4 md:p-6 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto w-full md:max-w-5xl mx-auto"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a2a transparent" }}
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          style={{
+            background: "rgba(255,255,255,0.82)",
+            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
+          }}
         >
           <h1 className="text-3xl font-bold text-[#040404] mb-8">Subscription Management</h1>
 
           {loading && (
-            <div className="mb-6 text-sm text-[#6A6A82]">Loading subscription…</div>
+            <div className="mb-6 text-sm text-[#6A6A82]">Loading subscription...</div>
           )}
           {notice && (
             <div className="mb-6 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm">
@@ -336,10 +339,10 @@ export default function SubscriptionPage() {
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                           </svg>
-                          Processing…
+                          Processing...
                         </>
                       ) : isCurrent ? (
-                        "✓ Active Plan"
+                        "Active Plan"
                       ) : (
                         "Upgrade"
                       )}

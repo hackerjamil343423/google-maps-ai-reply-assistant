@@ -272,3 +272,27 @@ Date: 2026-02-27
 ### Notes
 - No `/ar` or `/en` URL routing is used.
 - Default language follows browser language when no user preference is saved.
+
+---
+
+## Phase 8 - Production UI Audit + Landing Fixes (Completed)
+Date: 2026-02-27
+
+### Scope completed
+- Replaced brand logo asset with the provided smaller icon file:
+  - `public/assets/brand/wakkelni-logo.png`
+- Fixed demo page readability issue:
+  - Updated low-contrast heading color in `src/app/demo/page.tsx`
+- Fixed production footer link breakage by adding missing pages:
+  - `src/app/about/page.tsx`
+  - `src/app/terms/page.tsx`
+  - `src/app/privacy/page.tsx`
+
+### Validation
+- `npm run lint`: passed
+- `npx tsc --noEmit`: passed
+- `npm run build`: passed
+
+### Notes
+- Footer links on landing/demo/pricing now resolve correctly in production.
+- Brand logo updates are live across all pages that use `/assets/brand/wakkelni-logo.png`.

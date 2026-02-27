@@ -320,7 +320,7 @@ export default function OverviewPage() {
     <DashboardShell activeHref="/dashboard/overview">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#E6E9F8] p-6 md:p-10 h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
           style={{
             background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",

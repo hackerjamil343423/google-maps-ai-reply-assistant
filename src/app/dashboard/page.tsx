@@ -212,7 +212,7 @@ export default function DashboardPage() {
     <DashboardShell activeHref="/dashboard">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#5F30EB]/20 p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-150px)] backdrop-blur-[80px] overflow-y-auto"
+          className="brand-scrollbar rounded-3xl border border-[#5F30EB]/20 p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-150px)] backdrop-blur-[80px] overflow-y-auto"
           style={{
             background: "rgba(255,255,255,0.82)",
             boxShadow: "0 -4px 100px 21px #efefef14 inset",
