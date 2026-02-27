@@ -61,14 +61,14 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B090A] text-white">
+    <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
       {/* Navbar */}
       <nav className="relative flex items-center justify-between px-6 lg:px-20 py-6">
         <Link href="/" className="flex items-center space-x-2 w-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assets/brand/logo-02.svg"
-            alt="Five Star Reply Logo"
+            src="/assets/brand/wakkelni-logo.png"
+            alt="Wakkelni Stars Logo"
             className="w-full h-auto"
           />
         </Link>
@@ -81,8 +81,8 @@ export default function DemoPage() {
               href={link.href}
               className={`transition-colors ${
                 link.href === "/demo"
-                  ? "text-[#C3C3C3]"
-                  : "text-[#C3C3C3]/50 hover:text-[#C3C3C3]/70"
+                  ? "text-[#4E4E5E]"
+                  : "text-[#4E4E5E]/50 hover:text-[#4E4E5E]/70"
               }`}
             >
               {link.label}
@@ -94,13 +94,13 @@ export default function DemoPage() {
         <div className="hidden md:flex items-center space-x-2">
           <Link
             href="/GetStarted?mode=login"
-            className="text-white hover:text-[#00FFE9] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
+            className="text-[#040404] hover:text-[#5F30EB] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
           >
             Log In
           </Link>
           <Link
             href="/GetStarted?mode=signup"
-            className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+            className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
           >
             Get Started
           </Link>
@@ -108,7 +108,7 @@ export default function DemoPage() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-white cursor-pointer z-10"
+          className="md:hidden text-[#040404] cursor-pointer z-10"
           aria-label="Toggle menu"
           onClick={() => setMenuOpen(!menuOpen)}
         >
@@ -132,12 +132,12 @@ export default function DemoPage() {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-[#1b1c1c] flex flex-col items-center py-6 space-y-4 md:hidden z-50">
+          <div className="absolute top-full left-0 right-0 bg-[#FFFFFF] flex flex-col items-center py-6 space-y-4 md:hidden z-50">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[#C3C3C3] hover:text-white transition-colors"
+                className="text-[#4E4E5E] hover:text-[#040404] transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
@@ -145,13 +145,13 @@ export default function DemoPage() {
             ))}
             <Link
               href="/GetStarted?mode=login"
-              className="text-white hover:text-[#00FFE9] transition-colors"
+              className="text-[#040404] hover:text-[#5F30EB] transition-colors"
             >
               Log In
             </Link>
             <Link
               href="/GetStarted?mode=signup"
-              className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+              className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
             >
               Get Started
             </Link>
@@ -182,14 +182,14 @@ export default function DemoPage() {
                   <div className="w-2 h-2 rotate-45 bg-white shadow-lg shadow-white/25" />
                 </div>
                 <div
-                  className="px-6 md:px-12 py-2 rounded-full border border-[#FFFFFF33]"
+                  className="px-6 md:px-12 py-2 rounded-full border border-[#5F30EB33]"
                   style={{
                     background:
                       "linear-gradient(180deg, rgba(2,7,26,0.04) 0%, rgba(2,7,26,0.16) 100%)",
                     boxShadow: "0px 4px 8px 1px #F4F4FE40 inset",
                   }}
                 >
-                  <span className="text-white text-[12px] md:text-xl tracking-wider">
+                  <span className="text-[#040404] text-[12px] md:text-xl tracking-wider">
                     Demo
                   </span>
                 </div>
@@ -203,7 +203,7 @@ export default function DemoPage() {
                 <h1 className="font-bold text-xl md:text-2xl lg:text-4xl">
                   Reply With AI
                 </h1>
-                <p className="text-sm text-[#C3C3C3]">
+                <p className="text-sm text-[#4E4E5E]">
                   Write perfect reply within seconds
                 </p>
               </div>
@@ -214,7 +214,7 @@ export default function DemoPage() {
               <div
                 className="max-w-6xl w-full grid lg:grid-cols-2 gap-10 rounded-2xl p-10"
                 style={{
-                  background: "rgba(11,9,10,0.2)",
+                  background: "rgba(255,255,255,0.82)",
                   border: "1px solid rgba(255,255,255,0.2)",
                   boxShadow: "inset 0px -4px 100px 21px #0B385829",
                   backdropFilter: "blur(12px)",
@@ -228,14 +228,14 @@ export default function DemoPage() {
                       <img
                         alt="AI Icon"
                         className="w-full h-auto"
-                        src="/assets/brand/logo-01.svg"
+                        src="/assets/brand/wakkelni-logo.png"
                       />
                     </div>
                     <h2 className="md:text-xl text-center md:text-left lg:text-2xl font-semibold text-[#F4F7FF]">
                       10x Faster Review Replies with AI
                     </h2>
                   </div>
-                  <p className="text-gray-400 text-sm text-left md:leading-relaxed">
+                  <p className="text-[#6A6A82] text-sm text-left md:leading-relaxed">
                     Transform customer reviews into professional responses in
                     seconds. Our AI understands context, tone, and sentiment to
                     craft replies that maintain your brand voice while addressing
@@ -245,7 +245,7 @@ export default function DemoPage() {
                   </p>
                   <Link
                     href="/GetStarted?mode=signup"
-                    className="bg-white text-black font-medium px-6 py-3 rounded-full w-fit hover:bg-[#00FFE9] transition-colors"
+                    className="bg-white text-black font-medium px-6 py-3 rounded-full w-fit hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
                   >
                     Get Started
                   </Link>
@@ -255,7 +255,7 @@ export default function DemoPage() {
                 <div className="flex flex-col items-center w-full justify-center space-y-6">
                   {/* Star Rating Selector */}
                   <div className="w-full">
-                    <p className="text-xs text-[#C3C3C3] mb-2">Review rating</p>
+                    <p className="text-xs text-[#4E4E5E] mb-2">Review rating</p>
                     <div className="flex gap-1">
                       {STAR_RATINGS.map((star) => {
                         const filled = star <= (hoveredStar || starRating);
@@ -290,9 +290,9 @@ export default function DemoPage() {
                   {/* Review Textarea */}
                   <textarea
                     placeholder="Paste your review here"
-                    className="w-full rounded-xl p-4 text-gray-200 placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-[#00FFE9] min-h-[150px]"
+                    className="w-full rounded-xl p-4 text-[#3E3E52] placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-[#5F30EB] min-h-[150px]"
                     style={{
-                      background: "rgba(11,9,10,0.2)",
+                      background: "rgba(255,255,255,0.82)",
                       border: "1px solid rgba(255,255,255,0.2)",
                       backdropFilter: "blur(12px)",
                     }}
@@ -303,9 +303,9 @@ export default function DemoPage() {
                   {/* Reviewer Name Input */}
                   <input
                     placeholder="Enter reviewer's name (optional)"
-                    className="w-full rounded-xl p-4 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#00FFE9]"
+                    className="w-full rounded-xl p-4 text-[#3E3E52] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#5F30EB]"
                     style={{
-                      background: "rgba(11,9,10,0.2)",
+                      background: "rgba(255,255,255,0.82)",
                       border: "1px solid rgba(255,255,255,0.2)",
                       backdropFilter: "blur(12px)",
                     }}
@@ -318,10 +318,10 @@ export default function DemoPage() {
                   <button
                     onClick={handleGenerate}
                     disabled={!canGenerate || loading}
-                    className="w-full cursor-pointer px-8 py-3 rounded-full text-white font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full cursor-pointer px-8 py-3 rounded-full text-[#040404] font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{
                       background: canGenerate && !loading
-                        ? "linear-gradient(135deg, #00FFE9 0%, #00B4D8 100%)"
+                        ? "linear-gradient(135deg, #5F30EB 0%, #00E0FF 100%)"
                         : "rgba(255,255,255,0.1)",
                       color: canGenerate && !loading ? "#000" : "#fff",
                     }}
@@ -358,7 +358,7 @@ export default function DemoPage() {
                   {reply && (
                     <div className="w-full space-y-3">
                       <div
-                        className="w-full rounded-xl p-4 text-gray-200 text-sm leading-relaxed"
+                        className="w-full rounded-xl p-4 text-[#3E3E52] text-sm leading-relaxed"
                         style={{
                           background: "rgba(0,255,233,0.05)",
                           border: "1px solid rgba(0,255,233,0.3)",
@@ -369,7 +369,7 @@ export default function DemoPage() {
                       <div className="flex gap-3">
                         <button
                           onClick={handleCopy}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-[#FFFFFF33] text-[#C3C3C3] hover:border-[#00FFE9] hover:text-[#00FFE9] transition-colors cursor-pointer"
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-[#5F30EB33] text-[#4E4E5E] hover:border-[#5F30EB] hover:text-[#5F30EB] transition-colors cursor-pointer"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -391,7 +391,7 @@ export default function DemoPage() {
                         <button
                           onClick={handleRegenerate}
                           disabled={loading}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-[#FFFFFF33] text-[#C3C3C3] hover:border-[#00FFE9] hover:text-[#00FFE9] transition-colors cursor-pointer disabled:opacity-40"
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-[#5F30EB33] text-[#4E4E5E] hover:border-[#5F30EB] hover:text-[#5F30EB] transition-colors cursor-pointer disabled:opacity-40"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -423,7 +423,7 @@ export default function DemoPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative overflow-hidden text-white pt-20 pb-10 border-t border-[#00FFE9]/20">
+      <footer className="relative overflow-hidden text-[#040404] pt-20 pb-10 border-t border-[#5F30EB]/20">
         <div className="absolute inset-0 pointer-events-none -z-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -437,32 +437,32 @@ export default function DemoPage() {
             <div className="w-40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assets/brand/logo-02.svg"
-                alt="Five Star Reply Logo"
+                src="/assets/brand/wakkelni-logo.png"
+                alt="Wakkelni Stars Logo"
                 className="w-full h-auto"
               />
             </div>
-            <p className="text-sm text-gray-400 max-w-md leading-relaxed">
+            <p className="text-sm text-[#6A6A82] max-w-md leading-relaxed">
               Transform customer feedback into meaningful connections. Our
               AI-powered platform helps businesses respond to reviews with
               personalized, professional replies that build stronger customer
               relationships and improve online reputation.
             </p>
           </div>
-          <div className="flex flex-row items-center justify-start gap-8 text-sm text-gray-400">
-            <Link href="/" className="hover:text-[#00FFE9] transition-colors">
+          <div className="flex flex-row items-center justify-start gap-8 text-sm text-[#6A6A82]">
+            <Link href="/" className="hover:text-[#5F30EB] transition-colors">
               Home
             </Link>
-            <Link href="/about" className="hover:text-[#00FFE9] transition-colors">
+            <Link href="/about" className="hover:text-[#5F30EB] transition-colors">
               About Us
             </Link>
-            <Link href="/pricing" className="hover:text-[#00FFE9] transition-colors">
+            <Link href="/pricing" className="hover:text-[#5F30EB] transition-colors">
               Pricing
             </Link>
-            <Link href="/terms" className="hover:text-[#00FFE9] transition-colors">
+            <Link href="/terms" className="hover:text-[#5F30EB] transition-colors">
               Terms
             </Link>
-            <Link href="/privacy" className="hover:text-[#00FFE9] transition-colors">
+            <Link href="/privacy" className="hover:text-[#5F30EB] transition-colors">
               Privacy
             </Link>
           </div>
@@ -471,7 +471,7 @@ export default function DemoPage() {
               href="https://www.facebook.com/profile.php?id=61584823262750"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-10 h-10 border p-2 border-white/20 rounded-full flex items-center justify-center hover:border-[#00FFE9] hover:text-[#00FFE9] transition-all"
+              className="w-10 h-10 border p-2 border-[#5F30EB]/20 rounded-full flex items-center justify-center hover:border-[#5F30EB] hover:text-[#5F30EB] transition-all"
               aria-label="Facebook"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -484,10 +484,11 @@ export default function DemoPage() {
           </div>
         </div>
         <div className="text-center mt-10 text-gray-600 text-xs">
-          © {new Date().getFullYear()} Five Star Reply. All rights reserved.
+          © {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
         </div>
       </footer>
     </div>
   );
 }
+
 

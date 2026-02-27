@@ -212,9 +212,9 @@ export default function DashboardPage() {
     <DashboardShell activeHref="/dashboard">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#ffffff]/20 p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-150px)] backdrop-blur-[80px] overflow-y-auto"
+          className="rounded-3xl border border-[#5F30EB]/20 p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-150px)] backdrop-blur-[80px] overflow-y-auto"
           style={{
-            background: "rgba(11,9,10,0.2)",
+            background: "rgba(255,255,255,0.82)",
             boxShadow: "0 -4px 100px 21px #efefef14 inset",
           }}
         >
@@ -223,14 +223,14 @@ export default function DashboardPage() {
           </h2>
 
           <div
-            className="flex flex-col md:flex-row md:items-center gap-4 rounded-xl border border-[#1f1f1f] p-3"
-            style={{ background: "rgba(11,9,10,0.2)" }}
+            className="flex flex-col md:flex-row md:items-center gap-4 rounded-xl border border-[#E6E9F8] p-3"
+            style={{ background: "rgba(255,255,255,0.82)" }}
           >
             <input
               readOnly
               value={connectionLabel}
               className={`flex-1 px-4 py-3 outline-none bg-transparent ${
-                connected ? "text-[#00FFE9]" : "text-gray-300"
+                connected ? "text-[#5F30EB]" : "text-[#4F4F63]"
               }`}
               type="text"
             />
@@ -240,7 +240,7 @@ export default function DashboardPage() {
               className="px-6 py-3 rounded-xl font-medium transition-all text-black disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.03] active:scale-[0.97] cursor-pointer"
               style={{
                 background:
-                  "linear-gradient(to bottom, rgba(0,255,233,0.67), rgba(0,255,233,0.2))",
+                  "linear-gradient(to bottom, rgba(0,255,233,0.67), rgba(95,48,235,0.2))",
                 boxShadow: "0px 4.65px 9.3px 1.16px #F4F4FE40 inset",
               }}
             >
@@ -253,12 +253,12 @@ export default function DashboardPage() {
           )}
 
           {notice && (
-            <p className="mt-4 text-sm text-[#00FFE9]">{notice}</p>
+            <p className="mt-4 text-sm text-[#5F30EB]">{notice}</p>
           )}
 
           {!connected && (
             <div className="mt-8 space-y-4">
-              <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
+              <p className="text-[#6A6A82] text-sm leading-relaxed max-w-lg">
                 Link Google first, then connect and sync reviews so AI replies can be generated and posted from real business data.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
@@ -281,14 +281,14 @@ export default function DashboardPage() {
                 ].map((card) => (
                   <div
                     key={card.step}
-                    className="rounded-2xl border border-[#ffffff15] p-5"
-                    style={{ background: "rgba(11,9,10,0.3)" }}
+                    className="rounded-2xl border border-[#5F30EB26] p-5"
+                    style={{ background: "rgba(255,255,255,0.9)" }}
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#00FFE920] border border-[#00FFE940] flex items-center justify-center text-[#00FFE9] font-bold text-sm mb-3">
+                    <div className="w-8 h-8 rounded-full bg-[#5F30EB20] border border-[#5F30EB40] flex items-center justify-center text-[#5F30EB] font-bold text-sm mb-3">
                       {card.step}
                     </div>
-                    <h3 className="font-semibold text-white mb-1">{card.title}</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">{card.desc}</p>
+                    <h3 className="font-semibold text-[#040404] mb-1">{card.title}</h3>
+                    <p className="text-[#6A6A82] text-sm leading-relaxed">{card.desc}</p>
                   </div>
                 ))}
               </div>
@@ -297,10 +297,10 @@ export default function DashboardPage() {
 
           {connected && (
             <div className="mt-8 space-y-6">
-              <div className="flex items-center gap-3 text-[#00FFE9]">
+              <div className="flex items-center gap-3 text-[#5F30EB]">
                 <span className="text-sm font-medium">
                   Google Business Profile connected. Go to{" "}
-                  <Link href="/dashboard/overview" className="underline hover:text-white transition-colors">
+                  <Link href="/dashboard/overview" className="underline hover:text-[#040404] transition-colors">
                     Overview
                   </Link>{" "}
                   to manage real reviews.
@@ -314,11 +314,11 @@ export default function DashboardPage() {
                 ].map((stat) => (
                   <div
                     key={stat.label}
-                    className="rounded-2xl border border-[#ffffff15] p-5 flex flex-col gap-2"
-                    style={{ background: "rgba(11,9,10,0.3)" }}
+                    className="rounded-2xl border border-[#5F30EB26] p-5 flex flex-col gap-2"
+                    style={{ background: "rgba(255,255,255,0.9)" }}
                   >
-                    <span className="text-3xl font-bold text-white">{stat.value}</span>
-                    <span className="text-gray-400 text-sm">{stat.label}</span>
+                    <span className="text-3xl font-bold text-[#040404]">{stat.value}</span>
+                    <span className="text-[#6A6A82] text-sm">{stat.label}</span>
                   </div>
                 ))}
               </div>
@@ -329,3 +329,4 @@ export default function DashboardPage() {
     </DashboardShell>
   );
 }
+

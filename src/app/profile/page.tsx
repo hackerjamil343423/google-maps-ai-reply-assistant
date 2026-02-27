@@ -4,18 +4,18 @@ import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
 
 const inputCls =
-  "w-full px-4 py-3 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 transition-all text-sm";
+  "w-full px-4 py-3 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all text-sm";
 const inputStyle = {
-  background: "rgba(11,9,10,0.3)",
+  background: "rgba(255,255,255,0.9)",
   border: "1px solid rgba(255,255,255,0.15)",
 };
 
-const labelCls = "block text-sm text-gray-400 mb-1.5";
+const labelCls = "block text-sm text-[#6A6A82] mb-1.5";
 
 function EyeToggle({ show, onToggle }: { show: boolean; onToggle: () => void }) {
   return (
     <button type="button" onClick={onToggle}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer transition-colors"
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#3E3E52] cursor-pointer transition-colors"
       aria-label={show ? "Hide password" : "Show password"}>
       {show ? (
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
@@ -178,16 +178,16 @@ export default function ProfilePage() {
     <DashboardShell activeHref="/profile">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#1f1f1f] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
           style={{
-            background: "rgba(11,9,10,0.2)",
+            background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
           }}
         >
           <h2 className="text-xl md:text-2xl font-medium mb-8">Profile</h2>
 
           {loadingProfile && (
-            <div className="mb-5 text-sm text-gray-400">Loading profile…</div>
+            <div className="mb-5 text-sm text-[#6A6A82]">Loading profile…</div>
           )}
 
           {profileError && (
@@ -201,15 +201,15 @@ export default function ProfilePage() {
             {/* ── Avatar section ── */}
             <div className="flex items-center gap-5">
               <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 border-2 border-[#00FFE9]/30"
+                className="w-20 h-20 rounded-full flex items-center justify-center text-[#040404] text-2xl font-bold flex-shrink-0 border-2 border-[#5F30EB]/30"
                 style={{ background: "linear-gradient(135deg, #7C3AED, #0284C7)" }}
               >
                 {initials}
               </div>
               <div>
-                <p className="text-white font-medium">{firstName} {lastName}</p>
-                <p className="text-gray-500 text-sm">{email}</p>
-                <button className="mt-2 text-xs text-[#00FFE9] hover:underline cursor-pointer transition-colors">
+                <p className="text-[#040404] font-medium">{firstName} {lastName}</p>
+                <p className="text-[#8A8AA0] text-sm">{email}</p>
+                <button className="mt-2 text-xs text-[#5F30EB] hover:underline cursor-pointer transition-colors">
                   Change avatar
                 </button>
               </div>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
 
             {/* ── Profile form ── */}
             <section>
-              <h3 className="text-base font-medium text-[#C3C3C3] mb-5 pb-3 border-b border-[#ffffff10]">
+              <h3 className="text-base font-medium text-[#4E4E5E] mb-5 pb-3 border-b border-[#5F30EB20]">
                 Personal Information
               </h3>
               <form onSubmit={handleProfileSave} className="space-y-5">
@@ -279,7 +279,7 @@ export default function ProfilePage() {
                   <button type="submit" disabled={savingProfile}
                     className="px-6 py-3 rounded-full font-semibold text-black transition-all cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2"
                     style={{
-                      background: "#00FFE9",
+                      background: "#5F30EB",
                       boxShadow: "0px 4.65px 9.3px 1.16px #F4F4FE40 inset",
                     }}>
                     {savingProfile ? (
@@ -299,7 +299,7 @@ export default function ProfilePage() {
 
             {/* ── Password section ── */}
             <section>
-              <h3 className="text-base font-medium text-[#C3C3C3] mb-5 pb-3 border-b border-[#ffffff10]">
+              <h3 className="text-base font-medium text-[#4E4E5E] mb-5 pb-3 border-b border-[#5F30EB20]">
                 Change Password
               </h3>
               <form onSubmit={handlePasswordSave} className="space-y-5">
@@ -335,14 +335,14 @@ export default function ProfilePage() {
                             : newPw.length >= 10 && /[A-Z]/.test(newPw) && /[0-9]/.test(newPw) ? 3
                             : newPw.length >= 8 ? 2
                             : 1;
-                          const color = strength === 1 ? "#EF4444" : strength === 2 ? "#F59E0B" : strength === 3 ? "#3B82F6" : "#00FFE9";
+                          const color = strength === 1 ? "#EF4444" : strength === 2 ? "#F59E0B" : strength === 3 ? "#3B82F6" : "#5F30EB";
                           return (
                             <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
                               style={{ background: i <= strength ? color : "#2a2a2a" }} />
                           );
                         })}
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#8A8AA0]">
                         {newPw.length < 8 ? "Too short" : newPw.length < 10 ? "Weak" : /[A-Z]/.test(newPw) && /[0-9]/.test(newPw) && newPw.length >= 12 ? "Strong" : "Good"}
                       </p>
                     </div>
@@ -379,7 +379,7 @@ export default function ProfilePage() {
                   <button type="submit" disabled={savingPassword}
                     className="px-6 py-3 rounded-full font-semibold text-black transition-all cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2"
                     style={{
-                      background: "#00FFE9",
+                      background: "#5F30EB",
                       boxShadow: "0px 4.65px 9.3px 1.16px #F4F4FE40 inset",
                     }}>
                     {savingPassword ? (
@@ -405,8 +405,8 @@ export default function ProfilePage() {
               <div className="flex items-start justify-between gap-4 p-4 rounded-xl border border-red-500/20"
                 style={{ background: "rgba(239,68,68,0.04)" }}>
                 <div>
-                  <p className="text-sm font-medium text-white">Delete Account</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-sm font-medium text-[#040404]">Delete Account</p>
+                  <p className="text-xs text-[#8A8AA0] mt-0.5">
                     Permanently delete your account and all associated data. This action cannot be undone.
                   </p>
                 </div>
@@ -425,3 +425,4 @@ export default function ProfilePage() {
     </DashboardShell>
   );
 }
+

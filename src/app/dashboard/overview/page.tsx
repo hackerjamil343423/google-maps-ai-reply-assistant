@@ -158,12 +158,12 @@ function ReviewCard({
 
   return (
     <div
-      className="rounded-2xl border border-[#ffffff15] p-5 md:p-6 transition-all"
-      style={{ background: "rgba(11,9,10,0.4)" }}
+      className="rounded-2xl border border-[#5F30EB26] p-5 md:p-6 transition-all"
+      style={{ background: "rgba(255,255,255,0.92)" }}
     >
       <div className="flex items-start gap-4">
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+          className="w-10 h-10 rounded-full flex items-center justify-center text-[#040404] font-semibold text-sm flex-shrink-0"
           style={{ background: "#1f3a44" }}
         >
           {review.initials}
@@ -171,8 +171,8 @@ function ReviewCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="font-medium text-white">{review.authorName}</span>
-            <span className="text-gray-500 text-xs">{formatDate(review.reviewedAt)}</span>
+            <span className="font-medium text-[#040404]">{review.authorName}</span>
+            <span className="text-[#8A8AA0] text-xs">{formatDate(review.reviewedAt)}</span>
           </div>
           <Stars rating={review.rating} />
         </div>
@@ -180,29 +180,29 @@ function ReviewCard({
         <div
           className={`flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${
             review.reply?.status === "posted"
-              ? "bg-[#00FFE920] text-[#00FFE9] border border-[#00FFE930]"
-              : "bg-[#ffffff10] text-gray-400 border border-[#ffffff15]"
+              ? "bg-[#5F30EB20] text-[#5F30EB] border border-[#5F30EB30]"
+              : "bg-[#5F30EB18] text-[#6A6A82] border border-[#5F30EB26]"
           }`}
         >
           {review.reply?.status === "posted" ? "Replied" : "Pending"}
         </div>
       </div>
 
-      <p className="text-gray-300 text-sm leading-relaxed mt-4">{review.text}</p>
+      <p className="text-[#4F4F63] text-sm leading-relaxed mt-4">{review.text}</p>
 
       {review.reply && !replyOpen && (
-        <div className="mt-4 pl-4 border-l-2 border-[#00FFE940]">
-          <p className="text-xs text-[#00FFE9] font-medium mb-1">
+        <div className="mt-4 pl-4 border-l-2 border-[#5F30EB40]">
+          <p className="text-xs text-[#5F30EB] font-medium mb-1">
             {review.reply.status === "posted" ? "Posted reply" : "Draft reply"}
           </p>
-          <p className="text-gray-400 text-sm leading-relaxed">{review.reply.content}</p>
+          <p className="text-[#6A6A82] text-sm leading-relaxed">{review.reply.content}</p>
         </div>
       )}
 
       <div className="flex flex-wrap gap-2 mt-4">
         <button
           onClick={() => setReplyOpen((prev) => !prev)}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#ffffff20] text-gray-300 hover:text-[#00FFE9] hover:border-[#00FFE930] transition-colors cursor-pointer"
+          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#5F30EB20] text-[#4F4F63] hover:text-[#5F30EB] hover:border-[#5F30EB30] transition-colors cursor-pointer"
         >
           {review.reply ? "Edit Reply" : "Write Reply"}
         </button>
@@ -210,7 +210,7 @@ function ReviewCard({
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#00FFE930] text-[#00FFE9] hover:bg-[#00FFE910] transition-colors cursor-pointer disabled:opacity-50"
+          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#5F30EB30] text-[#5F30EB] hover:bg-[#5F30EB10] transition-colors cursor-pointer disabled:opacity-50"
         >
           {generating ? "Generating..." : "AI Generate"}
         </button>
@@ -218,7 +218,7 @@ function ReviewCard({
         <button
           onClick={handlePost}
           disabled={posting || !replyText.trim()}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#00FFE920] border border-[#00FFE940] text-[#00FFE9] hover:bg-[#00FFE930] transition-colors cursor-pointer disabled:opacity-50"
+          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#5F30EB20] border border-[#5F30EB40] text-[#5F30EB] hover:bg-[#5F30EB30] transition-colors cursor-pointer disabled:opacity-50"
         >
           {posting ? "Posting..." : "Post Reply"}
         </button>
@@ -231,16 +231,16 @@ function ReviewCard({
             value={replyText}
             onChange={(event) => setReplyText(event.target.value)}
             placeholder="Write your reply here..."
-            className="w-full rounded-xl p-3 text-sm text-gray-200 placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-[#00FFE9]"
+            className="w-full rounded-xl p-3 text-sm text-[#3E3E52] placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-[#5F30EB]"
             style={{
-              background: "rgba(11,9,10,0.5)",
+              background: "rgba(255,255,255,0.95)",
               border: "1px solid rgba(255,255,255,0.15)",
             }}
           />
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setReplyOpen(false)}
-              className="px-4 py-1.5 rounded-full text-xs font-medium border border-[#ffffff20] text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="px-4 py-1.5 rounded-full text-xs font-medium border border-[#5F30EB20] text-[#6A6A82] hover:text-[#040404] transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -248,7 +248,7 @@ function ReviewCard({
               onClick={handleSave}
               disabled={saving || !replyText.trim()}
               className="px-4 py-1.5 rounded-full text-xs font-medium text-black transition-colors cursor-pointer disabled:opacity-40"
-              style={{ background: "linear-gradient(to right, #00FFE9, #00B4D8)" }}
+              style={{ background: "linear-gradient(to right, #5F30EB, #00E0FF)" }}
             >
               {saving ? "Saving..." : "Save Draft"}
             </button>
@@ -320,9 +320,9 @@ export default function OverviewPage() {
     <DashboardShell activeHref="/dashboard/overview">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#1f1f1f] p-6 md:p-10 h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="rounded-3xl border border-[#E6E9F8] p-6 md:p-10 h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
           style={{
-            background: "rgba(11,9,10,0.2)",
+            background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
           }}
         >
@@ -331,7 +331,7 @@ export default function OverviewPage() {
             {!data?.googleConnected && (
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 px-4 py-2 bg-[#00FFE9] text-black text-sm font-medium rounded-full hover:opacity-90 transition-opacity self-start sm:self-auto"
+                className="flex items-center gap-2 px-4 py-2 bg-[#5F30EB] text-[#F6F4FF] text-sm font-medium rounded-full hover:opacity-90 transition-opacity self-start sm:self-auto"
               >
                 Connect Business Profile
               </Link>
@@ -340,27 +340,27 @@ export default function OverviewPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {[
-              { label: "Total Reviews", value: data?.summary.total ?? 0, color: "text-white" },
+              { label: "Total Reviews", value: data?.summary.total ?? 0, color: "text-[#040404]" },
               { label: "Avg Rating", value: `${data?.summary.avgRating ?? 0} *`, color: "text-yellow-400" },
-              { label: "Replied", value: data?.summary.replied ?? 0, color: "text-[#00FFE9]" },
+              { label: "Replied", value: data?.summary.replied ?? 0, color: "text-[#5F30EB]" },
               { label: "Pending", value: data?.summary.pending ?? 0, color: "text-orange-400" },
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-xl border border-[#ffffff10] p-4"
-                style={{ background: "rgba(11,9,10,0.4)" }}
+                className="rounded-xl border border-[#5F30EB20] p-4"
+                style={{ background: "rgba(255,255,255,0.92)" }}
               >
                 <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                <p className="text-gray-500 text-xs mt-0.5">{stat.label}</p>
+                <p className="text-[#8A8AA0] text-xs mt-0.5">{stat.label}</p>
               </div>
             ))}
           </div>
 
           <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6">
-            <div className="flex items-center bg-[#0B090A33] border border-[#2A2A2A] rounded-full px-4 py-2.5 flex-1 gap-2">
+            <div className="flex items-center bg-[#F6F4FF33] border border-[#E6E9F8] rounded-full px-4 py-2.5 flex-1 gap-2">
               <input
                 placeholder="Search reviews..."
-                className="flex-1 bg-transparent text-sm text-gray-300 placeholder-gray-500 focus:outline-none"
+                className="flex-1 bg-transparent text-sm text-[#4F4F63] placeholder-gray-500 focus:outline-none"
                 type="text"
                 value={search}
                 onChange={(event) => {
@@ -377,15 +377,15 @@ export default function OverviewPage() {
                   setRatingFilter(event.target.value);
                   setPage(1);
                 }}
-                className="w-full md:w-[160px] px-4 py-3 pr-10 rounded-lg border border-[#2A2A2A] text-gray-300 font-medium focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 appearance-none cursor-pointer transition-all hover:border-[#00FFE9]/30"
-                style={{ background: "rgba(11,9,10,0.2)", backdropFilter: "blur(8px)" }}
+                className="w-full md:w-[160px] px-4 py-3 pr-10 rounded-lg border border-[#E6E9F8] text-[#4F4F63] font-medium focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 appearance-none cursor-pointer transition-all hover:border-[#5F30EB]/30"
+                style={{ background: "rgba(255,255,255,0.82)", backdropFilter: "blur(8px)" }}
               >
-                <option value="0" className="bg-[#0B090A]">All Ratings</option>
-                <option value="1" className="bg-[#0B090A]">1 Star and below</option>
-                <option value="2" className="bg-[#0B090A]">2 Stars and below</option>
-                <option value="3" className="bg-[#0B090A]">3 Stars and below</option>
-                <option value="4" className="bg-[#0B090A]">4 Stars and below</option>
-                <option value="5" className="bg-[#0B090A]">5 Stars and below</option>
+                <option value="0" className="bg-[#F6F4FF]">All Ratings</option>
+                <option value="1" className="bg-[#F6F4FF]">1 Star and below</option>
+                <option value="2" className="bg-[#F6F4FF]">2 Stars and below</option>
+                <option value="3" className="bg-[#F6F4FF]">3 Stars and below</option>
+                <option value="4" className="bg-[#F6F4FF]">4 Stars and below</option>
+                <option value="5" className="bg-[#F6F4FF]">5 Stars and below</option>
               </select>
             </div>
 
@@ -396,13 +396,13 @@ export default function OverviewPage() {
                   setSortBy(event.target.value as "relevant" | "newest" | "lowest" | "rating");
                   setPage(1);
                 }}
-                className="w-full md:w-[160px] px-4 py-3 pr-10 rounded-lg border border-[#2A2A2A] text-gray-300 font-medium focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 appearance-none cursor-pointer transition-all hover:border-[#00FFE9]/30"
-                style={{ background: "rgba(11,9,10,0.2)", backdropFilter: "blur(8px)" }}
+                className="w-full md:w-[160px] px-4 py-3 pr-10 rounded-lg border border-[#E6E9F8] text-[#4F4F63] font-medium focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 appearance-none cursor-pointer transition-all hover:border-[#5F30EB]/30"
+                style={{ background: "rgba(255,255,255,0.82)", backdropFilter: "blur(8px)" }}
               >
-                <option value="relevant" className="bg-[#0B090A]">Most Relevant</option>
-                <option value="newest" className="bg-[#0B090A]">Most Recent</option>
-                <option value="lowest" className="bg-[#0B090A]">Lowest Rating</option>
-                <option value="rating" className="bg-[#0B090A]">Highest Rating</option>
+                <option value="relevant" className="bg-[#F6F4FF]">Most Relevant</option>
+                <option value="newest" className="bg-[#F6F4FF]">Most Recent</option>
+                <option value="lowest" className="bg-[#F6F4FF]">Lowest Rating</option>
+                <option value="rating" className="bg-[#F6F4FF]">Highest Rating</option>
               </select>
             </div>
           </div>
@@ -410,7 +410,7 @@ export default function OverviewPage() {
           {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
           {loading ? (
-            <p className="text-gray-400 text-sm">Loading reviews...</p>
+            <p className="text-[#6A6A82] text-sm">Loading reviews...</p>
           ) : data && data.reviews.length > 0 ? (
             <div className="space-y-4">
               {data.reviews.map((review) => (
@@ -419,7 +419,7 @@ export default function OverviewPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16">
-              <p className="text-gray-400 text-lg">No reviews match your filters</p>
+              <p className="text-[#6A6A82] text-lg">No reviews match your filters</p>
               <button
                 onClick={() => {
                   setSearch("");
@@ -427,7 +427,7 @@ export default function OverviewPage() {
                   setSortBy("relevant");
                   setPage(1);
                 }}
-                className="mt-3 text-sm text-[#00FFE9] hover:underline cursor-pointer"
+                className="mt-3 text-sm text-[#5F30EB] hover:underline cursor-pointer"
               >
                 Clear filters
               </button>
@@ -439,21 +439,21 @@ export default function OverviewPage() {
               <button
                 disabled={data.pagination.page === 1}
                 onClick={() => setPage((prev) => prev - 1)}
-                className="px-4 py-2 border border-[#2A2A2A] text-gray-300 rounded-lg hover:bg-[#1f1f1f] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer text-sm"
-                style={{ background: "rgba(11,9,10,0.2)" }}
+                className="px-4 py-2 border border-[#E6E9F8] text-[#4F4F63] rounded-lg hover:bg-[#E6E9F8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer text-sm"
+                style={{ background: "rgba(255,255,255,0.82)" }}
               >
                 Previous
               </button>
 
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-[#6A6A82]">
                 Page {data.pagination.page} of {data.pagination.totalPages}
               </div>
 
               <button
                 disabled={data.pagination.page === data.pagination.totalPages}
                 onClick={() => setPage((prev) => prev + 1)}
-                className="px-4 py-2 border border-[#2A2A2A] text-gray-300 rounded-lg hover:bg-[#1f1f1f] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer text-sm"
-                style={{ background: "rgba(11,9,10,0.2)" }}
+                className="px-4 py-2 border border-[#E6E9F8] text-[#4F4F63] rounded-lg hover:bg-[#E6E9F8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer text-sm"
+                style={{ background: "rgba(255,255,255,0.82)" }}
               >
                 Next
               </button>
@@ -464,3 +464,4 @@ export default function OverviewPage() {
     </DashboardShell>
   );
 }
+

@@ -174,17 +174,17 @@ function GetStartedContent() {
 
   return (
     <div
-      className="min-h-screen h-screen overflow-y-auto flex items-center justify-center text-white px-4 pt-24 pb-12"
+      className="min-h-screen h-screen overflow-y-auto flex items-center justify-center text-[#040404] px-4 pt-24 pb-12"
       style={{
-        background: "#0B090A",
+        background: "#F6F4FF",
         boxShadow: "inset 0px -4.65px 116.24px 24.41px #EFEFEF14",
         backdropFilter: "blur(89px)",
       }}
     >
       <div className="w-full max-w-5xl">
         <div
-          className="backdrop-blur-[60px] border border-[#ffffff33] rounded-2xl shadow-lg overflow-hidden"
-          style={{ background: "rgba(11,9,10,0.2)" }}
+          className="backdrop-blur-[60px] border border-[#5F30EB33] rounded-2xl shadow-lg overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.82)" }}
         >
           <div className="flex flex-col md:flex-row">
             {/* Left Panel */}
@@ -192,13 +192,13 @@ function GetStartedContent() {
               <div className="w-40">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  alt="Five Star Reply Logo"
+                  alt="Wakkelni Stars Logo"
                   className="w-full h-auto"
-                  src="/assets/brand/logo-01.svg"
+                  src="/assets/brand/wakkelni-logo.png"
                 />
               </div>
-              <p className="text-[#00FFE9] text-lg">Connect With AI</p>
-              <p className="text-gray-400 text-sm max-w-xs leading-relaxed">
+              <p className="text-[#5F30EB] text-lg">Connect With AI</p>
+              <p className="text-[#6A6A82] text-sm max-w-xs leading-relaxed">
                 {isLogin
                   ? "Welcome back. Log in to manage your AI-powered review replies."
                   : "Join thousands of businesses using AI to respond to reviews faster and smarter."}
@@ -207,7 +207,7 @@ function GetStartedContent() {
 
             {/* Right Panel — Form */}
             <div className="w-full md:w-1/2 p-10">
-              <h2 className="text-2xl font-semibold mb-6 text-center text-white">
+              <h2 className="text-2xl font-semibold mb-6 text-center text-[#040404]">
                 {isLogin ? "Welcome Back" : "Create Account"}
               </h2>
 
@@ -217,9 +217,9 @@ function GetStartedContent() {
                   <input
                     placeholder="Enter your full name"
                     required
-                    className="w-full px-5 py-4 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 transition-all"
+                    className="w-full px-5 py-4 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
                     style={{
-                      background: "rgba(11,9,10,0.13)",
+                      background: "rgba(255,255,255,0.9)",
                       border: "1px solid rgba(255,255,255,0.13)",
                     }}
                     type="text"
@@ -234,9 +234,9 @@ function GetStartedContent() {
                 <input
                   placeholder="Enter your email"
                   required
-                  className="w-full px-5 py-4 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 transition-all"
+                  className="w-full px-5 py-4 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
                   style={{
-                    background: "rgba(11,9,10,0.13)",
+                    background: "rgba(255,255,255,0.9)",
                     border: "1px solid rgba(255,255,255,0.13)",
                   }}
                   type="email"
@@ -251,9 +251,9 @@ function GetStartedContent() {
                   <input
                     placeholder="Enter your password"
                     required
-                    className="w-full px-5 py-4 pr-12 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 transition-all"
+                    className="w-full px-5 py-4 pr-12 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
                     style={{
-                      background: "rgba(11,9,10,0.13)",
+                      background: "rgba(255,255,255,0.9)",
                       border: "1px solid rgba(255,255,255,0.13)",
                     }}
                     type={showPassword ? "text" : "password"}
@@ -264,7 +264,7 @@ function GetStartedContent() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#4F4F63] cursor-pointer"
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
@@ -278,9 +278,9 @@ function GetStartedContent() {
                     <input
                       placeholder="Confirm your password"
                       required
-                      className="w-full px-5 py-4 pr-12 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 transition-all"
+                      className="w-full px-5 py-4 pr-12 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
                       style={{
-                        background: "rgba(11,9,10,0.13)",
+                        background: "rgba(255,255,255,0.9)",
                         border: "1px solid rgba(255,255,255,0.13)",
                       }}
                       type={showConfirm ? "text" : "password"}
@@ -291,7 +291,7 @@ function GetStartedContent() {
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#4F4F63] cursor-pointer"
                       onClick={() => setShowConfirm((v) => !v)}
                       aria-label={showConfirm ? "Hide password" : "Show password"}
                     >
@@ -305,7 +305,7 @@ function GetStartedContent() {
                   <div className="text-right">
                     <button
                       type="button"
-                      className="text-sm text-gray-400 hover:text-[#00FFE9] transition-colors cursor-pointer"
+                      className="text-sm text-[#6A6A82] hover:text-[#5F30EB] transition-colors cursor-pointer"
                     >
                       Forgot Password?
                     </button>
@@ -325,9 +325,9 @@ function GetStartedContent() {
                 type="button"
                 onClick={handleGoogleAuth}
                 disabled={googleLoading}
-                className="flex items-center justify-center gap-3 py-4 w-full mt-4 rounded-lg border text-gray-300 hover:opacity-90 transition-opacity"
+                className="flex items-center justify-center gap-3 py-4 w-full mt-4 rounded-lg border text-[#4F4F63] hover:opacity-90 transition-opacity"
                 style={{
-                  background: "rgba(11,9,10,0.07)",
+                  background: "rgba(255,255,255,0.85)",
                   border: "1px solid rgba(255,255,255,0.13)",
                 }}
               >
@@ -378,23 +378,23 @@ function GetStartedContent() {
               {/* Switch mode */}
               <div className="mt-8 text-center">
                 {isLogin ? (
-                  <p className="text-gray-400">
+                  <p className="text-[#6A6A82]">
                     Don&apos;t have an account?{" "}
                     <button
                       type="button"
                       onClick={switchMode}
-                      className="text-[#00FFE9] hover:underline font-medium cursor-pointer"
+                      className="text-[#5F30EB] hover:underline font-medium cursor-pointer"
                     >
                       Sign up.
                     </button>
                   </p>
                 ) : (
-                  <p className="text-gray-400">
+                  <p className="text-[#6A6A82]">
                     Already have an account?{" "}
                     <button
                       type="button"
                       onClick={switchMode}
-                      className="text-[#00FFE9] hover:underline font-medium cursor-pointer"
+                      className="text-[#5F30EB] hover:underline font-medium cursor-pointer"
                     >
                       Log in.
                     </button>
@@ -413,17 +413,17 @@ export default function GetStartedPage() {
   return (
     <>
       {/* Fixed Header — logo only, no nav */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#ffffff10]"
-        style={{ background: "rgba(11,9,10,0.8)", backdropFilter: "blur(12px)" }}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#5F30EB20]"
+        style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)" }}
       >
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                alt="Five Star Reply Logo"
+                alt="Wakkelni Stars Logo"
                 className="w-full h-auto"
-                src="/assets/brand/logo-02.svg"
+                src="/assets/brand/wakkelni-logo.png"
               />
             </div>
           </Link>
@@ -436,4 +436,5 @@ export default function GetStartedPage() {
     </>
   );
 }
+
 

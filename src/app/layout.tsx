@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Five Star Reply — AI Google Review Responder",
+  title: "Wakkelni Stars — AI Google Review Responder",
   description:
     "Let AI respond to hundreds of your Google Business Profile reviews in your unique brand voice. Boost SEO, build trust, and save time.",
 };

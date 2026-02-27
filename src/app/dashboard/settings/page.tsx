@@ -90,16 +90,16 @@ export default function SettingsPage() {
     <DashboardShell activeHref="/dashboard/settings">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#1f1f1f] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
           style={{
-            background: "rgba(11,9,10,0.2)",
+            background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
           }}
         >
           <h2 className="text-xl md:text-2xl font-medium mb-6">Settings</h2>
 
           {loadingInitial && (
-            <div className="mb-5 text-sm text-gray-400">Loading settings…</div>
+            <div className="mb-5 text-sm text-[#6A6A82]">Loading settings…</div>
           )}
 
           {error && (
@@ -113,7 +113,7 @@ export default function SettingsPage() {
             {/* ── AI Prompt ── */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm text-gray-400">
+                <label className="block text-sm text-[#6A6A82]">
                   AI-generated response
                 </label>
                 <span className="text-xs text-gray-600">{charCount} chars</span>
@@ -123,20 +123,20 @@ export default function SettingsPage() {
                 value={prompt}
                 onChange={(e) => handlePromptChange(e.target.value)}
                 placeholder="Enter the instruction for AI to write reviews"
-                className="w-full px-4 py-3 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 resize-vertical text-sm leading-relaxed transition-all"
+                className="w-full px-4 py-3 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 resize-vertical text-sm leading-relaxed transition-all"
                 style={{
-                  background: "rgba(11,9,10,0.2)",
+                  background: "rgba(255,255,255,0.82)",
                   border: "1px solid rgba(255,255,255,0.2)",
                   boxShadow: "inset 0px -4.65px 116.24px 24.41px #EFEFEF14",
                   scrollbarWidth: "thin",
-                  scrollbarColor: "#00FFE9 #1f1f1f",
+                  scrollbarColor: "#5F30EB #E6E9F8",
                 }}
               />
               <div className="flex items-center gap-2 mt-2">
                 <button
                   type="button"
                   onClick={() => { handlePromptChange(DEFAULT_AI_PROMPT); }}
-                  className="text-xs text-gray-500 hover:text-[#00FFE9] transition-colors cursor-pointer underline-offset-2 hover:underline"
+                  className="text-xs text-[#8A8AA0] hover:text-[#5F30EB] transition-colors cursor-pointer underline-offset-2 hover:underline"
                 >
                   Reset to default
                 </button>
@@ -145,30 +145,30 @@ export default function SettingsPage() {
 
             {/* ── Tone Style ── */}
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className="block text-sm text-[#6A6A82] mb-2">
                 Set AI Tone Style
               </label>
               <div className="relative max-w-sm">
                 <select
                   value={tone}
                   onChange={(e) => { setTone(e.target.value); setSaved(false); }}
-                  className="w-full px-4 py-3 pr-10 rounded-lg text-gray-300 font-medium focus:outline-none focus:ring-2 focus:ring-[#00FFE9]/50 focus:border-[#00FFE9]/50 appearance-none cursor-pointer transition-all duration-300 hover:border-[#00FFE9]/30"
+                  className="w-full px-4 py-3 pr-10 rounded-lg text-[#4F4F63] font-medium focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 focus:border-[#5F30EB]/50 appearance-none cursor-pointer transition-all duration-300 hover:border-[#5F30EB]/30"
                   style={{
-                    background: "rgba(11,9,10,0.2)",
-                    border: "1px solid #2A2A2A",
+                    background: "rgba(255,255,255,0.82)",
+                    border: "1px solid #E6E9F8",
                     boxShadow: "inset 0px -4px 40px 5px #0B385829",
                     backdropFilter: "blur(8px)",
                   }}
                 >
                   {TONE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="bg-[#0B090A] text-gray-300">
+                    <option key={opt.value} value={opt.value} className="bg-[#F6F4FF] text-[#4F4F63]">
                       {opt.label}
                     </option>
                   ))}
                 </select>
                 <svg
                   xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                  fill="none" stroke="#00FFE9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                   className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-300"
                   aria-hidden="true"
                 >
@@ -185,8 +185,8 @@ export default function SettingsPage() {
                     onClick={() => { setTone(opt.value); setSaved(false); }}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       tone === opt.value
-                        ? "bg-[#00FFE9]/20 text-[#00FFE9] border border-[#00FFE9]/40"
-                        : "bg-[#1a1a1a] text-gray-500 border border-[#ffffff10] hover:text-gray-300 hover:border-[#ffffff25]"
+                        ? "bg-[#5F30EB]/20 text-[#5F30EB] border border-[#5F30EB]/40"
+                        : "bg-[#EEF2FF] text-[#8A8AA0] border border-[#5F30EB20] hover:text-[#4F4F63] hover:border-[#5F30EB25]"
                     }`}
                   >
                     {opt.label}
@@ -197,37 +197,37 @@ export default function SettingsPage() {
 
             {/* ── Post Approval ── */}
             <div>
-              <label className="block text-sm text-gray-400 mb-3">
+              <label className="block text-sm text-[#6A6A82] mb-3">
                 Reviews Post Approval
               </label>
               <div className="flex items-center gap-8">
                 <label className="flex items-center gap-2.5 cursor-pointer group">
                   <input
-                    className="accent-[#00FFE9] w-4 h-4 cursor-pointer"
+                    className="accent-[#5F30EB] w-4 h-4 cursor-pointer"
                     type="radio"
                     name="postType"
                     checked={postType === "auto"}
                     onChange={() => { setPostType("auto"); setSaved(false); }}
                   />
-                  <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+                  <span className="text-[#4F4F63] text-sm group-hover:text-[#040404] transition-colors">
                     Auto Post
                   </span>
                 </label>
                 <label className="flex items-center gap-2.5 cursor-pointer group">
                   <input
-                    className="accent-[#00FFE9] w-4 h-4 cursor-pointer"
+                    className="accent-[#5F30EB] w-4 h-4 cursor-pointer"
                     type="radio"
                     name="postType"
                     checked={postType === "review"}
                     onChange={() => { setPostType("review"); setSaved(false); }}
                   />
-                  <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+                  <span className="text-[#4F4F63] text-sm group-hover:text-[#040404] transition-colors">
                     Review before publish
                   </span>
                 </label>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Current setting: <span className="text-gray-400">{postLabel}</span>
+              <p className="text-xs text-[#8A8AA0] mt-2">
+                Current setting: <span className="text-[#6A6A82]">{postLabel}</span>
               </p>
             </div>
 
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                 disabled={saving}
                 className="px-6 py-3 rounded-full font-semibold text-black transition-all duration-300 cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2"
                 style={{
-                  background: "#00FFE9",
+                  background: "#5F30EB",
                   boxShadow: "0px 4.65px 9.3px 1.16px #F4F4FE40 inset",
                 }}
               >
@@ -272,3 +272,4 @@ export default function SettingsPage() {
     </DashboardShell>
   );
 }
+

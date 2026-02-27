@@ -21,9 +21,9 @@ interface TeamMember {
 }
 
 const ROLE_COLORS: Record<Role, string> = {
-  VIEWER: "text-gray-400 bg-gray-500/10 border-gray-500/20",
+  VIEWER: "text-[#6A6A82] bg-gray-500/10 border-gray-500/20",
   EDITOR: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-  MANAGER: "text-[#00FFE9] bg-[#00FFE9]/10 border-[#00FFE9]/20",
+  MANAGER: "text-[#5F30EB] bg-[#5F30EB]/10 border-[#5F30EB]/20",
 };
 
 const STATUS_COLORS: Record<MemberStatus, string> = {
@@ -32,9 +32,9 @@ const STATUS_COLORS: Record<MemberStatus, string> = {
 };
 
 const inputCls =
-  "w-full px-3 py-2 rounded-md text-[#C3C3C3] focus:outline-none focus:ring-2 focus:ring-[#00FFE9] focus:border-transparent transition-all";
+  "w-full px-3 py-2 rounded-md text-[#4E4E5E] focus:outline-none focus:ring-2 focus:ring-[#5F30EB] focus:border-transparent transition-all";
 const inputStyle = {
-  background: "#1a1a1a",
+  background: "#EEF2FF",
   border: "1px solid rgba(255,255,255,0.15)",
 };
 
@@ -195,15 +195,15 @@ export default function TeamPage() {
           style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a2a transparent" }}
         >
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#C3C3C3] mb-2">Team Management</h1>
-            <p className="text-[#B0B0B0]">Invite and manage team members for your businesses</p>
+            <h1 className="text-3xl font-bold text-[#4E4E5E] mb-2">Team Management</h1>
+            <p className="text-[#646478]">Invite and manage team members for your businesses</p>
           </div>
 
           <div
-            className="rounded-xl border border-[#ffffff]/20 p-6 mb-8"
-            style={{ background: "rgba(11,9,10,0.2)" }}
+            className="rounded-xl border border-[#5F30EB]/20 p-6 mb-8"
+            style={{ background: "rgba(255,255,255,0.82)" }}
           >
-            <h2 className="text-xl font-semibold text-[#C3C3C3] mb-4">Invite Team Member</h2>
+            <h2 className="text-xl font-semibold text-[#4E4E5E] mb-4">Invite Team Member</h2>
 
             {success && (
               <div className="mb-4 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function TeamPage() {
             <form onSubmit={handleInvite} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#B0B0B0] mb-1">Email Address</label>
+                  <label className="block text-sm font-medium text-[#646478] mb-1">Email Address</label>
                   <input
                     required
                     type="email"
@@ -237,7 +237,7 @@ export default function TeamPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[#B0B0B0] mb-1">Business</label>
+                  <label className="block text-sm font-medium text-[#646478] mb-1">Business</label>
                   <div className="relative">
                     <select
                       required
@@ -247,13 +247,13 @@ export default function TeamPage() {
                       onChange={(e) => setBusiness(e.target.value)}
                     >
                       {businesses.map((item) => (
-                        <option key={item} value={item} className="bg-[#1a1a1a]">
+                        <option key={item} value={item} className="bg-[#EEF2FF]">
                           {item}
                         </option>
                       ))}
                     </select>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="#00FFE9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
                       <path d="m6 9 6 6 6-6" />
                     </svg>
@@ -261,7 +261,7 @@ export default function TeamPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[#B0B0B0] mb-1">Role</label>
+                  <label className="block text-sm font-medium text-[#646478] mb-1">Role</label>
                   <div className="relative">
                     <select
                       required
@@ -270,12 +270,12 @@ export default function TeamPage() {
                       value={role}
                       onChange={(e) => setRole(e.target.value as Role)}
                     >
-                      <option value="VIEWER" className="bg-[#1a1a1a]">Viewer — Can view reviews</option>
-                      <option value="EDITOR" className="bg-[#1a1a1a]">Editor — Can view and reply to reviews</option>
-                      <option value="MANAGER" className="bg-[#1a1a1a]">Manager — Full team management access</option>
+                      <option value="VIEWER" className="bg-[#EEF2FF]">Viewer — Can view reviews</option>
+                      <option value="EDITOR" className="bg-[#EEF2FF]">Editor — Can view and reply to reviews</option>
+                      <option value="MANAGER" className="bg-[#EEF2FF]">Manager — Full team management access</option>
                     </select>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="#00FFE9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
                       <path d="m6 9 6 6 6-6" />
                     </svg>
@@ -286,8 +286,8 @@ export default function TeamPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2 rounded-md font-medium text-[#0B090A] hover:opacity-80 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
-                style={{ background: "#00FFE9" }}
+                className="px-6 py-2 rounded-md font-medium text-[#F6F4FF] hover:opacity-80 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                style={{ background: "#5F30EB" }}
               >
                 {submitting ? (
                   <>
@@ -310,20 +310,20 @@ export default function TeamPage() {
             </form>
           </div>
 
-          <div className="rounded-xl border border-[#ffffff]/20 overflow-hidden"
-            style={{ background: "rgba(11,9,10,0.2)" }}>
-            <div className="p-6 border-b border-[#ffffff]/20 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[#C3C3C3]">Team Members</h2>
-              <span className="text-xs text-gray-500 bg-[#1f1f1f] border border-[#ffffff10] px-2.5 py-1 rounded-full">
+          <div className="rounded-xl border border-[#5F30EB]/20 overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.82)" }}>
+            <div className="p-6 border-b border-[#5F30EB]/20 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-[#4E4E5E]">Team Members</h2>
+              <span className="text-xs text-[#8A8AA0] bg-[#E6E9F8] border border-[#5F30EB20] px-2.5 py-1 rounded-full">
                 {members.length} member{members.length !== 1 ? "s" : ""}
               </span>
             </div>
 
-            <div className="divide-y divide-[#ffffff]/10">
+            <div className="divide-y divide-[#5F30EB]/10">
               {loadingMembers ? (
-                <div className="p-10 text-center text-[#B0B0B0]">Loading team members…</div>
+                <div className="p-10 text-center text-[#646478]">Loading team members…</div>
               ) : members.length === 0 ? (
-                <div className="p-10 text-center text-[#B0B0B0]">
+                <div className="p-10 text-center text-[#646478]">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
                     className="text-gray-600 mx-auto mb-3" aria-hidden="true">
@@ -342,14 +342,14 @@ export default function TeamPage() {
                       removingId === member.id ? "opacity-40" : "opacity-100"
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-[#040404] text-sm font-semibold flex-shrink-0"
                       style={{ background: getAvatarColor(member.email) }}>
                       {getInitials(member.email)}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#C3C3C3] font-medium text-sm truncate">{member.email}</p>
-                      <p className="text-gray-500 text-xs truncate">
+                      <p className="text-[#4E4E5E] font-medium text-sm truncate">{member.email}</p>
+                      <p className="text-[#8A8AA0] text-xs truncate">
                         {member.business} · Joined {member.joinedAt}
                       </p>
                     </div>
@@ -366,9 +366,9 @@ export default function TeamPage() {
                         className={`text-xs font-medium px-2.5 py-1 rounded-full border appearance-none cursor-pointer pr-6 disabled:opacity-50 disabled:cursor-not-allowed ${ROLE_COLORS[member.role]}`}
                         style={{ background: "transparent" }}
                       >
-                        <option value="VIEWER" className="bg-[#1a1a1a] text-gray-300">Viewer</option>
-                        <option value="EDITOR" className="bg-[#1a1a1a] text-gray-300">Editor</option>
-                        <option value="MANAGER" className="bg-[#1a1a1a] text-gray-300">Manager</option>
+                        <option value="VIEWER" className="bg-[#EEF2FF] text-[#4F4F63]">Viewer</option>
+                        <option value="EDITOR" className="bg-[#EEF2FF] text-[#4F4F63]">Editor</option>
+                        <option value="MANAGER" className="bg-[#EEF2FF] text-[#4F4F63]">Manager</option>
                       </select>
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -381,7 +381,7 @@ export default function TeamPage() {
                       onClick={() => handleRemove(member)}
                       disabled={removingId === member.id || !member.canRemove}
                       title="Remove member"
-                      className="flex-shrink-0 p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex-shrink-0 p-2 rounded-lg text-[#8A8AA0] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -399,3 +399,4 @@ export default function TeamPage() {
     </DashboardShell>
   );
 }
+

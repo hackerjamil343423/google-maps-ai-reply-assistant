@@ -166,7 +166,7 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
 function LineChart({
   data,
   labels,
-  color = "#00FFE9",
+  color = "#5F30EB",
   height = 260,
 }: {
   data: number[];
@@ -197,7 +197,7 @@ function LineChart({
         const y = H - t * (H - PAD);
         return (
           <g key={t}>
-            <line x1={PAD} x2={W - PAD} y1={y} y2={y} stroke="#ffffff08" strokeWidth="1" />
+            <line x1={PAD} x2={W - PAD} y1={y} y2={y} stroke="#5F30EB14" strokeWidth="1" />
             <text x={PAD - 6} y={y + 4} fontSize="9" fill="#666" textAnchor="end">
               {Math.round(min + t * (max - min))}
             </text>
@@ -226,13 +226,13 @@ function LineChart({
             cx={point.x}
             cy={point.y}
             r={hovered === index ? 6 : 4}
-            fill={hovered === index ? color : "#0B090A"}
+            fill={hovered === index ? color : "#F6F4FF"}
             stroke={color}
             strokeWidth="2"
           />
           {hovered === index && (
             <g>
-              <rect x={point.x - 32} y={point.y - 34} width="64" height="22" rx="4" fill="#0B090A" stroke={color} strokeWidth="1" />
+              <rect x={point.x - 32} y={point.y - 34} width="64" height="22" rx="4" fill="#F6F4FF" stroke={color} strokeWidth="1" />
               <text x={point.x} y={point.y - 19} textAnchor="middle" fontSize="11" fill={color} fontWeight="700">
                 {data[index]}
               </text>
@@ -292,12 +292,12 @@ function RadialProgress({ value, size = 110 }: { value: number; size?: number })
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="#1f1f1f" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={radius} stroke="#E6E9F8" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#00FFE9"
+          stroke="#5F30EB"
           strokeWidth={stroke}
           fill="none"
           strokeDasharray={circ}
@@ -307,7 +307,7 @@ function RadialProgress({ value, size = 110 }: { value: number; size?: number })
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xl font-semibold text-[#00FFE9]">{value}%</span>
+        <span className="text-xl font-semibold text-[#5F30EB]">{value}%</span>
       </div>
     </div>
   );
@@ -358,16 +358,16 @@ export default function AnalyticsPage() {
     <DashboardShell activeHref="/dashboard/analytics">
       <div className="h-full">
         <div
-          className="rounded-3xl border border-[#1f1f1f] p-4 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="rounded-3xl border border-[#E6E9F8] p-4 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
           style={{
-            background: "rgba(11,9,10,0.2)",
+            background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
           }}
         >
           <h2 className="text-xl md:text-2xl font-medium mb-6">Analytics</h2>
 
           {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
-          {loading && <p className="text-sm text-gray-400 mb-4">Loading analytics...</p>}
+          {loading && <p className="text-sm text-[#6A6A82] mb-4">Loading analytics...</p>}
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {analytics.stats.map((stat) => (
@@ -375,12 +375,12 @@ export default function AnalyticsPage() {
                 key={stat.label}
                 className="rounded-2xl p-5 border border-[#2a2a2a] space-y-2"
                 style={{
-                  background: "rgba(11,9,10,0.2)",
+                  background: "rgba(255,255,255,0.82)",
                   boxShadow: "inset 0px -4px 40px 5px #0B385829",
                 }}
               >
-                <p className="text-white text-sm">{stat.label}</p>
-                <h3 className="text-2xl md:text-4xl lg:text-5xl text-[#00FFE9] font-light tabular-nums">
+                <p className="text-[#040404] text-sm">{stat.label}</p>
+                <h3 className="text-2xl md:text-4xl lg:text-5xl text-[#5F30EB] font-light tabular-nums">
                   <AnimatedNumber target={stat.value} suffix={stat.suffix} />
                 </h3>
               </div>
@@ -389,44 +389,44 @@ export default function AnalyticsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div
-              className="lg:col-span-2 rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
+              className="lg:col-span-2 rounded-2xl border border-[#E6E9F8] p-4 md:p-6"
               style={{
-                background: "rgba(11,9,10,0.2)",
+                background: "rgba(255,255,255,0.82)",
                 boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
               }}
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-gray-400">Monthly Replied Reviews</p>
+                <p className="text-sm text-[#6A6A82]">Monthly Replied Reviews</p>
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[#00FFE9] inline-block" />
-                  <span className="text-xs text-gray-400">Replied Trend</span>
+                  <span className="w-3 h-3 rounded-full bg-[#5F30EB] inline-block" />
+                  <span className="text-xs text-[#6A6A82]">Replied Trend</span>
                 </div>
               </div>
-              <LineChart data={analytics.impactData} labels={analytics.monthLabels} color="#00FFE9" height={240} />
+              <LineChart data={analytics.impactData} labels={analytics.monthLabels} color="#5F30EB" height={240} />
             </div>
 
             <div className="flex flex-col gap-4">
               <div
-                className="rounded-2xl border border-[#1f1f1f] p-6 text-center flex-1 flex flex-col justify-center"
+                className="rounded-2xl border border-[#E6E9F8] p-6 text-center flex-1 flex flex-col justify-center"
                 style={{
-                  background: "rgba(11,9,10,0.2)",
+                  background: "rgba(255,255,255,0.82)",
                   boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
                 }}
               >
-                <p className="text-sm text-gray-400 mb-3">Average Rating</p>
+                <p className="text-sm text-[#6A6A82] mb-3">Average Rating</p>
                 <StarDisplay rating={analytics.avgRating} />
-                <h3 className="text-4xl font-semibold text-[#00FFE9] mt-3">{analytics.avgRating}</h3>
-                <p className="text-xs text-gray-500 mt-1">out of 5.0</p>
+                <h3 className="text-4xl font-semibold text-[#5F30EB] mt-3">{analytics.avgRating}</h3>
+                <p className="text-xs text-[#8A8AA0] mt-1">out of 5.0</p>
               </div>
 
               <div
-                className="rounded-2xl border border-[#1f1f1f] p-6 text-center flex-1 flex flex-col items-center justify-center"
+                className="rounded-2xl border border-[#E6E9F8] p-6 text-center flex-1 flex flex-col items-center justify-center"
                 style={{
-                  background: "rgba(11,9,10,0.2)",
+                  background: "rgba(255,255,255,0.82)",
                   boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
                 }}
               >
-                <p className="text-sm text-gray-400 mb-3">Response Rate</p>
+                <p className="text-sm text-[#6A6A82] mb-3">Response Rate</p>
                 <RadialProgress value={analytics.responseRate} size={110} />
               </div>
             </div>
@@ -434,13 +434,13 @@ export default function AnalyticsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div
-              className="rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
+              className="rounded-2xl border border-[#E6E9F8] p-4 md:p-6"
               style={{
-                background: "rgba(11,9,10,0.2)",
+                background: "rgba(255,255,255,0.82)",
                 boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
               }}
             >
-              <p className="text-sm text-gray-400 mb-4">Monthly Reviews</p>
+              <p className="text-sm text-[#6A6A82] mb-4">Monthly Reviews</p>
               <div className="flex items-end gap-2 h-32">
                 {analytics.reviewsData.map((value, index) => {
                   const pct = (value / maxMonthlyReviews) * 100;
@@ -450,7 +450,7 @@ export default function AnalyticsPage() {
                         className="w-full rounded-t-md transition-all duration-300 group-hover:opacity-80"
                         style={{
                           height: `${pct}%`,
-                          background: "linear-gradient(to top, #00FFE9, #00B4D8)",
+                          background: "linear-gradient(to top, #5F30EB, #00E0FF)",
                           minHeight: 4,
                         }}
                         title={`${analytics.monthLabels[index]}: ${value}`}
@@ -463,28 +463,28 @@ export default function AnalyticsPage() {
             </div>
 
             <div
-              className="rounded-2xl border border-[#1f1f1f] p-4 md:p-6"
+              className="rounded-2xl border border-[#E6E9F8] p-4 md:p-6"
               style={{
-                background: "rgba(11,9,10,0.2)",
+                background: "rgba(255,255,255,0.82)",
                 boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
               }}
             >
-              <p className="text-sm text-gray-400 mb-4">Rating Distribution</p>
+              <p className="text-sm text-[#6A6A82] mb-4">Rating Distribution</p>
               <div className="space-y-3">
                 {analytics.ratingDist.map((item) => (
                   <div key={item.stars} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-8 flex-shrink-0">{item.stars}*</span>
-                    <div className="flex-1 bg-[#1f1f1f] rounded-full h-2 overflow-hidden">
+                    <span className="text-xs text-[#6A6A82] w-8 flex-shrink-0">{item.stars}*</span>
+                    <div className="flex-1 bg-[#E6E9F8] rounded-full h-2 overflow-hidden">
                       <div
                         className="h-2 rounded-full transition-all duration-700"
                         style={{
                           width: `${item.pct}%`,
                           background:
-                            item.stars >= 4 ? "#00FFE9" : item.stars === 3 ? "#D97706" : "#EF4444",
+                            item.stars >= 4 ? "#5F30EB" : item.stars === 3 ? "#D97706" : "#EF4444",
                         }}
                       />
                     </div>
-                    <span className="text-xs text-gray-500 w-8 text-right flex-shrink-0">{item.count}</span>
+                    <span className="text-xs text-[#8A8AA0] w-8 text-right flex-shrink-0">{item.count}</span>
                   </div>
                 ))}
               </div>
@@ -495,3 +495,4 @@ export default function AnalyticsPage() {
     </DashboardShell>
   );
 }
+

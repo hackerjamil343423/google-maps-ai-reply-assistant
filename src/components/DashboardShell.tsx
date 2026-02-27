@@ -101,11 +101,11 @@ function SidebarInner({
   onLogout: () => Promise<void>;
 }) {
   return (
-    <div className="flex flex-col h-full bg-[#0B090A33] border border-[#ffffff]/20 shadow-[0_-4px_100px_21px_#efefef14_inset] py-6 rounded-3xl overflow-hidden">
+    <div className="flex flex-col h-full bg-[#F6F4FF33] border border-[#5F30EB]/20 shadow-[0_-4px_100px_21px_#efefef14_inset] py-6 rounded-3xl overflow-hidden">
       <div className="flex flex-col items-center flex-1 overflow-y-auto">
         <Link href="/" className="w-10 h-10 flex items-center justify-center shrink-0" onClick={onClose}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt="Five Star Reply" src="/assets/brand/logo-icon.svg"
+          <img alt="Wakkelni Stars" src="/assets/brand/wakkelni-logo.png"
             width={40} height={40} className="w-10 h-10 object-contain" />
         </Link>
 
@@ -116,8 +116,8 @@ function SidebarInner({
               <Link key={item.title} href={item.href} title={item.title} onClick={onClose}
                 className={`p-3 rounded-xl transition-all duration-300 ${
                   isActive
-                    ? "bg-[#00FFE920] text-[#00FFE9] shadow-[0_0_10px_#00FFE940]"
-                    : "text-[#B0B0B0] hover:text-[#00FFE9] hover:bg-[#00FFE910]"
+                    ? "bg-[#5F30EB20] text-[#5F30EB] shadow-[0_0_10px_#5F30EB40]"
+                    : "text-[#646478] hover:text-[#5F30EB] hover:bg-[#5F30EB10]"
                 }`}>
                 {item.icon}
               </Link>
@@ -126,11 +126,11 @@ function SidebarInner({
         </nav>
       </div>
 
-      <div className="flex flex-col items-center pt-4 mt-auto border-t border-white/10 shrink-0">
+      <div className="flex flex-col items-center pt-4 mt-auto border-t border-[#5F30EB]/12 shrink-0">
         <button
           title="Logout"
           onClick={onLogout}
-          className="p-3 rounded-xl transition-all duration-300 cursor-pointer text-[#B0B0B0] hover:text-[#FF4E4E] hover:bg-[#FF4E4E20]"
+          className="p-3 rounded-xl transition-all duration-300 cursor-pointer text-[#646478] hover:text-[#FF4E4E] hover:bg-[#FF4E4E20]"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -204,7 +204,7 @@ export default function DashboardShell({
   }
 
   return (
-    <div className="min-h-screen bg-[#0B090A] text-white">
+    <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
       {/* Desktop sidebar */}
       <aside className="fixed top-0 left-0 h-full w-[150px] px-6 pt-6 hidden md:block z-10">
         <SidebarInner activeHref={activeHref} onLogout={handleLogout} />
@@ -213,7 +213,7 @@ export default function DashboardShell({
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-[#F8F9FF]/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative w-[150px] h-full px-3 pt-6 pb-4 z-50">
             <SidebarInner
               activeHref={activeHref}
@@ -230,14 +230,14 @@ export default function DashboardShell({
         <header className="flex justify-between items-center w-full mb-10">
           <div className="w-40">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt="Five Star Reply Logo" className="w-full h-auto"
-              src="/assets/brand/logo-02.svg" />
+            <img alt="Wakkelni Stars Logo" className="w-full h-auto"
+              src="/assets/brand/wakkelni-logo.png" />
           </div>
           <div className="flex items-center space-x-4">
-            <button className="md:hidden p-2 rounded-lg hover:bg-[#00FFE910] transition-colors cursor-pointer"
+            <button className="md:hidden p-2 rounded-lg hover:bg-[#5F30EB10] transition-colors cursor-pointer"
               aria-label="Toggle menu" onClick={() => setMobileOpen(true)}>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                fill="none" stroke="#00FFE9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" />
               </svg>
             </button>
@@ -245,19 +245,19 @@ export default function DashboardShell({
             <div className="relative">
               <button className="flex items-center cursor-pointer" aria-label="Toggle profile"
                 onClick={() => setProfileOpen(!profileOpen)}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#2A2A2A] text-white font-semibold border border-[#00FFE9]/20 select-none">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E6E9F8] text-[#040404] font-semibold border border-[#5F30EB]/20 select-none">
                   {initials}
                 </div>
               </button>
               {profileOpen && (
-                <div className="absolute right-0 top-12 w-48 rounded-xl border border-[#ffffff22] py-2 z-50"
-                  style={{ background: "#141414" }}>
-                  <div className="px-4 py-2 border-b border-white/10 mb-1">
-                    <p className="text-sm font-medium text-white">{profile.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{profile.email}</p>
+                <div className="absolute right-0 top-12 w-48 rounded-xl border border-[#5F30EB22] py-2 z-50"
+                  style={{ background: "#FFFFFF" }}>
+                  <div className="px-4 py-2 border-b border-[#5F30EB]/12 mb-1">
+                    <p className="text-sm font-medium text-[#040404]">{profile.name}</p>
+                    <p className="text-xs text-[#8A8AA0] truncate">{profile.email}</p>
                   </div>
                   <Link href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-[#00FFE9] hover:bg-[#00FFE910] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-[#4F4F63] hover:text-[#5F30EB] hover:bg-[#5F30EB10] transition-colors"
                     onClick={() => setProfileOpen(false)}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -267,7 +267,7 @@ export default function DashboardShell({
                     Profile
                   </Link>
                   <Link href="/dashboard/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-[#00FFE9] hover:bg-[#00FFE910] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-[#4F4F63] hover:text-[#5F30EB] hover:bg-[#5F30EB10] transition-colors"
                     onClick={() => setProfileOpen(false)}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -298,4 +298,5 @@ export default function DashboardShell({
     </div>
   );
 }
+
 

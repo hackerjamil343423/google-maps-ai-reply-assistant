@@ -576,14 +576,14 @@ export default function Home() {
   }, [fetchBusinessSuggestions, searchValue, selectedBusiness]);
 
   return (
-    <div className="min-h-screen bg-[#0B090A] text-white">
+    <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
       {/* Navbar */}
       <nav className="relative flex items-center justify-between px-6 lg:px-20 py-6">
         <Link href="/" className="flex items-center space-x-2 w-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assets/brand/logo-02.svg"
-            alt="Five Star Reply Logo"
+            src="/assets/brand/wakkelni-logo.png"
+            alt="Wakkelni Stars Logo"
             className="w-full h-auto"
           />
         </Link>
@@ -596,8 +596,8 @@ export default function Home() {
               href={link.href}
               className={`transition-colors ${
                 link.href === "/"
-                  ? "text-[#C3C3C3]"
-                  : "text-[#C3C3C3]/50 hover:text-[#C3C3C3]/70"
+                  ? "text-[#4E4E5E]"
+                  : "text-[#4E4E5E]/50 hover:text-[#4E4E5E]/70"
               }`}
             >
               {link.label}
@@ -610,7 +610,7 @@ export default function Home() {
           {isAuthenticated ? (
             <Link
               href="/dashboard/overview"
-              className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+              className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
             >
               Dashboard
             </Link>
@@ -618,13 +618,13 @@ export default function Home() {
             <>
               <Link
                 href="/GetStarted?mode=login"
-                className="text-white hover:text-[#00FFE9] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
+                className="text-[#040404] hover:text-[#5F30EB] transition-colors px-6 py-2 z-10 cursor-pointer rounded-full font-normal"
               >
                 Log In
               </Link>
               <Link
                 href="/GetStarted?mode=signup"
-                className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+                className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
               >
                 Get Started
               </Link>
@@ -634,7 +634,7 @@ export default function Home() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-white cursor-pointer z-10"
+          className="md:hidden text-[#040404] cursor-pointer z-10"
           aria-label="Toggle menu"
           onClick={() => setMenuOpen(!menuOpen)}
         >
@@ -658,12 +658,12 @@ export default function Home() {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-[#1b1c1c] flex flex-col items-center py-6 space-y-4 md:hidden z-50">
+          <div className="absolute top-full left-0 right-0 bg-[#FFFFFF] flex flex-col items-center py-6 space-y-4 md:hidden z-50">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[#C3C3C3] hover:text-white transition-colors"
+                className="text-[#4E4E5E] hover:text-[#040404] transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
@@ -672,7 +672,7 @@ export default function Home() {
             {isAuthenticated ? (
               <Link
                 href="/dashboard/overview"
-                className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+                className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
               >
                 Dashboard
               </Link>
@@ -680,13 +680,13 @@ export default function Home() {
               <>
                 <Link
                   href="/GetStarted?mode=login"
-                  className="text-white hover:text-[#00FFE9] transition-colors"
+                  className="text-[#040404] hover:text-[#5F30EB] transition-colors"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/GetStarted?mode=signup"
-                  className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#00FFE9] transition-colors"
+                  className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
                 >
                   Get Started
                 </Link>
@@ -697,7 +697,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="flex pt-10 flex-col relative items-center text-white md:px-6 md:py-20 justify-center min-h-[85vh]">
+      <section className="flex pt-10 flex-col relative items-center text-[#040404] md:px-6 md:py-20 justify-center min-h-[85vh]">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -715,14 +715,14 @@ export default function Home() {
               <div className="w-2 h-2 rotate-45 bg-white shadow-lg shadow-white/50" />
             </div>
             <div
-              className="px-6 md:px-12 py-2 rounded-full border border-[#FFFFFF33]"
+              className="px-6 md:px-12 py-2 rounded-full border border-[#5F30EB33]"
               style={{
                 background:
                   "linear-gradient(180deg, rgba(2,7,26,0.04) 0%, rgba(2,7,26,0.16) 100%)",
                 boxShadow: "0px 4px 8px 1px #F4F4FE40 inset",
               }}
             >
-              <span className="text-white text-[12px] md:text-xl tracking-wider">
+              <span className="text-[#040404] text-[12px] md:text-xl tracking-wider">
                 Auto-Reply To Your Google Reviews Using AI
               </span>
             </div>
@@ -743,14 +743,14 @@ export default function Home() {
           {/* Search Form */}
           <div className="mt-6 w-full flex flex-col items-center space-y-4">
             <form
-              className="w-full flex flex-col md:flex-row items-center gap-3 bg-[#1b1c1c] rounded-lg md:rounded-full p-3 relative"
+              className="w-full flex flex-col md:flex-row items-center gap-3 bg-[#FFFFFF] rounded-lg md:rounded-full p-3 relative"
               role="search"
               onSubmit={handleSearchSubmit}
             >
               <input
                 type="text"
                 placeholder="Type your business name and address here"
-                className="w-full bg-transparent text-white rounded-full px-4 py-3 focus:outline-none placeholder:text-gray-400"
+                className="w-full bg-transparent text-[#040404] rounded-full px-4 py-3 focus:outline-none placeholder:text-[#6A6A82]"
                 aria-label="Search business reviews"
                 value={searchValue}
                 onChange={(e) => {
@@ -764,7 +764,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={searchLoading || previewLoading}
-                className="w-full md:w-auto cursor-pointer bg-white text-black px-6 py-3 font-bold rounded-lg md:rounded-full transition hover:bg-[#00FFE9] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full md:w-auto cursor-pointer bg-white text-black px-6 py-3 font-bold rounded-lg md:rounded-full transition hover:bg-[#5F30EB] hover:text-[#F6F4FF] disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Submit search"
               >
                 {searchLoading || previewLoading ? "Loading..." : "Go!"}
@@ -772,9 +772,9 @@ export default function Home() {
             </form>
 
             {(searchLoading || searchResults.length > 0) && (
-              <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#131313] overflow-hidden">
+              <div className="w-full max-w-3xl rounded-2xl border border-[#5F30EB]/12 bg-white overflow-hidden">
                 {searchLoading && (
-                  <div className="px-4 py-3 text-sm text-gray-400">
+                  <div className="px-4 py-3 text-sm text-[#6A6A82]">
                     Searching businesses...
                   </div>
                 )}
@@ -791,9 +791,9 @@ export default function Home() {
                       }}
                       className="w-full text-left px-4 py-3 border-t border-white/5 hover:bg-[#1d1d1d] transition-colors"
                     >
-                      <p className="text-sm text-white font-medium">{result.name}</p>
+                      <p className="text-sm text-[#040404] font-medium">{result.name}</p>
                       {result.address && (
-                        <p className="text-xs text-gray-400 mt-1">{result.address}</p>
+                        <p className="text-xs text-[#6A6A82] mt-1">{result.address}</p>
                       )}
                     </button>
                   ))}
@@ -804,7 +804,7 @@ export default function Home() {
               <p className="text-sm text-red-400 text-center max-w-3xl">{searchError}</p>
             )}
 
-            <div className="text-center text-gray-300 max-w-2xl px-4">
+            <div className="text-center text-[#4F4F63] max-w-2xl px-4">
               <p className="mb-2">
                 Don&apos;t just take our word for it. Watch our AI write a
                 perfect response for your business right now.
@@ -817,20 +817,20 @@ export default function Home() {
             </div>
 
             {(previewLoading || previewError || previewItems.length > 0) && (
-              <div className="w-full max-w-5xl mt-4 rounded-2xl border border-white/10 bg-[#101010] p-4 md:p-6">
+              <div className="w-full max-w-5xl mt-4 rounded-2xl border border-[#5F30EB]/12 bg-white p-4 md:p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
-                  <h3 className="text-lg md:text-xl font-semibold text-white">
+                  <h3 className="text-lg md:text-xl font-semibold text-[#040404]">
                     Live Review Reply Preview
                   </h3>
                   {selectedBusiness && (
-                    <p className="text-xs md:text-sm text-[#00FFE9]">
+                    <p className="text-xs md:text-sm text-[#5F30EB]">
                       {selectedBusiness.name}
                     </p>
                   )}
                 </div>
 
                 {previewLoading && previewItems.length === 0 && (
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-[#6A6A82]">
                     Loading reviews and generating replies...
                   </p>
                 )}
@@ -844,23 +844,23 @@ export default function Home() {
                     {previewItems.map((item) => (
                       <article
                         key={item.id}
-                        className="rounded-xl border border-white/10 bg-[#171717] p-4 text-left"
+                        className="rounded-xl border border-[#5F30EB]/12 bg-[#F9FAFF] p-4 text-left"
                       >
                         <div className="flex items-center justify-between gap-2 mb-2">
-                          <p className="text-sm text-white font-medium truncate">
+                          <p className="text-sm text-[#040404] font-medium truncate">
                             {item.authorName}
                           </p>
-                          <p className="text-xs text-[#00FFE9]">
+                          <p className="text-xs text-[#5F30EB]">
                             {"★".repeat(Math.max(1, Math.min(5, item.rating)))}
                           </p>
                         </div>
-                        <p className="text-xs text-gray-300 leading-relaxed mb-4">
+                        <p className="text-xs text-[#4F4F63] leading-relaxed mb-4">
                           {item.review}
                         </p>
 
-                        <div className="rounded-lg border border-[#00FFE930] bg-[#00FFE90D] p-3 min-h-[110px]">
+                        <div className="rounded-lg border border-[#5F30EB30] bg-[#5F30EB0D] p-3 min-h-[110px]">
                           {item.loading && (
-                            <p className="text-xs text-gray-300">
+                            <p className="text-xs text-[#4F4F63]">
                               Generating AI reply...
                             </p>
                           )}
@@ -869,11 +869,11 @@ export default function Home() {
                           )}
                           {!item.loading && !item.error && (
                             <>
-                              <p className="text-xs text-white leading-relaxed">
+                              <p className="text-xs text-[#040404] leading-relaxed">
                                 {item.reply}
                               </p>
                               {item.source && (
-                                <p className="text-[10px] uppercase tracking-wide text-[#00FFE9] mt-2">
+                                <p className="text-[10px] uppercase tracking-wide text-[#5F30EB] mt-2">
                                   Source: {item.source}
                                 </p>
                               )}
@@ -891,13 +891,13 @@ export default function Home() {
       </section>
 
       {/* Why Your Business Needs This */}
-      <section className="py-12 md:py-24 bg-black text-white grid place-items-center">
+      <section className="py-12 md:py-24 bg-[#F8F9FF] text-[#040404] grid place-items-center">
         <div className="max-w-6xl mx-auto px-6 w-full">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
               Why Your Business Needs This
             </h2>
-            <p className="text-[#C3C3C3] text-sm md:text-lg max-w-2xl mx-auto">
+            <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
               You might forget to respond to a customer for months, but our AI
               never sleeps. Responding to reviews is not just polite; it is a
               critical engine for growth.
@@ -907,22 +907,22 @@ export default function Home() {
             {WHY_CARDS.map((card) => (
               <div
                 key={card.title}
-                className="rounded-2xl border border-[#FFFFFF33] p-8 text-left"
+                className="rounded-2xl border border-[#5F30EB33] p-8 text-left"
                 style={{
-                  background: "#0B090A",
+                  background: "#F6F4FF",
                   boxShadow: "0px -4px 100px 21px #EFEFEF14 inset",
                 }}
               >
-                <div className="mb-4 text-[#00FFE9]">{card.icon}</div>
+                <div className="mb-4 text-[#5F30EB]">{card.icon}</div>
                 <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{card.desc}</p>
+                <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
               </div>
             ))}
           </div>
           <div className="text-center mt-12">
             <Link
               href="/GetStarted?mode=signup"
-              className="inline-block bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-[#00FFE9] transition-colors"
+              className="inline-block bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
             >
               Get Started for Free
             </Link>
@@ -931,13 +931,13 @@ export default function Home() {
       </section>
 
       {/* The Cost of Silence */}
-      <section className="py-12 md:py-24 bg-[#0B090A] text-white">
+      <section className="py-12 md:py-24 bg-[#F6F4FF] text-[#040404]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
               The Cost of Silence
             </h2>
-            <p className="text-[#C3C3C3] text-sm md:text-lg max-w-2xl mx-auto">
+            <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
               What happens when you ignore your reviews?
             </p>
           </div>
@@ -945,9 +945,9 @@ export default function Home() {
             {COST_CARDS.map((card) => (
               <div
                 key={card.title}
-                className="rounded-2xl border border-[#FFFFFF33] p-6 text-left"
+                className="rounded-2xl border border-[#5F30EB33] p-6 text-left"
                 style={{
-                  background: "#1A1A1A",
+                  background: "#EEF2FF",
                   boxShadow: "0px -4px 100px 21px #EFEFEF14 inset",
                 }}
               >
@@ -969,7 +969,7 @@ export default function Home() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">
+                <p className="text-[#6A6A82] text-sm leading-relaxed">
                   {card.desc}
                 </p>
               </div>
@@ -979,7 +979,7 @@ export default function Home() {
       </section>
 
       {/* The Customers We Serve */}
-      <section className="py-12 md:py-24 bg-black text-white">
+      <section className="py-12 md:py-24 bg-[#F8F9FF] text-[#040404]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
@@ -990,9 +990,9 @@ export default function Home() {
             {SERVE_CARDS.map((card) => (
               <div
                 key={card.title}
-                className="rounded-2xl border border-[#FFFFFF33] p-8 text-left"
+                className="rounded-2xl border border-[#5F30EB33] p-8 text-left"
                 style={{
-                  background: "#0B090A",
+                  background: "#F6F4FF",
                   boxShadow: "0px -4px 100px 21px #EFEFEF14 inset",
                 }}
               >
@@ -1001,7 +1001,7 @@ export default function Home() {
                   <img src={card.icon} className="w-6 h-6" alt="" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{card.desc}</p>
+                <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
               </div>
             ))}
           </div>
@@ -1009,12 +1009,12 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="py-12 md:py-24 bg-[#0B090A] text-white">
+      <section className="py-12 md:py-24 bg-[#F6F4FF] text-[#040404]">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-5xl font-semibold mb-8 md:mb-16 mt-6">
             How It Works
           </h2>
-          <p className="text-[#C3C3C3] text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-16">
+          <p className="text-[#4E4E5E] text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-16">
             Our AI uses an expert-built prompt system to generate personalized,
             thoughtful responses to every review posted on your Google Business
             Profile.
@@ -1023,12 +1023,12 @@ export default function Home() {
             {HOW_CARDS.map((card) => (
               <div
                 key={card.title}
-                className="rounded-2xl bg-[#0B090A] border border-[#FFFFFF33] p-8 text-left"
+                className="rounded-2xl bg-[#F6F4FF] border border-[#5F30EB33] p-8 text-left"
                 style={{ boxShadow: "0px -4px 100px 21px #EFEFEF14 inset" }}
               >
-                <div className="mb-6 inline-flex text-white">{card.icon}</div>
+                <div className="mb-6 inline-flex text-[#040404]">{card.icon}</div>
                 <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{card.desc}</p>
+                <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
               </div>
             ))}
           </div>
@@ -1036,7 +1036,7 @@ export default function Home() {
       </section>
 
       {/* Join Us / CTA Banner */}
-      <section className="relative bg-[#0B090A] overflow-hidden py-24">
+      <section className="relative bg-[#F6F4FF] overflow-hidden py-24">
         <div className="absolute inset-0 pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -1050,13 +1050,13 @@ export default function Home() {
           <h3 className="text-xl md:text-2xl font-medium mb-4">
             Ready to Save Time and Rank Higher?
           </h3>
-          <p className="text-[#C3C3C3] mb-10 text-lg">
+          <p className="text-[#4E4E5E] mb-10 text-lg">
             Your customers are talking about you. It is time to join the
             conversation.
           </p>
           <Link
             href="/GetStarted?mode=signup"
-            className="inline-block bg-white text-black px-10 py-4 rounded-full font-semibold text-lg hover:bg-[#00FFE9] transition-colors"
+            className="inline-block bg-white text-black px-10 py-4 rounded-full font-semibold text-lg hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
           >
             Get Started
           </Link>
@@ -1064,13 +1064,13 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section className="py-12 md:py-24 bg-[#0B090A] text-white relative overflow-hidden">
+      <section className="py-12 md:py-24 bg-[#F6F4FF] text-[#040404] relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
               Pricing
             </h2>
-            <p className="text-[#C3C3C3] text-sm md:text-lg max-w-2xl mx-auto">
+            <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
               Ready to transform your business through AI? Understanding your
               review content can be tough. Simplify the process with our pre-set
               questions to uncover customer pain points conveniently.
@@ -1082,20 +1082,20 @@ export default function Home() {
                 key={plan.name}
                 className={`rounded-2xl border p-8 flex flex-col ${
                   plan.highlighted
-                    ? "border-[#00FFE9] shadow-[0_0_40px_0_rgba(0,255,233,0.15)]"
-                    : "border-[#FFFFFF33]"
+                    ? "border-[#5F30EB] shadow-[0_0_40px_0_rgba(95,48,235,0.15)]"
+                    : "border-[#5F30EB33]"
                 }`}
-                style={{ background: plan.highlighted ? "#01221F" : "#0B090A" }}
+                style={{ background: plan.highlighted ? "#EEF2FF" : "#F6F4FF" }}
               >
                 <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+                <p className="text-[#6A6A82] text-sm mb-6 leading-relaxed">
                   {plan.tagline}
                 </p>
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((f) => (
                     <li
                       key={f}
-                      className="flex items-center gap-3 text-sm text-[#C3C3C3]"
+                      className="flex items-center gap-3 text-sm text-[#4E4E5E]"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1103,7 +1103,7 @@ export default function Home() {
                         height="16"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#00FFE9"
+                        stroke="#5F30EB"
                         strokeWidth="2.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1117,7 +1117,7 @@ export default function Home() {
                 </ul>
                 <div className="mb-6">
                   <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-gray-400 text-sm ml-1">
+                  <span className="text-[#6A6A82] text-sm ml-1">
                     {plan.period}
                   </span>
                 </div>
@@ -1125,8 +1125,8 @@ export default function Home() {
                   href="/GetStarted?mode=signup"
                   className={`block text-center py-3 rounded-full font-semibold transition-colors ${
                     plan.highlighted
-                      ? "bg-[#00FFE9] text-black hover:bg-white"
-                      : "bg-white text-black hover:bg-[#00FFE9]"
+                      ? "bg-[#5F30EB] text-[#F6F4FF] hover:bg-white"
+                      : "bg-white text-black hover:bg-[#5F30EB] hover:text-[#F6F4FF]"
                   }`}
                 >
                   Get Started
@@ -1137,11 +1137,11 @@ export default function Home() {
           <div className="text-center mt-12">
             <Link
               href="/GetStarted?mode=signup"
-              className="inline-block border border-[#00FFE9] text-[#00FFE9] px-10 py-4 rounded-full font-semibold text-lg hover:bg-[#00FFE9] hover:text-black transition-colors"
+              className="inline-block border border-[#5F30EB] text-[#5F30EB] px-10 py-4 rounded-full font-semibold text-lg hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
             >
               Start FREE Trial
             </Link>
-            <p className="text-gray-400 text-sm mt-3">
+            <p className="text-[#6A6A82] text-sm mt-3">
               No credit card required.
             </p>
           </div>
@@ -1149,7 +1149,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#0B090A] border-t border-[#FFFFFF15] py-12 relative overflow-hidden">
+      <footer className="bg-[#F6F4FF] border-t border-[#5F30EB20] py-12 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -1163,11 +1163,11 @@ export default function Home() {
             <div className="flex flex-col items-center md:items-start gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assets/brand/logo-02.svg"
-                alt="Five Star Reply Logo"
+                src="/assets/brand/wakkelni-logo.png"
+                alt="Wakkelni Stars Logo"
                 className="w-32 h-auto"
               />
-              <p className="text-gray-400 text-sm max-w-xs text-center md:text-left">
+              <p className="text-[#6A6A82] text-sm max-w-xs text-center md:text-left">
                 Transform customer feedback into meaningful connections. Our
                 AI-powered platform helps businesses respond to reviews with
                 personalized, professional replies.
@@ -1176,7 +1176,7 @@ export default function Home() {
                 href="https://www.facebook.com/profile.php?id=61584823262750"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-400 hover:text-[#00FFE9] transition-colors"
+                className="flex items-center gap-2 text-[#6A6A82] hover:text-[#5F30EB] transition-colors"
                 aria-label="Facebook"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1188,34 +1188,34 @@ export default function Home() {
               </a>
             </div>
             <nav className="flex flex-col items-center md:items-end gap-3">
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+              <div className="flex flex-wrap justify-center gap-6 text-sm text-[#6A6A82]">
                 <Link
                   href="/"
-                  className="hover:text-[#00FFE9] transition-colors"
+                  className="hover:text-[#5F30EB] transition-colors"
                 >
                   Home
                 </Link>
                 <Link
                   href="/about"
-                  className="hover:text-[#00FFE9] transition-colors"
+                  className="hover:text-[#5F30EB] transition-colors"
                 >
                   About Us
                 </Link>
                 <Link
                   href="/pricing"
-                  className="hover:text-[#00FFE9] transition-colors"
+                  className="hover:text-[#5F30EB] transition-colors"
                 >
                   Pricing
                 </Link>
                 <Link
                   href="/terms"
-                  className="hover:text-[#00FFE9] transition-colors"
+                  className="hover:text-[#5F30EB] transition-colors"
                 >
                   Terms
                 </Link>
                 <Link
                   href="/privacy"
-                  className="hover:text-[#00FFE9] transition-colors"
+                  className="hover:text-[#5F30EB] transition-colors"
                 >
                   Privacy
                 </Link>
@@ -1223,11 +1223,12 @@ export default function Home() {
             </nav>
           </div>
           <div className="text-center mt-10 text-gray-600 text-xs">
-            © {new Date().getFullYear()} Five Star Reply. All rights reserved.
+            © {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
 
