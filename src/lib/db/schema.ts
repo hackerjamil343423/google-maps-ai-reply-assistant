@@ -314,8 +314,8 @@ export const subscriptions = pgTable("subscriptions", {
     .references(() => workspaces.id, { onDelete: "cascade" }),
   plan: text("plan").notNull().default("free"),
   status: subscriptionStatusEnum("status").notNull().default("trialing"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
+  streamConsumerId: text("stream_consumer_id"),
+  streamSubscriptionId: text("stream_subscription_id"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })

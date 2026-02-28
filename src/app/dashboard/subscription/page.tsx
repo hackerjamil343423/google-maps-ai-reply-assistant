@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import DashboardShell from "@/components/DashboardShell";
 
@@ -53,11 +54,14 @@ const FALLBACK_STATE: SubscriptionState = {
 };
 
 export default function SubscriptionPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [data, setData] = useState<SubscriptionState>(FALLBACK_STATE);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const didHandleParams = useRef(false);
 
   async function loadSubscription() {
     setLoading(true);
@@ -83,6 +87,23 @@ export default function SubscriptionPage() {
     void loadSubscription();
   }, []);
 
+  useEffect(() => {
+    if (didHandleParams.current) return;
+    didHandleParams.current = true;
+
+    const successParam = searchParams.get("success");
+    const errorParam = searchParams.get("error");
+
+    if (successParam === "true") {
+      setNotice("Your subscription has been activated!");
+      // Remove query params from URL
+      router.replace("/dashboard/subscription");
+    } else if (errorParam === "payment_failed") {
+      setError("Payment failed or was cancelled. Please try again.");
+      router.replace("/dashboard/subscription");
+    }
+  }, [searchParams, router]);
+
   const activePlanLabel = useMemo(() => {
     if (data.plan === "free") return "free";
     return data.plan;
@@ -92,21 +113,20 @@ export default function SubscriptionPage() {
     setUpgrading(planName);
     setError("");
     try {
-      const res = await fetch("/api/subscription", {
-        method: "PATCH",
+      const res = await fetch("/api/subscription/checkout", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: planName }),
       });
       const payload = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(payload?.error || "Failed to update plan.");
+        throw new Error(payload?.error || "Failed to start checkout.");
       }
-      setNotice(`Plan upgraded to ${planName}.`);
-      setTimeout(() => setNotice(""), 3000);
-      await loadSubscription();
+      const checkoutUrl = payload?.checkoutUrl as string | undefined;
+      if (!checkoutUrl) throw new Error("No checkout URL returned.");
+      window.location.href = checkoutUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update plan.");
-    } finally {
+      setError(err instanceof Error ? err.message : "Failed to start checkout.");
       setUpgrading(null);
     }
   }
@@ -344,7 +364,7 @@ export default function SubscriptionPage() {
                       ) : isCurrent ? (
                         "Active Plan"
                       ) : (
-                        "Upgrade"
+                        "Subscribe & Pay"
                       )}
                     </button>
                   </div>

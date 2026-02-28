@@ -40,8 +40,11 @@ const serverEnvSchema = z.object({
   GOOGLE_MAPS_API_KEY: optionalNonEmptyString,
   OPENAI_API_KEY: optionalNonEmptyString,
   OPENAI_MODEL: optionalNonEmptyString,
-  STRIPE_SECRET_KEY: optionalNonEmptyString,
-  STRIPE_WEBHOOK_SECRET: optionalNonEmptyString,
+  STREAM_API_KEY: optionalNonEmptyString,
+  STREAM_API_SECRET: optionalNonEmptyString,
+  STREAM_PRODUCT_LOCAL_BUSINESS: optionalNonEmptyString,
+  STREAM_PRODUCT_MULTI_LOCATION: optionalNonEmptyString,
+  STREAM_PRODUCT_AGENCY_MAX: optionalNonEmptyString,
 });
 
 export const env = serverEnvSchema.parse({
@@ -55,8 +58,11 @@ export const env = serverEnvSchema.parse({
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_MODEL: process.env.OPENAI_MODEL,
-  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+  STREAM_API_KEY: process.env.STREAM_API_KEY,
+  STREAM_API_SECRET: process.env.STREAM_API_SECRET,
+  STREAM_PRODUCT_LOCAL_BUSINESS: process.env.STREAM_PRODUCT_LOCAL_BUSINESS,
+  STREAM_PRODUCT_MULTI_LOCATION: process.env.STREAM_PRODUCT_MULTI_LOCATION,
+  STREAM_PRODUCT_AGENCY_MAX: process.env.STREAM_PRODUCT_AGENCY_MAX,
 });
 
 export const isProduction = env.NODE_ENV === "production";

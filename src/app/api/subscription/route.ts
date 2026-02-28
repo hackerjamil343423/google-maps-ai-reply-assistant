@@ -1,6 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
@@ -11,10 +10,6 @@ import {
   PLAN_LIMITS,
   type PlanName,
 } from "@/lib/subscription/plans";
-
-const updatePlanSchema = z.object({
-  plan: z.enum(["Local Business", "Multi-Location", "Agency Max"]),
-});
 
 function getCurrentMonthKey() {
   const now = new Date();
@@ -116,55 +111,9 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function PATCH(req: NextRequest) {
-  const session = await getRequestSession(req);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!db) {
-    return NextResponse.json(
-      { error: "DATABASE_URL is not configured." },
-      { status: 503 }
-    );
-  }
-
-  const payload = await req.json().catch(() => null);
-  const parsed = updatePlanSchema.safeParse(payload);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
-
-  const workspaceId = await ensureWorkspaceForUser(
-    session.user.id,
-    session.user.name
+export async function PATCH(_req: NextRequest) {
+  return NextResponse.json(
+    { error: "Use POST /api/subscription/checkout to upgrade your plan." },
+    { status: 405 }
   );
-  if (!workspaceId) {
-    return NextResponse.json(
-      { error: "Unable to initialize workspace." },
-      { status: 500 }
-    );
-  }
-
-  const nextPeriod = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-  await db
-    .insert(subscriptions)
-    .values({
-      workspaceId,
-      plan: parsed.data.plan,
-      status: "active",
-      currentPeriodEnd: nextPeriod,
-    })
-    .onConflictDoUpdate({
-      target: subscriptions.workspaceId,
-      set: {
-        plan: parsed.data.plan,
-        status: "active",
-        currentPeriodEnd: nextPeriod,
-        updatedAt: new Date(),
-      },
-    });
-
-  return NextResponse.json({ success: true });
 }
