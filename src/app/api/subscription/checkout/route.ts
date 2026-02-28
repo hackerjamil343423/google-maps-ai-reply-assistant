@@ -6,7 +6,7 @@ import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { createConsumer, createPaymentLink } from "@/lib/streampay/client";
-import { isKnownPlan, PLAN_LIMITS } from "@/lib/subscription/plans";
+import { getPlanProductId, PLAN_LIMITS } from "@/lib/subscription/plans";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const checkoutSchema = z.object({
@@ -32,9 +32,11 @@ export async function POST(req: NextRequest) {
   const { plan } = parsed.data;
   const planInfo = PLAN_LIMITS[plan];
 
-  if (!planInfo.streamProductId) {
+  // Read product ID at request time — never at module load time
+  const productId = getPlanProductId(plan);
+  if (!productId) {
     return NextResponse.json(
-      { error: "STREAM_PRODUCT_* env vars not configured for this plan." },
+      { error: "Payment is not configured for this plan. Please contact support." },
       { status: 503 }
     );
   }
@@ -86,7 +88,7 @@ export async function POST(req: NextRequest) {
 
   const paymentLink = await createPaymentLink({
     name: `${plan} Plan`,
-    product_id: planInfo.streamProductId,
+    product_id: productId,
     organization_consumer_id: streamConsumerId,
     success_redirect_url: `${appUrl}/api/subscription/callback?plan=${encodeURIComponent(plan)}`,
     failure_redirect_url: `${appUrl}/dashboard/subscription?error=payment_failed`,
