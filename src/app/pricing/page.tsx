@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -120,9 +121,12 @@ function Badge({ label }: { label: string }) {
 }
 
 export default function PricingPage() {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -144,6 +148,30 @@ export default function PricingPage() {
 
   function toggleFaq(i: number) {
     setOpenFaq((prev) => (prev === i ? null : i));
+  }
+
+  async function handlePlanClick(planName: string) {
+    if (!isAuthenticated) {
+      router.push("/GetStarted?mode=signup");
+      return;
+    }
+    setCheckingOut(planName);
+    setCheckoutError("");
+    try {
+      const res = await fetch("/api/subscription/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planName }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Failed to start checkout.");
+      const checkoutUrl = data?.checkoutUrl as string | undefined;
+      if (!checkoutUrl) throw new Error("No checkout URL returned.");
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "Failed to start checkout.");
+      setCheckingOut(null);
+    }
   }
 
   return (
@@ -289,87 +317,112 @@ export default function PricingPage() {
             conveniently.
           </p>
 
+          {/* Checkout error banner */}
+          {checkoutError && (
+            <div className="w-full max-w-xl mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-500 text-sm text-center">
+              {checkoutError}
+            </div>
+          )}
+
           {/* Plans Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 place-items-center w-full">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl border p-10 backdrop-blur-md ease-in-out w-full ${
-                  plan.highlighted
-                    ? "border-[#5F30EB33] lg:scale-105 lg:mb-40 shadow-[0px_0px_60px_10px_rgba(0,245,212,0.2)]"
-                    : "border-[#5F30EB33]"
-                }`}
-                style={{
-                  background: plan.highlighted
-                    ? "linear-gradient(to bottom, #F6F4FF, #EEF2FF, #F6F4FF)"
-                    : "#F6F4FF",
-                  boxShadow: plan.highlighted
-                    ? "0px -4px 100px 21px #EFEFEF14 inset, 0px 0px 60px 10px rgba(0,245,212,0.2)"
-                    : "0px -4px 100px 21px #EFEFEF14 inset",
-                }}
-              >
-                <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                <p className="text-[#6A6A82] text-sm mb-6 leading-relaxed">
-                  {plan.tagline}
-                </p>
+            {PLANS.map((plan) => {
+              const isLoadingThis = checkingOut === plan.name;
+              return (
+                <div
+                  key={plan.name}
+                  className={`relative rounded-2xl border p-10 backdrop-blur-md ease-in-out w-full ${
+                    plan.highlighted
+                      ? "border-[#5F30EB33] lg:scale-105 lg:mb-40 shadow-[0px_0px_60px_10px_rgba(0,245,212,0.2)]"
+                      : "border-[#5F30EB33]"
+                  }`}
+                  style={{
+                    background: plan.highlighted
+                      ? "linear-gradient(to bottom, #F6F4FF, #EEF2FF, #F6F4FF)"
+                      : "#F6F4FF",
+                    boxShadow: plan.highlighted
+                      ? "0px -4px 100px 21px #EFEFEF14 inset, 0px 0px 60px 10px rgba(0,245,212,0.2)"
+                      : "0px -4px 100px 21px #EFEFEF14 inset",
+                  }}
+                >
+                  <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
+                  <p className="text-[#6A6A82] text-sm mb-6 leading-relaxed">
+                    {plan.tagline}
+                  </p>
 
-                {/* Divider */}
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-[#00E0FF] to-transparent mb-6" />
+                  {/* Divider */}
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-[#00E0FF] to-transparent mb-6" />
 
-                {/* Features */}
-                <ul className="space-y-3 mb-8 text-left">
-                  <li className="flex items-center text-[#4F4F63] text-[15px]">
-                    <div className="w-5 h-5 rounded-md bg-[#5F30EB] flex items-center justify-center mr-3 flex-shrink-0 text-black">
-                      <CheckIcon />
-                    </div>
-                    {plan.profileLine}
-                  </li>
-                  {FEATURES.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-center text-[#4F4F63] text-[15px]"
-                    >
+                  {/* Features */}
+                  <ul className="space-y-3 mb-8 text-left">
+                    <li className="flex items-center text-[#4F4F63] text-[15px]">
                       <div className="w-5 h-5 rounded-md bg-[#5F30EB] flex items-center justify-center mr-3 flex-shrink-0 text-black">
                         <CheckIcon />
                       </div>
-                      {feature}
+                      {plan.profileLine}
                     </li>
-                  ))}
-                </ul>
+                    {FEATURES.map((feature) => (
+                      <li
+                        key={feature}
+                        className="flex items-center text-[#4F4F63] text-[15px]"
+                      >
+                        <div className="w-5 h-5 rounded-md bg-[#5F30EB] flex items-center justify-center mr-3 flex-shrink-0 text-black">
+                          <CheckIcon />
+                        </div>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
 
-                {/* Price + CTA */}
-                <div className="w-full grid place-items-center md:place-items-start">
-                  <h4 className="text-4xl font-bold mb-4 text-[#040404]">
-                    {plan.price}{" "}
-                    <span className="text-sm text-[#00E0FF]">
-                      {plan.period}
-                    </span>
-                  </h4>
-                  <Link
-                    href="/GetStarted?mode=signup"
-                    className="w-[60%] py-3 px-6 rounded-full font-medium transition-all text-center bg-[#EEF2FF] border border-[#00E0FF]/30 text-[#00E0FF] hover:bg-[#00E0FF]/10"
-                  >
-                    Get Started
-                  </Link>
+                  {/* Price + CTA */}
+                  <div className="w-full grid place-items-center md:place-items-start">
+                    <h4 className="text-4xl font-bold mb-4 text-[#040404]">
+                      {plan.price}{" "}
+                      <span className="text-sm text-[#00E0FF]">
+                        {plan.period}
+                      </span>
+                    </h4>
+                    <button
+                      onClick={() => void handlePlanClick(plan.name)}
+                      disabled={!!checkingOut}
+                      className="w-[60%] py-3 px-6 rounded-full font-medium transition-all text-center bg-[#EEF2FF] border border-[#00E0FF]/30 text-[#00E0FF] hover:bg-[#00E0FF]/10 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isLoadingThis ? (
+                        <>
+                          <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                          Redirecting...
+                        </>
+                      ) : isAuthenticated ? (
+                        "Subscribe Now"
+                      ) : (
+                        "Get Started"
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Free Trial CTA */}
           <div className="mt-16 md:mt-24 flex flex-col items-center">
             <Link
-              href="/GetStarted?mode=signup"
+              href={isAuthenticated ? "/dashboard/subscription" : "/GetStarted?mode=signup"}
               className="px-10 py-4 rounded-full font-semibold text-lg transition-all text-black hover:shadow-[0_0_20px_rgba(0,255,233,0.4)] hover:scale-105 active:scale-95"
               style={{
                 background: "linear-gradient(to right, #00E0FF, #5F30EB)",
               }}
             >
-              Start FREE Trial
+              {isAuthenticated ? "Manage Subscription" : "Start FREE Trial"}
             </Link>
-            <p className="mt-4 text-[#8A8AA0] text-sm">
-              No credit card required.
-            </p>
+            {!isAuthenticated && (
+              <p className="mt-4 text-[#8A8AA0] text-sm">
+                No credit card required.
+              </p>
+            )}
           </div>
         </div>
       </section>

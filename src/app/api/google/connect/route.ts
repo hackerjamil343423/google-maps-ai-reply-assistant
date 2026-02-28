@@ -4,6 +4,10 @@ import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { connectWorkspaceGoogleBusiness } from "@/lib/google/business-profile";
+import {
+  getConnectedAccountsCount,
+  getWorkspaceAccess,
+} from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 type ConnectErrorAction = "relink_google" | "check_google_setup" | "none";
@@ -114,6 +118,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "Unable to initialize workspace." },
       { status: 500 }
+    );
+  }
+
+  // Enforce subscription access and account limit
+  const access = await getWorkspaceAccess(workspaceId);
+  if (!access.allowed) {
+    return NextResponse.json(
+      {
+        error:
+          access.reason === "trial_expired"
+            ? "Your free trial has expired. Please upgrade to a paid plan."
+            : "Your subscription is not active. Please renew to connect accounts.",
+        errorCode: "subscription_required",
+        action: "none",
+      },
+      { status: 403 }
+    );
+  }
+
+  const connectedCount = await getConnectedAccountsCount(workspaceId);
+  if (connectedCount >= access.planInfo.maxAccounts) {
+    return NextResponse.json(
+      {
+        error: `Your ${access.plan} plan allows up to ${access.planInfo.maxAccounts} connected account(s). Upgrade your plan to add more.`,
+        errorCode: "account_limit_reached",
+        action: "none",
+      },
+      { status: 403 }
     );
   }
 

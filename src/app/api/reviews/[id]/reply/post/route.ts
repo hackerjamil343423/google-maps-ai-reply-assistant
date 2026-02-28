@@ -9,6 +9,7 @@ import {
   getWorkspaceReviewById,
   markReplyPosted,
 } from "@/lib/reviews/server";
+import { getWorkspaceAccess, incrementUsageCounter } from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const postReplySchema = z.object({
@@ -41,6 +42,20 @@ export async function POST(
     return NextResponse.json(
       { error: "Unable to initialize workspace." },
       { status: 500 }
+    );
+  }
+
+  // Enforce subscription access
+  const access = await getWorkspaceAccess(workspaceId);
+  if (!access.allowed) {
+    return NextResponse.json(
+      {
+        error:
+          access.reason === "trial_expired"
+            ? "Your free trial has expired. Please upgrade to post replies."
+            : "Your subscription is not active. Please renew to post replies.",
+      },
+      { status: 403 }
     );
   }
 
@@ -97,6 +112,8 @@ export async function POST(
     source,
     userId: session.user.id,
   });
+
+  void incrementUsageCounter(workspaceId, "reviewsManaged");
 
   return NextResponse.json({
     success: true,
