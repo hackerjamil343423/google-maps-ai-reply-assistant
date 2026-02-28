@@ -931,11 +931,6 @@ export default function Home() {
                               <p className="text-xs text-[#040404] leading-relaxed">
                                 {item.reply}
                               </p>
-                              {item.source && (
-                                <p className="text-[10px] uppercase tracking-wide text-[#5F30EB] mt-2">
-                                  Source: {item.source}
-                                </p>
-                              )}
                             </>
                           )}
                         </div>
