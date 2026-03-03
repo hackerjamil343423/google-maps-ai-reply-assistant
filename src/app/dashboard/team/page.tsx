@@ -189,7 +189,14 @@ export default function TeamPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/team">
-      <div className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto">
+      <div className="h-full">
+        <div
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          style={{
+            background: "rgba(255,255,255,0.82)",
+            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
+          }}
+        >
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#4E4E5E] mb-2">Team Management</h1>
             <p className="text-[#646478]">Invite and manage team members for your businesses</p>
@@ -389,6 +396,7 @@ export default function TeamPage() {
               )}
             </div>
           </div>
+        </div>
       </div>
     </DashboardShell>
   );

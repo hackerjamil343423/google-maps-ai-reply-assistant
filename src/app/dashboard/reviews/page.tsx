@@ -368,7 +368,14 @@ export default function ReviewsPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/reviews">
-      <div className="h-[calc(100vh-120px)] flex flex-col">
+      <div className="h-full">
+        <div
+          className="rounded-3xl border border-[#E6E9F8] p-6 md:p-10 h-[calc(100vh-120px)] flex flex-col backdrop-blur-[80px]"
+          style={{
+            background: "rgba(255,255,255,0.82)",
+            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
+          }}
+        >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl md:text-2xl font-medium">Status Filters</h2>
           </div>
@@ -457,6 +464,7 @@ export default function ReviewsPage() {
               </button>
             </div>
           )}
+        </div>
       </div>
     </DashboardShell>
   );

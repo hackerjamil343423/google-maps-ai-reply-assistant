@@ -364,7 +364,14 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/analytics">
-      <div className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto">
+      <div className="h-full">
+        <div
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-4 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          style={{
+            background: "rgba(255,255,255,0.82)",
+            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
+          }}
+        >
           <h2 className="text-xl md:text-2xl font-medium mb-6">Analytics</h2>
 
           {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
@@ -491,6 +498,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
+        </div>
       </div>
     </DashboardShell>
   );
