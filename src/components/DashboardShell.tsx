@@ -106,10 +106,14 @@ function SidebarInner({
   activeHref,
   onClose,
   onLogout,
+  profile,
+  initials,
 }: {
   activeHref: string;
   onClose?: () => void;
   onLogout: () => Promise<void>;
+  profile: { name: string; email: string };
+  initials: string;
 }) {
   return (
     <div className="flex flex-col h-full bg-[#F6F4FF33] border border-[#5F30EB]/20 shadow-[0_-4px_100px_21px_#efefef14_inset] py-4 rounded-3xl overflow-hidden">
@@ -147,20 +151,37 @@ function SidebarInner({
         </nav>
       </div>
 
-      <div className="flex flex-col items-stretch px-2 pt-3 mt-auto border-t border-[#5F30EB]/12 shrink-0">
-        <button
-          title="Logout"
-          onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 cursor-pointer text-[#646478] hover:text-[#FF4E4E] hover:bg-[#FF4E4E20]"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m16 17 5-5-5-5" />
-            <path d="M21 12H9" />
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-          </svg>
-          <span className="text-xs font-medium">Logout</span>
-        </button>
+      {/* Profile at bottom — hover reveals logout */}
+      <div className="px-2 pt-3 mt-auto border-t border-[#5F30EB]/12 shrink-0">
+        <div className="group relative">
+          {/* Logout popup — appears above on hover */}
+          <button
+            onClick={onLogout}
+            className="absolute bottom-full left-0 right-0 mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-[#FF4E4E]/20 text-[#FF4E4E] text-xs font-medium shadow-md
+              opacity-0 pointer-events-none translate-y-1
+              group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0
+              transition-all duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m16 17 5-5-5-5" />
+              <path d="M21 12H9" />
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            </svg>
+            Logout
+          </button>
+
+          {/* Profile row */}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-default hover:bg-[#5F30EB08] transition-colors">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E6E9F8] text-[#040404] text-xs font-semibold border border-[#5F30EB]/20 select-none shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-[#040404] truncate">{profile.name}</p>
+              <p className="text-[10px] text-[#8A8AA0] truncate">{profile.email}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -177,7 +198,6 @@ export default function DashboardShell({
   const router = useRouter();
   const { language } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState({
     name: "Account",
     email: "",
@@ -221,7 +241,6 @@ export default function DashboardShell({
 
   async function handleLogout() {
     await authClient.signOut();
-    setProfileOpen(false);
     setMobileOpen(false);
     router.push("/GetStarted?mode=login");
     router.refresh();
@@ -235,7 +254,7 @@ export default function DashboardShell({
           isRtl ? "right-0" : "left-0"
         }`}
       >
-        <SidebarInner activeHref={activeHref} onLogout={handleLogout} />
+        <SidebarInner activeHref={activeHref} onLogout={handleLogout} profile={profile} initials={initials} />
       </aside>
 
       {/* Mobile drawer */}
@@ -251,6 +270,8 @@ export default function DashboardShell({
               activeHref={activeHref}
               onClose={() => setMobileOpen(false)}
               onLogout={handleLogout}
+              profile={profile}
+              initials={initials}
             />
           </div>
         </div>
@@ -262,65 +283,15 @@ export default function DashboardShell({
           isRtl ? "md:pr-[200px]" : "md:pl-[200px]"
         }`}
       >
-        {/* Top header */}
-        <header className="flex justify-end items-center w-full mb-4 md:mb-5">
-          <div className="flex items-center space-x-4">
-            <button className="md:hidden p-2 rounded-lg hover:bg-[#5F30EB10] transition-colors cursor-pointer"
-              aria-label="Toggle menu" onClick={() => setMobileOpen(true)}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" />
-              </svg>
-            </button>
-
-            <div className="relative">
-              <button className="flex items-center cursor-pointer" aria-label="Toggle profile"
-                onClick={() => setProfileOpen(!profileOpen)}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E6E9F8] text-[#040404] font-semibold border border-[#5F30EB]/20 select-none">
-                  {initials}
-                </div>
-              </button>
-              {profileOpen && (
-                <div className={`absolute top-12 w-48 rounded-xl border border-[#5F30EB22] py-2 z-50 ${isRtl ? "left-0" : "right-0"}`}
-                  style={{ background: "#FFFFFF" }}>
-                  <div className="px-4 py-2 border-b border-[#5F30EB]/12 mb-1">
-                    <p className="text-sm font-medium text-[#040404]">{profile.name}</p>
-                    <p className="text-xs text-[#8A8AA0] truncate">{profile.email}</p>
-                  </div>
-                  <Link href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-[#4F4F63] hover:text-[#5F30EB] hover:bg-[#5F30EB10] transition-colors"
-                    onClick={() => setProfileOpen(false)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="8" r="4" />
-                      <path d="M20 21a8 8 0 1 0-16 0" />
-                    </svg>
-                    Profile
-                  </Link>
-                  <Link href="/dashboard/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-[#4F4F63] hover:text-[#5F30EB] hover:bg-[#5F30EB10] transition-colors"
-                    onClick={() => setProfileOpen(false)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    Settings
-                  </Link>
-                  <button
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#FF4E4E] hover:bg-[#FF4E4E10] transition-colors cursor-pointer"
-                    onClick={handleLogout}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="m16 17 5-5-5-5" /><path d="M21 12H9" />
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    </svg>
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Top header — mobile hamburger only */}
+        <header className="flex justify-start items-center w-full mb-4 md:mb-5 md:hidden">
+          <button className="p-2 rounded-lg hover:bg-[#5F30EB10] transition-colors cursor-pointer"
+            aria-label="Toggle menu" onClick={() => setMobileOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+              fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" />
+            </svg>
+          </button>
         </header>
 
         {/* Page content */}
