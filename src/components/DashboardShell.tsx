@@ -113,10 +113,10 @@ function SidebarInner({
 }) {
   return (
     <div className="flex flex-col h-full bg-[#F6F4FF33] border border-[#5F30EB]/20 shadow-[0_-4px_100px_21px_#efefef14_inset] py-4 rounded-3xl overflow-hidden">
-      <div className="brand-scrollbar flex flex-col items-center flex-1 overflow-y-auto">
+      <div className="brand-scrollbar flex flex-col flex-1 overflow-y-auto">
         <Link
           href="/"
-          className="w-10 h-10 flex items-center justify-center shrink-0 mt-1"
+          className="flex items-center gap-2 px-4 shrink-0 mt-1 mb-2"
           onClick={onClose}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -129,28 +129,29 @@ function SidebarInner({
           />
         </Link>
 
-        <nav className="flex flex-col items-center space-y-3 mt-4 mb-4">
+        <nav className="flex flex-col items-stretch w-full px-2 space-y-1 mt-4 mb-4">
           {NAV_ITEMS.map((item) => {
             const isActive = activeHref === item.href;
             return (
               <Link key={item.title} href={item.href} title={item.title} onClick={onClose}
-                className={`p-3 rounded-xl transition-all duration-300 ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
                   isActive
                     ? "bg-[#5F30EB20] text-[#5F30EB] shadow-[0_0_10px_#5F30EB40]"
                     : "text-[#646478] hover:text-[#5F30EB] hover:bg-[#5F30EB10]"
                 }`}>
-                {item.icon}
+                <span className="shrink-0">{item.icon}</span>
+                <span className="text-xs font-medium leading-tight">{item.title}</span>
               </Link>
             );
           })}
         </nav>
       </div>
 
-      <div className="flex flex-col items-center pt-3 mt-auto border-t border-[#5F30EB]/12 shrink-0">
+      <div className="flex flex-col items-stretch px-2 pt-3 mt-auto border-t border-[#5F30EB]/12 shrink-0">
         <button
           title="Logout"
           onClick={onLogout}
-          className="p-3 rounded-xl transition-all duration-300 cursor-pointer text-[#646478] hover:text-[#FF4E4E] hover:bg-[#FF4E4E20]"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 cursor-pointer text-[#646478] hover:text-[#FF4E4E] hover:bg-[#FF4E4E20]"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -158,6 +159,7 @@ function SidebarInner({
             <path d="M21 12H9" />
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
           </svg>
+          <span className="text-xs font-medium">Logout</span>
         </button>
       </div>
     </div>
@@ -229,7 +231,7 @@ export default function DashboardShell({
     <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
       {/* Desktop sidebar */}
       <aside
-        className={`fixed top-1/2 -translate-y-1/2 h-[88vh] max-h-[860px] w-[150px] px-6 hidden md:block z-10 ${
+        className={`fixed top-1/2 -translate-y-1/2 h-[88vh] max-h-[860px] w-[200px] px-4 hidden md:block z-10 ${
           isRtl ? "right-0" : "left-0"
         }`}
       >
@@ -244,7 +246,7 @@ export default function DashboardShell({
           }`}
         >
           <div className="absolute inset-0 bg-[#F8F9FF]/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="relative w-[150px] h-full px-3 pt-4 pb-3 z-50">
+          <div className="relative w-[200px] h-full px-3 pt-4 pb-3 z-50">
             <SidebarInner
               activeHref={activeHref}
               onClose={() => setMobileOpen(false)}
@@ -257,7 +259,7 @@ export default function DashboardShell({
       {/* Main */}
       <main
         className={`ml-0 w-full px-4 md:px-8 pt-2 md:pt-4 pb-4 md:pb-8 min-h-screen md:h-screen overflow-hidden ${
-          isRtl ? "md:pr-[150px]" : "md:pl-[150px]"
+          isRtl ? "md:pr-[200px]" : "md:pl-[200px]"
         }`}
       >
         {/* Top header */}
