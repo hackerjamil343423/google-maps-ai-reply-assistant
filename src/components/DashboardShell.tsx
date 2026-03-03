@@ -151,28 +151,58 @@ function SidebarInner({
         </nav>
       </div>
 
-      {/* Profile at bottom — hover reveals logout */}
+      {/* Profile at bottom — hover reveals menu */}
       <div className="px-2 pt-3 mt-auto border-t border-[#5F30EB]/12 shrink-0">
         <div className="group relative">
-          {/* Logout popup — appears above on hover */}
-          <button
-            onClick={onLogout}
-            className="absolute bottom-full left-0 right-0 mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-[#FF4E4E]/20 text-[#FF4E4E] text-xs font-medium shadow-md
-              opacity-0 pointer-events-none translate-y-1
-              group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0
-              transition-all duration-200"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="m16 17 5-5-5-5" />
-              <path d="M21 12H9" />
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            </svg>
-            Logout
-          </button>
+          {/* Popup menu — pb-2 bridges the gap so mouse never leaves group */}
+          <div className="absolute bottom-full left-0 right-0 pb-2
+            opacity-0 pointer-events-none -translate-y-1
+            group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0
+            transition-all duration-200 z-50">
+            <div className="bg-white rounded-xl border border-[#5F30EB]/12 shadow-lg overflow-hidden">
+              {/* User info header */}
+              <div className="px-3 py-2.5 border-b border-[#5F30EB]/10 bg-[#F6F4FF]">
+                <p className="text-xs font-semibold text-[#040404] truncate">{profile.name}</p>
+                <p className="text-[10px] text-[#8A8AA0] truncate">{profile.email}</p>
+              </div>
+              {/* Profile link */}
+              <Link href="/profile" onClick={onClose}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#4F4F63] hover:text-[#5F30EB] hover:bg-[#5F30EB08] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M20 21a8 8 0 1 0-16 0" />
+                </svg>
+                Profile
+              </Link>
+              {/* Settings link */}
+              <Link href="/dashboard/settings" onClick={onClose}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#4F4F63] hover:text-[#5F30EB] hover:bg-[#5F30EB08] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Settings
+              </Link>
+              {/* Divider */}
+              <div className="border-t border-[#5F30EB]/10" />
+              {/* Logout */}
+              <button onClick={onLogout}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-[#FF4E4E] hover:bg-[#FF4E4E08] transition-colors cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="m16 17 5-5-5-5" />
+                  <path d="M21 12H9" />
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                </svg>
+                Logout
+              </button>
+            </div>
+          </div>
 
-          {/* Profile row */}
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-default hover:bg-[#5F30EB08] transition-colors">
+          {/* Profile row trigger */}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-[#5F30EB08] transition-colors">
             <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E6E9F8] text-[#040404] text-xs font-semibold border border-[#5F30EB]/20 select-none shrink-0">
               {initials}
             </div>
@@ -180,6 +210,11 @@ function SidebarInner({
               <p className="text-xs font-medium text-[#040404] truncate">{profile.name}</p>
               <p className="text-[10px] text-[#8A8AA0] truncate">{profile.email}</p>
             </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+              fill="none" stroke="#8A8AA0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+              className="ml-auto shrink-0 -rotate-90 group-hover:rotate-90 transition-transform duration-200">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
           </div>
         </div>
       </div>
