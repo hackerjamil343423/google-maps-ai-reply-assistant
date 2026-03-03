@@ -135,14 +135,7 @@ export default function SubscriptionPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/subscription">
-      <div className="h-full">
-        <div
-          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
-          style={{
-            background: "rgba(255,255,255,0.82)",
-            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-          }}
-        >
+      <div className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto">
           <h1 className="text-3xl font-bold text-[#040404] mb-8">Subscription Management</h1>
 
           {loading && (
@@ -372,7 +365,6 @@ export default function SubscriptionPage() {
               })}
             </div>
           </div>
-        </div>
       </div>
     </DashboardShell>
   );

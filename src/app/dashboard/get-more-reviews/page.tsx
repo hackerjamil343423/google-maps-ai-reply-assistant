@@ -119,14 +119,7 @@ export default function GetMoreReviewsPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/get-more-reviews">
-      <div className="h-full">
-        <div
-          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
-          style={{
-            background: "rgba(255,255,255,0.82)",
-            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-          }}
-        >
+      <div className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto">
           <div className="mb-8">
             <h1 className="text-2xl md:text-3xl font-semibold text-[#040404]">Get More Reviews</h1>
             <p className="text-sm text-[#6A6A82] mt-2">
@@ -245,7 +238,6 @@ export default function GetMoreReviewsPage() {
               <p className="text-xs text-[#8A8AA0] mt-3">You can print and share this QR code anywhere customers can scan.</p>
             </div>
           </div>
-        </div>
       </div>
     </DashboardShell>
   );

@@ -318,14 +318,7 @@ export default function OverviewPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/overview">
-      <div className="h-full">
-        <div
-          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
-          style={{
-            background: "rgba(255,255,255,0.82)",
-            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-          }}
-        >
+      <div className="brand-scrollbar h-[calc(100vh-120px)] overflow-y-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
             <h2 className="text-xl md:text-2xl font-medium">Overview</h2>
             {!data?.googleConnected && (
@@ -459,7 +452,6 @@ export default function OverviewPage() {
               </button>
             </div>
           )}
-        </div>
       </div>
     </DashboardShell>
   );
