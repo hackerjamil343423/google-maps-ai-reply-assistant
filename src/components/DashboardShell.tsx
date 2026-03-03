@@ -129,8 +129,9 @@ function SidebarInner({
             src="/assets/brand/wakkelni-logo.png"
             width={40}
             height={40}
-            className="w-10 h-10 object-contain"
+            className="w-10 h-10 object-contain shrink-0"
           />
+          <span className="text-sm font-semibold text-[#040404] leading-tight">Wakkelni</span>
         </Link>
 
         <nav className="flex flex-col items-stretch w-full px-2 space-y-1 mt-4 mb-4">
