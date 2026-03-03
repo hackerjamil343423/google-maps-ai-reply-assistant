@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Demo", href: "/demo" },
   { label: "Pricing", href: "/pricing" },
+  { label: "Services", href: "/services" },
 ];
 
 const WHY_CARDS = [
@@ -1232,6 +1233,12 @@ export default function Home() {
                   className="hover:text-[#5F30EB] transition-colors"
                 >
                   Pricing
+                </Link>
+                <Link
+                  href="/services"
+                  className="hover:text-[#5F30EB] transition-colors"
+                >
+                  Services
                 </Link>
                 <Link
                   href="/terms"
