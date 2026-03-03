@@ -161,11 +161,6 @@ function SidebarInner({
             group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0
             transition-all duration-200 z-50">
             <div className="bg-white rounded-xl border border-[#5F30EB]/12 shadow-lg overflow-hidden">
-              {/* User info header */}
-              <div className="px-3 py-2.5 border-b border-[#5F30EB]/10 bg-[#F6F4FF]">
-                <p className="text-xs font-semibold text-[#040404] truncate">{profile.name}</p>
-                <p className="text-[10px] text-[#8A8AA0] truncate">{profile.email}</p>
-              </div>
               {/* Profile link */}
               <Link href="/profile" onClick={onClose}
                 className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#4F4F63] hover:text-[#5F30EB] hover:bg-[#5F30EB08] transition-colors">
