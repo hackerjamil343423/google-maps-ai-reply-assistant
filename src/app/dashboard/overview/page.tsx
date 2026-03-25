@@ -320,7 +320,7 @@ export default function OverviewPage() {
     <DashboardShell activeHref="/dashboard/overview">
       <div className="h-full">
         <div
-          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
+          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px] flex flex-col"
           style={{
             background: "rgba(255,255,255,0.82)",
             boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
@@ -330,7 +330,7 @@ export default function OverviewPage() {
             <h2 className="text-xl md:text-2xl font-medium">Overview</h2>
             {!data?.googleConnected && (
               <Link
-                href="/dashboard"
+                href="/dashboard/settings?section=google"
                 className="flex items-center gap-2 px-4 py-2 bg-[#5F30EB] text-[#F6F4FF] text-sm font-medium rounded-full hover:opacity-90 transition-opacity self-start sm:self-auto"
               >
                 Connect Business Profile
@@ -409,30 +409,81 @@ export default function OverviewPage() {
 
           {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
-          {loading ? (
-            <p className="text-[#6A6A82] text-sm">Loading reviews...</p>
-          ) : data && data.reviews.length > 0 ? (
-            <div className="space-y-4">
-              {data.reviews.map((review) => (
-                <ReviewCard key={review.id} review={review} onRefresh={loadReviews} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16">
-              <p className="text-[#6A6A82] text-lg">No reviews match your filters</p>
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setRatingFilter("0");
-                  setSortBy("relevant");
-                  setPage(1);
-                }}
-                className="mt-3 text-sm text-[#5F30EB] hover:underline cursor-pointer"
-              >
-                Clear filters
-              </button>
-            </div>
-          )}
+          <div className="flex-1">
+            {loading ? (
+              <p className="text-[#6A6A82] text-sm">Loading reviews...</p>
+            ) : data && data.reviews.length > 0 ? (
+              <div className="space-y-4">
+                {data.reviews.map((review) => (
+                  <ReviewCard key={review.id} review={review} onRefresh={loadReviews} />
+                ))}
+              </div>
+            ) : !data?.googleConnected ? (
+              <div className="flex h-full min-h-[340px] items-center justify-center">
+                <div
+                  className="w-full max-w-3xl rounded-[32px] border border-[#E6E9F8] p-8 md:p-10"
+                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,244,255,0.88))" }}
+                >
+                  <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5F30EB]">Get started</p>
+                      <h3 className="mt-3 text-2xl font-semibold text-[#040404]">Connect your Google Business Profile</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-[#6A6A82]">
+                        This page becomes useful after your business is connected and reviews are synced into the workspace.
+                      </p>
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <Link
+                          href="/dashboard/settings?section=google"
+                          className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+                        >
+                          Open Google Settings
+                        </Link>
+                        <Link
+                          href="/dashboard/review-link"
+                          className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63] hover:border-[#5F30EB]/25 hover:text-[#5F30EB]"
+                        >
+                          Open Review Link
+                        </Link>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                      {[
+                        { step: "1", title: "Link Google" },
+                        { step: "2", title: "Connect profile" },
+                        { step: "3", title: "Sync reviews" },
+                      ].map((item) => (
+                        <div key={item.step} className="rounded-2xl border border-[#E6E9F8] bg-white/82 p-4">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#5F30EB]/10 text-sm font-semibold text-[#5F30EB]">
+                            {item.step}
+                          </div>
+                          <p className="mt-3 text-sm font-semibold text-[#040404]">{item.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-full min-h-[320px] items-center justify-center">
+                <div className="w-full max-w-xl rounded-[28px] border border-[#E6E9F8] bg-[#FBFBFF] p-8 text-center">
+                  <p className="text-lg font-medium text-[#6A6A82]">No reviews match your filters</p>
+                  <p className="mt-2 text-sm text-[#8A8AA0]">Clear the current search and filters to see synced reviews again.</p>
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setRatingFilter("0");
+                      setSortBy("relevant");
+                      setPage(1);
+                    }}
+                    className="mt-5 text-sm font-medium text-[#5F30EB] hover:underline cursor-pointer"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {data && data.pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">

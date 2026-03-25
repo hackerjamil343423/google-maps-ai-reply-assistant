@@ -43,48 +43,12 @@ export const NAV_ITEMS = [
     ),
   },
   {
-    title: "Team",
-    href: "/dashboard/team",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-        <path d="M16 3.128a4 4 0 0 1 0 7.744" />
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-        <circle cx="9" cy="7" r="4" />
-      </svg>
-    ),
-  },
-  {
-    title: "Subscription",
-    href: "/dashboard/subscription",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect width="20" height="14" x="2" y="5" rx="2" />
-        <line x1="2" x2="22" y1="10" y2="10" />
-      </svg>
-    ),
-  },
-  {
-    title: "Get More Reviews",
-    href: "/dashboard/get-more-reviews",
+    title: "Review Link",
+    href: "/dashboard/review-link",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
-      </svg>
-    ),
-  },
-  {
-    title: "API",
-    href: "/dashboard",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <ellipse cx="12" cy="5" rx="9" ry="3" />
-        <path d="M3 5V19A9 3 0 0 0 21 19V5" />
-        <path d="M3 12A9 3 0 0 0 21 12" />
       </svg>
     ),
   },
@@ -134,7 +98,7 @@ function SidebarInner({
           <span className="text-sm font-semibold text-[#040404] leading-tight">Wakkelni</span>
         </Link>
 
-        <nav className="flex flex-col items-stretch w-full px-2 space-y-1 mt-4 mb-4">
+        <nav className="flex flex-col items-stretch w-full px-2 space-y-1.5 mt-4 mb-4">
           {NAV_ITEMS.map((item) => {
             const isActive = activeHref === item.href;
             return (
@@ -331,5 +295,4 @@ export default function DashboardShell({
     </div>
   );
 }
-
 
