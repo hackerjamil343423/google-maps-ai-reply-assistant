@@ -5,11 +5,7 @@ import DashboardShell from "@/components/DashboardShell";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 const inputCls =
-  "w-full px-4 py-3 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all text-sm";
-const inputStyle = {
-  background: "rgba(255,255,255,0.9)",
-  border: "1px solid rgba(255,255,255,0.15)",
-};
+  "w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4F63] outline-none transition-all focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12";
 
 const labelCls = "block text-sm text-[#6A6A82] mb-1.5";
 
@@ -40,7 +36,7 @@ function EyeToggle({ show, onToggle }: { show: boolean; onToggle: () => void }) 
 function SaveFeedback({ saved, label = "Saved successfully" }: { saved: boolean; label?: string }) {
   if (!saved) return null;
   return (
-    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/25 text-green-400 text-sm">
+    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-600 text-sm">
       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M20 6 9 17l-5-5" />
@@ -178,22 +174,18 @@ export default function ProfilePage() {
 
   return (
     <DashboardShell activeHref="/profile">
-      <div className="h-full">
-        <div
-          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-6 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
-          style={{
-            background: "rgba(255,255,255,0.82)",
-            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-          }}
-        >
-          <h2 className="text-xl md:text-2xl font-medium mb-8">Profile</h2>
+      <div>
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Account</p>
+          <h2 className="text-2xl font-semibold text-[#040404] mt-1">Profile</h2>
+        </div>
 
           {loadingProfile && (
-            <div className="mb-5 text-sm text-[#6A6A82]">Loading profile…</div>
+            <div className="mb-5 text-sm text-[#6B6487]">Loading profile…</div>
           )}
 
           {profileError && (
-            <div className="mb-5 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
               {profileError}
             </div>
           )}
@@ -202,24 +194,18 @@ export default function ProfilePage() {
 
             {/* ── Avatar section ── */}
             <div className="flex items-center gap-5">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-[#040404] text-2xl font-bold flex-shrink-0 border-2 border-[#5F30EB]/30"
-                style={{ background: "linear-gradient(135deg, #7C3AED, #0284C7)" }}
-              >
+              <div className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 bg-[#5F30EB]">
                 {initials}
               </div>
               <div>
                 <p className="text-[#040404] font-medium">{firstName} {lastName}</p>
-                <p className="text-[#8A8AA0] text-sm">{email}</p>
-                <button className="mt-2 text-xs text-[#5F30EB] hover:underline cursor-pointer transition-colors">
-                  Change avatar
-                </button>
+                <p className="text-[#6B6487] text-sm">{email}</p>
               </div>
             </div>
 
             {/* ── Profile form ── */}
             <section>
-              <h3 className="text-base font-medium text-[#4E4E5E] mb-5 pb-3 border-b border-[#5F30EB20]">
+              <h3 className="text-base font-medium text-[#040404] mb-5 pb-3 border-b border-[#E6E1FA]">
                 Personal Information
               </h3>
               <form onSubmit={handleProfileSave} className="space-y-5">
@@ -227,28 +213,24 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>First Name</label>
-                    <input type="text" required className={inputCls} style={inputStyle}
-                      value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                    <input type="text" required className={inputCls}                      value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                   </div>
                   <div>
                     <label className={labelCls}>Last Name</label>
-                    <input type="text" required className={inputCls} style={inputStyle}
-                      value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                    <input type="text" required className={inputCls}                      value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>
                 </div>
 
                 {/* Email */}
                 <div>
                   <label className={labelCls}>Email Address</label>
-                  <input type="email" required className={inputCls} style={inputStyle}
-                    value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <input type="email" required className={inputCls}                    value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
 
                 {/* Phone */}
                 <div>
                   <label className={labelCls}>Phone Number <span className="text-gray-600">(optional)</span></label>
-                  <input type="tel" className={inputCls} style={inputStyle}
-                    placeholder="+1 (555) 000-0000"
+                  <input type="tel" className={inputCls}                    placeholder="+1 (555) 000-0000"
                     value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
 
@@ -256,14 +238,12 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Company <span className="text-gray-600">(optional)</span></label>
-                    <input type="text" className={inputCls} style={inputStyle}
-                      placeholder="Your business name"
+                    <input type="text" className={inputCls}                      placeholder="Your business name"
                       value={company} onChange={(e) => setCompany(e.target.value)} />
                   </div>
                   <div>
                     <label className={labelCls}>Website <span className="text-gray-600">(optional)</span></label>
-                    <input type="url" className={inputCls} style={inputStyle}
-                      placeholder="https://yourbusiness.com"
+                    <input type="url" className={inputCls}                      placeholder="https://yourbusiness.com"
                       value={website} onChange={(e) => setWebsite(e.target.value)} />
                   </div>
                 </div>
@@ -271,19 +251,14 @@ export default function ProfilePage() {
                 {/* Bio */}
                 <div>
                   <label className={labelCls}>Bio <span className="text-gray-600">(optional)</span></label>
-                  <textarea rows={3} className={inputCls} style={inputStyle}
-                    placeholder="A short description about yourself or your business…"
+                  <textarea rows={3} className={inputCls}                    placeholder="A short description about yourself or your business…"
                     value={bio} onChange={(e) => setBio(e.target.value)} />
                 </div>
 
                 {/* Save */}
                 <div className="flex items-center gap-4 pt-1">
                   <button type="submit" disabled={savingProfile}
-                    className="px-6 py-3 rounded-full font-semibold text-black transition-all cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2"
-                    style={{
-                      background: "#5F30EB",
-                      boxShadow: "0px 4.65px 9.3px 1.16px #F4F4FE40 inset",
-                    }}>
+                    className="px-6 py-3 rounded-full font-semibold text-white bg-[#5F30EB] transition-all cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2">
                     {savingProfile ? (
                       <>
                         <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="15" height="15"
@@ -301,7 +276,7 @@ export default function ProfilePage() {
 
             {/* Language section */}
             <section>
-              <h3 className="text-base font-medium text-[#4E4E5E] mb-5 pb-3 border-b border-[#5F30EB20]">
+              <h3 className="text-base font-medium text-[#040404] mb-5 pb-3 border-b border-[#E6E1FA]">
                 Language
               </h3>
               <div className="max-w-sm">
@@ -310,13 +285,7 @@ export default function ProfilePage() {
                     value={language}
                     onChange={(e) => setLanguage(e.target.value === "ar" ? "ar" : "en")}
                     disabled={!languageReady}
-                    className="w-full px-4 py-3 pr-10 rounded-lg text-[#4F4F63] font-medium focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 focus:border-[#5F30EB]/50 appearance-none cursor-pointer transition-all duration-300 hover:border-[#5F30EB]/30 disabled:opacity-60"
-                    style={{
-                      background: "rgba(255,255,255,0.82)",
-                      border: "1px solid #E6E9F8",
-                      boxShadow: "inset 0px -4px 40px 5px #0B385829",
-                      backdropFilter: "blur(8px)",
-                    }}
+                    className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 pr-10 text-sm text-[#4F4F63] font-medium outline-none appearance-none cursor-pointer transition-all focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12 disabled:opacity-60"
                   >
                     <option value="en" className="bg-[#F6F4FF] text-[#4F4F63]">
                       English
@@ -341,9 +310,9 @@ export default function ProfilePage() {
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </div>
-                <p className="text-xs text-[#8A8AA0] mt-2">
+                <p className="text-xs text-[#6B6487] mt-2">
                   Current language:{" "}
-                  <span className="text-[#6A6A82]">
+                  <span className="font-medium text-[#040404]">
                     {language === "ar" ? "Arabic" : "English"}
                   </span>
                 </p>
@@ -351,7 +320,7 @@ export default function ProfilePage() {
             </section>
             {/* Password section */}
             <section>
-              <h3 className="text-base font-medium text-[#4E4E5E] mb-5 pb-3 border-b border-[#5F30EB20]">
+              <h3 className="text-base font-medium text-[#040404] mb-5 pb-3 border-b border-[#E6E1FA]">
                 Change Password
               </h3>
               <form onSubmit={handlePasswordSave} className="space-y-5">
@@ -360,8 +329,7 @@ export default function ProfilePage() {
                   <label className={labelCls}>Current Password</label>
                   <div className="relative">
                     <input type={showCurrent ? "text" : "password"} required
-                      className={`${inputCls} pr-11`} style={inputStyle}
-                      placeholder="Enter current password"
+                      className={`${inputCls} pr-11`}                      placeholder="Enter current password"
                       value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} />
                     <EyeToggle show={showCurrent} onToggle={() => setShowCurrent((v) => !v)} />
                   </div>
@@ -372,8 +340,7 @@ export default function ProfilePage() {
                   <label className={labelCls}>New Password</label>
                   <div className="relative">
                     <input type={showNew ? "text" : "password"} required
-                      className={`${inputCls} pr-11`} style={inputStyle}
-                      placeholder="Min. 8 characters"
+                      className={`${inputCls} pr-11`}                      placeholder="Min. 8 characters"
                       value={newPw} onChange={(e) => setNewPw(e.target.value)} />
                     <EyeToggle show={showNew} onToggle={() => setShowNew((v) => !v)} />
                   </div>
@@ -390,7 +357,7 @@ export default function ProfilePage() {
                           const color = strength === 1 ? "#EF4444" : strength === 2 ? "#F59E0B" : strength === 3 ? "#3B82F6" : "#5F30EB";
                           return (
                             <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
-                              style={{ background: i <= strength ? color : "#2a2a2a" }} />
+                              style={{ background: i <= strength ? color : "#E6E9F8" }} />
                           );
                         })}
                       </div>
@@ -406,8 +373,7 @@ export default function ProfilePage() {
                   <label className={labelCls}>Confirm New Password</label>
                   <div className="relative">
                     <input type={showConfirm ? "text" : "password"} required
-                      className={`${inputCls} pr-11`} style={inputStyle}
-                      placeholder="Re-enter new password"
+                      className={`${inputCls} pr-11`}                      placeholder="Re-enter new password"
                       value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
                     <EyeToggle show={showConfirm} onToggle={() => setShowConfirm((v) => !v)} />
                   </div>
@@ -421,7 +387,7 @@ export default function ProfilePage() {
 
                 {/* Error */}
                 {pwError && (
-                  <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+                  <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
                     {pwError}
                   </div>
                 )}
@@ -429,11 +395,7 @@ export default function ProfilePage() {
                 {/* Save */}
                 <div className="flex items-center gap-4 pt-1">
                   <button type="submit" disabled={savingPassword}
-                    className="px-6 py-3 rounded-full font-semibold text-black transition-all cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2"
-                    style={{
-                      background: "#5F30EB",
-                      boxShadow: "0px 4.65px 9.3px 1.16px #F4F4FE40 inset",
-                    }}>
+                    className="px-6 py-3 rounded-full font-semibold text-white bg-[#5F30EB] transition-all cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2">
                     {savingPassword ? (
                       <>
                         <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="15" height="15"
@@ -451,20 +413,19 @@ export default function ProfilePage() {
 
             {/* ── Danger zone ── */}
             <section>
-              <h3 className="text-base font-medium text-red-400 mb-5 pb-3 border-b border-red-500/20">
+              <h3 className="text-base font-medium text-red-500 mb-5 pb-3 border-b border-red-100">
                 Danger Zone
               </h3>
-              <div className="flex items-start justify-between gap-4 p-4 rounded-xl border border-red-500/20"
-                style={{ background: "rgba(239,68,68,0.04)" }}>
+              <div className="flex items-start justify-between gap-4 p-4 rounded-2xl border border-red-100 bg-red-50">
                 <div>
                   <p className="text-sm font-medium text-[#040404]">Delete Account</p>
-                  <p className="text-xs text-[#8A8AA0] mt-0.5">
+                  <p className="text-xs text-[#6B6487] mt-0.5">
                     Permanently delete your account and all associated data. This action cannot be undone.
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium text-red-500 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer"
                 >
                   Delete Account
                 </button>
@@ -472,7 +433,6 @@ export default function ProfilePage() {
             </section>
 
           </div>
-        </div>
       </div>
     </DashboardShell>
   );
