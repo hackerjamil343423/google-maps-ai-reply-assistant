@@ -364,20 +364,17 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/analytics">
-      <div className="h-full">
-        <div
-          className="brand-scrollbar rounded-3xl border border-[#E6E9F8] p-4 md:p-10 min-h-[70vh] max-h-[calc(100vh-120px)] overflow-y-auto backdrop-blur-[80px]"
-          style={{
-            background: "rgba(255,255,255,0.82)",
-            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-          }}
-        >
-          <h2 className="text-xl md:text-2xl font-medium mb-6">Analytics</h2>
+      <div className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-140px)] overflow-y-auto pr-1">
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
+          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Review Performance</h2>
+          <p className="mt-2 text-sm text-[#6A6A82]">Track rating quality, response rate, and monthly trends in a wider dashboard view.</p>
+        </div>
 
-          {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
-          {loading && <p className="text-sm text-[#6A6A82] mb-4">Loading analytics...</p>}
+        {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+        {loading && <p className="text-sm text-[#6A6A82] mb-4">Loading analytics...</p>}
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {analytics.stats.map((stat) => (
               <div
                 key={stat.label}
@@ -393,9 +390,9 @@ export default function AnalyticsPage() {
                 </h3>
               </div>
             ))}
-          </div>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div
               className="lg:col-span-2 rounded-2xl border border-[#E6E9F8] p-4 md:p-6"
               style={{
@@ -438,9 +435,9 @@ export default function AnalyticsPage() {
                 <RadialProgress value={analytics.responseRate} size={110} />
               </div>
             </div>
-          </div>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div
               className="rounded-2xl border border-[#E6E9F8] p-4 md:p-6"
               style={{
@@ -497,7 +494,6 @@ export default function AnalyticsPage() {
                 ))}
               </div>
             </div>
-          </div>
         </div>
       </div>
     </DashboardShell>

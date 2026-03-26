@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function PATCH(_req: NextRequest) {
+export async function PATCH() {
   return NextResponse.json(
     { error: "Use POST /api/subscription/checkout to upgrade your plan." },
     { status: 405 }

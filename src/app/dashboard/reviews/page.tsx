@@ -368,25 +368,16 @@ export default function ReviewsPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/reviews">
-      <div className="h-full">
-        <div
-          className="rounded-3xl border border-[#E6E9F8] p-6 md:p-10 h-[calc(100vh-120px)] flex flex-col backdrop-blur-[80px]"
-          style={{
-            background: "rgba(255,255,255,0.82)",
-            boxShadow: "inset 0px -4px 100px 21px #EFEFEF14",
-          }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl md:text-2xl font-medium">Status Filters</h2>
-          </div>
+      <div className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-140px)] overflow-y-auto pr-1">
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Reviews</p>
+          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Reply Workflow</h2>
+          <p className="mt-2 text-sm text-[#6A6A82]">Review pending items, generated drafts, and posted replies in one wider workspace.</p>
+        </div>
 
-          <div
-            className="flex items-center rounded-full px-4 py-2.5 mb-6 gap-2"
-            style={{
-              background: "rgba(255,255,255,0.82)",
-              border: "1px solid #E6E9F8",
-            }}
-          >
+        <div
+          className="flex items-center rounded-full px-4 py-2.5 mb-6 gap-2 border border-[#E6E9F8] bg-white/80 shadow-sm"
+        >
             <input
               placeholder="Search"
               className="flex-1 bg-transparent text-sm text-[#4F4F63] placeholder-gray-500 focus:outline-none"
@@ -394,9 +385,9 @@ export default function ReviewsPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
-          </div>
+        </div>
 
-          <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-6">
             {STATUS_TABS.map((tab) => {
               const isActive = activeTab === tab.key;
               const count = counts[tab.key];
@@ -426,13 +417,11 @@ export default function ReviewsPage() {
                 </button>
               );
             })}
-          </div>
+        </div>
 
-          {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+        {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
 
-          <div
-            className="brand-scrollbar flex-1 overflow-y-auto space-y-4 pr-1"
-          >
+        <div className="space-y-4">
             {loading ? (
               <p className="text-sm text-[#6A6A82]">Loading reviews...</p>
             ) : data && data.reviews.length > 0 ? (
@@ -448,10 +437,10 @@ export default function ReviewsPage() {
                 </p>
               </div>
             )}
-          </div>
+        </div>
 
-          {activeTab === "pending" && (data?.reviews.length ?? 0) > 0 && (
-            <div className="pt-4 mt-2 border-t border-[#5F30EB14] flex items-center justify-between text-xs text-[#8A8AA0]">
+        {activeTab === "pending" && (data?.reviews.length ?? 0) > 0 && (
+          <div className="pt-4 mt-6 border-t border-[#5F30EB14] flex items-center justify-between text-xs text-[#8A8AA0]">
               <span>
                 Showing {data?.reviews.length ?? 0} pending review{(data?.reviews.length ?? 0) !== 1 ? "s" : ""}
               </span>
@@ -462,9 +451,8 @@ export default function ReviewsPage() {
               >
                 Approve All
               </button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </DashboardShell>
   );

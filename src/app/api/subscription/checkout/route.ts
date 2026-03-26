@@ -6,7 +6,7 @@ import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { createConsumer, createPaymentLink } from "@/lib/streampay/client";
-import { getPlanProductId, PLAN_LIMITS } from "@/lib/subscription/plans";
+import { getPlanProductId } from "@/lib/subscription/plans";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const checkoutSchema = z.object({
@@ -30,8 +30,6 @@ export async function POST(req: NextRequest) {
   }
 
   const { plan } = parsed.data;
-  const planInfo = PLAN_LIMITS[plan];
-
   // Read product ID at request time — never at module load time
   const productId = getPlanProductId(plan);
   if (!productId) {
