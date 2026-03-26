@@ -208,7 +208,6 @@ function SidebarContent({
               <>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-[#040404]">{profile.name}</p>
-                  <p className="truncate text-xs text-[#6B6487]">{profile.email}</p>
                 </div>
                 <button
                   type="button"
