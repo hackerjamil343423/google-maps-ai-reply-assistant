@@ -121,7 +121,7 @@ export default function ReviewLinkPage() {
     <DashboardShell activeHref="/dashboard/review-link">
       <div className="h-full">
         <div
-          className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-140px)] overflow-y-auto pr-1"
+          className=""
         >
           <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>

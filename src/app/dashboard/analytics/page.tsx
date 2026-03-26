@@ -364,7 +364,7 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardShell activeHref="/dashboard/analytics">
-      <div className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-140px)] overflow-y-auto pr-1">
+      <div>
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
           <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Review Performance</h2>

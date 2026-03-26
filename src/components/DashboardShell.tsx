@@ -89,14 +89,14 @@ function SidebarSection({
               collapsed ? "justify-center" : "gap-3"
             } ${
               isActive
-                ? "bg-[#ffffff14] text-white shadow-[0_10px_24px_rgba(95,48,235,0.24)]"
-                : "text-[#B8B3D4] hover:bg-[#ffffff0d] hover:text-white"
+                ? "bg-[#5F30EB] text-white shadow-[0_4px_16px_rgba(95,48,235,0.24)]"
+                : "text-[#6B6487] hover:bg-[#F0EBFF] hover:text-[#5F30EB]"
             }`}
           >
-            <span className={`${isActive ? "text-[#B79CFF]" : "text-current"}`}>{item.icon}</span>
+            <span className={`${isActive ? "text-white" : "text-current"}`}>{item.icon}</span>
             {!collapsed && <span className="truncate font-medium">{item.title}</span>}
             {collapsed && (
-              <span className="pointer-events-none absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 whitespace-nowrap rounded-xl bg-[#191821] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 whitespace-nowrap rounded-xl bg-[#5F30EB] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                 {item.title}
               </span>
             )}
@@ -125,72 +125,95 @@ function SidebarContent({
   initials: string;
 }) {
   return (
-    <div className={`flex h-full flex-col rounded-[28px] border border-[#2E2C3D] bg-[#1A1824] text-white shadow-[0_24px_80px_rgba(16,15,24,0.30)] transition-all ${collapsed ? "w-[88px]" : "w-[272px]"}`}>
-      <div className={`flex items-center ${collapsed ? "justify-center px-3" : "justify-between px-4"} pt-4`}>
-        {!collapsed && (
+    <div className={`flex h-full flex-col rounded-[28px] border border-[#E6E1FA] bg-white text-[#040404] shadow-[0_4px_24px_rgba(95,48,235,0.08)] transition-all ${collapsed ? "w-[88px]" : "w-[272px]"}`}>
+
+      {/* Expanded header */}
+      {!collapsed && (
+        <div className="flex items-center justify-between px-4 pt-4">
           <Link href="/" className="flex items-center gap-3" onClick={onNavigate}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni" width={34} height={34} className="h-8 w-8 object-contain" />
-            <div>
-              <p className="text-sm font-semibold text-white">Wakkelni</p>
-              <p className="text-[11px] text-[#9891B5]">Workspace</p>
-            </div>
+            <p className="text-sm font-semibold text-[#040404]">Wakkelni</p>
           </Link>
-        )}
-
-        {collapsed && (
-          <Link href="/" className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ffffff10]" onClick={onNavigate}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni" width={28} height={28} className="h-7 w-7 object-contain" />
-          </Link>
-        )}
-
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={`flex h-11 w-11 items-center justify-center rounded-2xl border border-[#ffffff12] bg-[#ffffff08] text-[#C8C2E7] transition-colors hover:bg-[#ffffff12] hover:text-white cursor-pointer ${collapsed ? "mt-4" : ""}`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 6h16" />
-            <path d="M4 12h16" />
-            <path d="M4 18h16" />
-          </svg>
-        </button>
-      </div>
-
-      {!collapsed && (
-        <div className="px-4 pt-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-[#ffffff08] px-3 py-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9B94B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label="Collapse sidebar"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF] cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" />
             </svg>
-            <span className="text-sm text-[#9B94B8]">Navigate workspace</span>
-          </div>
+          </button>
         </div>
       )}
 
-      <div className={`brand-scrollbar flex-1 overflow-y-auto ${collapsed ? "px-3" : "px-4"}`}>
+      {/* Collapsed header: toggle on top, logo below */}
+      {collapsed && (
+        <div className="flex flex-col items-center gap-3 px-3 pt-4">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label="Expand sidebar"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF] cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" />
+            </svg>
+          </button>
+          <Link href="/" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F0EBFF]" onClick={onNavigate}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni" width={26} height={26} className="h-6 w-6 object-contain" />
+          </Link>
+        </div>
+      )}
+
+      <div className={`no-scrollbar flex-1 overflow-y-auto ${collapsed ? "px-3" : "px-4"}`}>
         <SidebarSection activeHref={activeHref} collapsed={collapsed} onNavigate={onNavigate} />
       </div>
 
-      <div className={`${collapsed ? "px-3 pb-3" : "px-4 pb-4"} mt-auto`}>
-        <div className={`rounded-2xl border border-[#ffffff10] bg-[#ffffff08] ${collapsed ? "px-0 py-3" : "px-3 py-3"}`}>
+      <div className={`${collapsed ? "px-3 pb-3" : "px-4 pb-4"} mt-auto flex flex-col gap-2`}>
+        {!collapsed && (
+          <Link
+            href="/profile"
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-2xl border border-[#E6E1FA] bg-white px-3 py-2.5 text-sm font-medium text-[#4F4A67] transition-colors hover:border-[#5F30EB]/25 hover:bg-[#F0EBFF] hover:text-[#5F30EB]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+            </svg>
+            Profile
+          </Link>
+        )}
+        {collapsed && (
+          <Link
+            href="/profile"
+            onClick={onNavigate}
+            title="Profile"
+            className="flex h-10 w-10 mx-auto items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+            </svg>
+          </Link>
+        )}
+        <div className={`rounded-2xl border border-[#E6E1FA] bg-[#F8F7FF] ${collapsed ? "px-0 py-3" : "px-3 py-3"}`}>
           <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0EBFF] text-xs font-semibold text-[#1A1824]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0EBFF] text-xs font-semibold text-[#5F30EB]">
               {initials}
             </div>
             {!collapsed && (
               <>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">{profile.name}</p>
-                  <p className="truncate text-xs text-[#9B94B8]">{profile.email}</p>
+                  <p className="truncate text-sm font-medium text-[#040404]">{profile.name}</p>
+                  <p className="truncate text-xs text-[#6B6487]">{profile.email}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => void onLogout()}
-                  className="rounded-xl border border-[#ffffff10] px-3 py-2 text-xs font-medium text-[#E9E5FF] hover:bg-[#ffffff10] cursor-pointer"
+                  className="rounded-xl border border-[#E6E1FA] px-3 py-2 text-xs font-medium text-[#5F30EB] hover:bg-[#F0EBFF] cursor-pointer"
                 >
                   Logout
                 </button>
@@ -203,7 +226,7 @@ function SidebarContent({
                 type="button"
                 onClick={() => void onLogout()}
                 title="Logout"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#ffffff10] text-[#E9E5FF] hover:bg-[#ffffff10] cursor-pointer"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E6E1FA] text-[#5F30EB] hover:bg-[#F0EBFF] cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="m16 17 5-5-5-5" />
@@ -325,36 +348,22 @@ export default function DashboardShell({
       )}
 
       <main className={`min-h-screen px-4 pb-8 pt-4 md:px-8 md:pb-10 md:pt-6 ${isRtl ? desktopOffsetRtl : desktopOffset}`}>
-        <header className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white/70 text-[#5F30EB] shadow-sm md:hidden cursor-pointer"
-              aria-label="Open menu"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 6h16" />
-                <path d="M4 12h16" />
-                <path d="M4 18h16" />
-              </svg>
-            </button>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8F82BF]">Dashboard</p>
-              <p className="text-sm text-[#6B6487]">Manage reviews, settings, and business activity.</p>
-            </div>
-          </div>
-
-          <div className="hidden items-center gap-3 md:flex">
-            <Link href="/profile" className="rounded-2xl border border-[#E6E1FA] bg-white/70 px-4 py-2.5 text-sm font-medium text-[#4F4A67] hover:border-[#5F30EB]/25 hover:text-[#5F30EB]">
-              Profile
-            </Link>
-          </div>
-        </header>
-
-        <div className="mx-auto w-full max-w-[1600px]">
-          {children}
+        <div className="md:hidden mb-4">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white/70 text-[#5F30EB] shadow-sm cursor-pointer"
+            aria-label="Open menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 6h16" />
+              <path d="M4 12h16" />
+              <path d="M4 18h16" />
+            </svg>
+          </button>
         </div>
+
+        {children}
       </main>
     </div>
   );

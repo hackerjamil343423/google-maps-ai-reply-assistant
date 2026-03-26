@@ -320,7 +320,7 @@ export default function OverviewPage() {
     <DashboardShell activeHref="/dashboard/overview">
       <div className="h-full">
         <div
-          className="brand-scrollbar min-h-[70vh] max-h-[calc(100vh-140px)] overflow-y-auto pr-1 flex flex-col"
+          className="flex flex-col"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
             <h2 className="text-xl md:text-2xl font-medium">Overview</h2>
