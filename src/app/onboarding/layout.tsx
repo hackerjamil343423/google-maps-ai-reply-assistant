@@ -7,7 +7,7 @@ import { userProfiles } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardLayout({
+export default async function OnboardingLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -18,19 +18,16 @@ export default async function DashboardLayout({
     redirect("/GetStarted?mode=login");
   }
 
-  // Guard: send users who haven't finished onboarding back to it.
-  // Only blocks when a profile row explicitly has onboardingCompleted=false
-  // (existing users with no row at all are let through).
   if (db) {
     const profile = await db.query.userProfiles.findFirst({
       where: eq(userProfiles.userId, session.user.id),
       columns: { onboardingCompleted: true },
     });
 
-    if (profile && profile.onboardingCompleted === false) {
-      redirect("/onboarding");
+    if (profile?.onboardingCompleted === true) {
+      redirect("/dashboard/overview");
     }
   }
 
-  return children;
+  return <>{children}</>;
 }

@@ -132,6 +132,10 @@ function GetStartedContent() {
           setError(res.error.message ?? "Failed to create your account.");
           return;
         }
+        // New users go through onboarding
+        router.push("/onboarding");
+        router.refresh();
+        return;
       }
 
       router.push("/dashboard");

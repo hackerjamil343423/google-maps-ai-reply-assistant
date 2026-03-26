@@ -122,6 +122,7 @@ export const userProfiles = pgTable("user_profiles", {
   company: text("company"),
   website: text("website"),
   bio: text("bio"),
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

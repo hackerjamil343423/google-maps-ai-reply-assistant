@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
     company: profile?.company ?? "",
     website: profile?.website ?? "",
     bio: profile?.bio ?? "",
+    onboardingCompleted: profile?.onboardingCompleted ?? false,
   });
 }
 
