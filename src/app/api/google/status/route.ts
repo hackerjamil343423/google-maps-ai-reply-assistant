@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { businesses } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { GOOGLE_BUSINESS_SCOPES, hasLinkedGoogleAccount } from "@/lib/google/business-profile";
+import { getWorkspaceAccess } from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 export async function GET(req: NextRequest) {
@@ -38,6 +39,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const access = await getWorkspaceAccess(workspaceId);
+
   const linkedAccount = await hasLinkedGoogleAccount(session.user.id);
 
   const business = await db.query.businesses.findFirst({
@@ -69,5 +72,7 @@ export async function GET(req: NextRequest) {
         }
       : null,
     requiredScopes: GOOGLE_BUSINESS_SCOPES,
+    subscriptionAllowed: access.allowed,
+    subscriptionReason: access.reason,
   });
 }

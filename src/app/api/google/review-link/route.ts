@@ -4,6 +4,7 @@ import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { getWorkspaceGoogleReviewLink } from "@/lib/google/business-profile";
+import { getWorkspaceAccess } from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 function classifyReviewLinkError(message: string) {
@@ -71,6 +72,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { error: "Unable to initialize workspace." },
       { status: 500 }
+    );
+  }
+
+  const access = await getWorkspaceAccess(workspaceId);
+  if (!access.allowed) {
+    return NextResponse.json(
+      {
+        error:
+          access.reason === "trial_expired"
+            ? "Your free trial has expired. Please upgrade to a paid plan."
+            : "Your subscription is not active.",
+        errorCode: "subscription_required",
+      },
+      { status: 403 }
     );
   }
 

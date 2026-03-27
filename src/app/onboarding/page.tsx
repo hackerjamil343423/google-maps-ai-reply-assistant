@@ -273,6 +273,17 @@ function OnboardingContent() {
     router.refresh();
   }
 
+  // Skip onboarding entirely
+  async function handleSkip() {
+    try {
+      await fetch("/api/onboarding/complete", { method: "POST" });
+    } catch {
+      // Continue anyway
+    }
+    router.push("/dashboard/overview");
+    router.refresh();
+  }
+
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4 py-12"
@@ -301,6 +312,15 @@ function OnboardingContent() {
 
         {/* Card */}
         <div className="rounded-3xl border border-[#E6E1FA] bg-white px-8 py-8 shadow-[0_8px_40px_rgba(95,48,235,0.08)]">
+          <div className="mb-6 flex justify-end">
+            <button
+              type="button"
+              onClick={() => void handleSkip()}
+              className="text-sm text-[#6B6487] hover:text-[#5F30EB] transition-colors cursor-pointer"
+            >
+              Skip for now →
+            </button>
+          </div>
           <Onboarding
             totalSteps={4}
             defaultValue={initialStep}
