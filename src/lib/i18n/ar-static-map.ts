@@ -509,4 +509,103 @@ export const AR_STATIC_MAP: Record<string, string> = {
     "دع الذكاء الاصطناعي يرد على مئات مراجعات ملف نشاطك التجاري على Google بصوت علامتك الخاص. عزز الظهور وابنِ الثقة ووفر الوقت.",
   "Understanding your review content can be tough. Simplify the process with our pre-set questions to uncover customer pain points conveniently.":
     "قد يكون فهم محتوى المراجعات صعبًا. بسّط العملية عبر أسئلتنا الجاهزة لاكتشاف نقاط ألم العملاء بسهولة.",
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+  Services: "الخدمات",
+
+  // ── Common actions ──────────────────────────────────────────────────────────
+  Save: "حفظ",
+  Saved: "تم الحفظ",
+  Reset: "إعادة ضبط",
+  Cancel: "إلغاء",
+  Remove: "إزالة",
+  chars: "حرف",
+  "Get started": "ابدأ",
+  "Sending...": "جارٍ الإرسال...",
+  "Processing...": "جارٍ المعالجة...",
+  "Posting...": "جارٍ النشر...",
+  "Connecting...": "جارٍ الاتصال...",
+
+  // ── Connection states ───────────────────────────────────────────────────────
+  "Not connected": "غير متصل",
+  "Not connected yet": "لم يتم الاتصال بعد",
+
+  // ── Dashboard settings tabs & labels ───────────────────────────────────────
+  "Workspace Settings": "إعدادات مساحة العمل",
+  "Each area now lives in its own tab so the page stays focused and easy to use.":
+    "كل قسم في تبويبه الخاص ليظل المحتوى منظمًا وسهل الاستخدام.",
+  "AI Reply Settings": "إعدادات رد الذكاء الاصطناعي",
+  "Posting mode": "وضع النشر",
+  "Billing And Plan": "الفوترة والخطة",
+  "Current plan, usage, and upgrades.": "الخطة الحالية والاستخدام والترقيات.",
+  "Compare all plans": "مقارنة جميع الخطط",
+  "Your subscription has been activated.": "تم تفعيل اشتراكك.",
+  "Payment failed or was cancelled. Please try again.":
+    "فشل الدفع أو تم إلغاؤه. يرجى المحاولة مرة أخرى.",
+  "Team Access": "وصول الفريق",
+  Members: "الأعضاء",
+  "No team members yet.": "لا يوجد أعضاء فريق بعد.",
+
+  // ── Google business section ─────────────────────────────────────────────────
+  "Connection, sync status, and review activity.":
+    "الاتصال وحالة المزامنة ونشاط المراجعات.",
+  "Open Review Link": "فتح رابط المراجعة",
+  "Open Overview": "فتح الملخص",
+  "Business profile not connected yet.": "لم يتم ربط ملف النشاط التجاري بعد.",
+  "Connect Google first, then sync reviews so AI replies can work with real data.":
+    "اربط Google أولًا، ثم زامن المراجعات حتى تعمل ردود الذكاء الاصطناعي مع بيانات حقيقية.",
+
+  // ── Overview page onboarding prompt ────────────────────────────────────────
+  "Connect your Google Business Profile": "اربط ملف نشاطك التجاري على Google",
+  "This page becomes useful after your business is connected and reviews are synced into the workspace.":
+    "تصبح هذه الصفحة مفيدة بعد ربط نشاطك التجاري ومزامنة المراجعات في مساحة العمل.",
+  "Open Google Settings": "فتح إعدادات Google",
+  "Link Google": "ربط Google",
+  "Connect profile": "ربط الملف الشخصي",
+  "Sync reviews": "مزامنة المراجعات",
+
+  // ── Onboarding wizard ───────────────────────────────────────────────────────
+  "Skip for now →": "تخطَّ الآن ←",
+  "Welcome to Wakkelni": "مرحبًا بـ Wakkelni",
+  "Here's what you'll be able to do once you're set up.":
+    "إليك ما ستتمكن من فعله بمجرد إعدادك.",
+  "Let's get started": "لنبدأ",
+  "Connect your business": "اربط نشاطك التجاري",
+  "Link your Google Business Profile so Wakkelni can access and reply to your reviews.":
+    "اربط ملف نشاطك التجاري على Google لتتمكن Wakkelni من الوصول إلى مراجعاتك والرد عليها.",
+  "Business profile connected": "تم ربط ملف النشاط التجاري",
+  "Ready to start replying to reviews": "جاهز لبدء الرد على المراجعات",
+  "This only takes a moment": "لن يستغرق ذلك سوى لحظة",
+  "Connect to start managing your reviews": "اتصل لبدء إدارة مراجعاتك",
+  "Connect with Google": "الاتصال عبر Google",
+  "Choose your reply tone": "اختر نبرة ردّك",
+  "Pick the voice that best matches your brand. You can always change this later in Settings.":
+    "اختر الأسلوب الأنسب لعلامتك التجارية. يمكنك تغييره في أي وقت من الإعدادات.",
+  Professional: "احترافي",
+  "Polished and business-appropriate": "صقيل ومناسب للأعمال",
+  Friendly: "ودّي",
+  "Warm, approachable, and conversational": "دافئ وسهل التواصل",
+  Concise: "مختصر",
+  "Short and straight to the point": "قصير ومباشر",
+  Empathetic: "متعاطف",
+  "Understanding and emotionally aware": "متفهم وذكي عاطفيًا",
+  "You're all set!": "أنت جاهز تمامًا!",
+  "Wakkelni is ready. Here are a few tips to get the most out of it.":
+    "Wakkelni جاهز. إليك بعض النصائح للاستفادة القصوى منه.",
+  "Quick tips": "نصائح سريعة",
+  "New reviews are picked up automatically — AI replies are drafted and posted based on your approval mode.":
+    "تُجمَع المراجعات الجديدة تلقائيًا — تُنشأ الردود وتُنشر وفق وضع الموافقة المختار.",
+  "Fine-tune your AI prompt and tone anytime in":
+    "اضبط موجه الذكاء الاصطناعي ونبرته في أي وقت من",
+  "Settings → AI": "الإعدادات ← الذكاء الاصطناعي",
+  "Opening dashboard…": "جارٍ فتح لوحة التحكم…",
+  "Go to Dashboard": "الذهاب إلى لوحة التحكم",
+  "AI-Powered Replies": "ردود مدعومة بالذكاء الاصطناعي",
+  "Automatically generate personalised, on-brand responses to every Google review.":
+    "أنشئ تلقائيًا ردودًا مخصصة تعكس هوية علامتك لكل مراجعة على Google.",
+  "Analytics & Insights": "التحليلات والإحصائيات",
+  "Track reply rates, average ratings, and monthly trends in one clear dashboard.":
+    "تتبع معدلات الرد والتقييمات المتوسطة والاتجاهات الشهرية في لوحة واضحة.",
+  "Share a direct link that makes it effortless for happy customers to leave 5-star reviews.":
+    "شارك رابطًا مباشرًا يسهّل على العملاء السعداء ترك تقييمات 5 نجوم.",
 };
