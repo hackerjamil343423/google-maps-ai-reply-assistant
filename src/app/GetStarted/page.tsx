@@ -134,7 +134,6 @@ function GetStartedContent() {
         }
         // New users go through onboarding
         router.push("/onboarding");
-        router.refresh();
         return;
       }
 
@@ -153,7 +152,7 @@ function GetStartedContent() {
     try {
       const res = (await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/onboarding",
       })) as unknown as {
         error?: { message?: string };
         data?: { url?: string } | null;
