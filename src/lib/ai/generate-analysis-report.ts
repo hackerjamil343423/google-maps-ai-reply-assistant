@@ -143,7 +143,7 @@ export async function generateAnalysisReport(
     // Strip MiniMax thinking tags: <think>...</think>
     rawContent = rawContent.replace(/<[^>]*>/g, "");
 
-    // Strip markdown code blocks if present
+    // Try to extract JSON — support markdown code blocks or bare JSON
     let jsonString = rawContent.trim();
     if (jsonString.startsWith("```json")) {
       jsonString = jsonString.slice(7);
@@ -155,7 +155,20 @@ export async function generateAnalysisReport(
     }
     jsonString = jsonString.trim();
 
-    const parsed = JSON.parse(jsonString) as ReportData;
+    // Try direct parse first
+    let parsed: ReportData;
+    try {
+      parsed = JSON.parse(jsonString) as ReportData;
+    } catch {
+      // Fallback: extract first JSON array or object from the text
+      const match = jsonString.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (!match) throw new Error("No JSON found in response");
+      try {
+        parsed = JSON.parse(match[1]) as ReportData;
+      } catch {
+        throw new Error("Failed to parse JSON from response");
+      }
+    }
 
     return {
       reportData: parsed,
@@ -301,7 +314,18 @@ Return format:
     }
     jsonString = jsonString.trim();
 
-    const parsed = JSON.parse(jsonString) as ReportData;
+    let parsed: ReportData;
+    try {
+      parsed = JSON.parse(jsonString) as ReportData;
+    } catch {
+      const match = jsonString.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (!match) throw new Error("No JSON found in response");
+      try {
+        parsed = JSON.parse(match[1]) as ReportData;
+      } catch {
+        throw new Error("Failed to parse JSON from response");
+      }
+    }
 
     return {
       reportData: parsed,
