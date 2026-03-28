@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import DashboardShell from "@/components/DashboardShell";
+
+type BusinessSuggestion = {
+  id: string;
+  name: string;
+  address: string;
+  label: string;
+};
 
 type ReportSummary = {
   id: string;
@@ -215,14 +222,20 @@ function ReportCard({ report }: { report: ReportData }) {
 }
 
 export default function ReportsPageClient() {
-  const [googleMapsUrl, setGoogleMapsUrl] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [searchResults, setSearchResults] = useState<BusinessSuggestion[]>([]);
+  const [selectedBusiness, setSelectedBusiness] = useState<BusinessSuggestion | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [generating, setGenerating] = useState(false);
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [error, setError] = useState("");
+  const [generateError, setGenerateError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const searchRequestIdRef = useRef(0);
 
   // Load report history on mount
   useEffect(() => {
@@ -248,15 +261,21 @@ export default function ReportsPageClient() {
     };
   }, []);
 
-  async function handleGenerateReport() {
-    const url = googleMapsUrl.trim();
-    if (!url) {
-      setError("Please enter a Google Maps URL");
-      return;
-    }
+  const fetchSearchResults = useCallback(async (query: string) => {
+    const res = await fetch(
+      `/api/public/business-search?q=${encodeURIComponent(query)}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    const json = await res.json() as { results?: BusinessSuggestion[] };
+    return json.results ?? [];
+  }, []);
+
+  const handleGenerateReport = useCallback(async () => {
+    if (!selectedBusiness) return;
 
     setGenerating(true);
-    setError("");
+    setGenerateError("");
     setSuccess("");
     setSelectedReport(null);
 
@@ -264,16 +283,13 @@ export default function ReportsPageClient() {
       const res = await fetch("/api/analytics/reports/url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ placeId: selectedBusiness.id }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to generate report");
-        if (res.status === 429) {
-          setError(data.error || "Monthly limit reached");
-        }
+        setGenerateError(data.error || "Failed to generate report");
         return;
       }
 
@@ -288,15 +304,64 @@ export default function ReportsPageClient() {
       };
 
       setReports((prev) => [newReport, ...prev]);
-      setGoogleMapsUrl("");
+      setSelectedBusiness(null);
+      setSearchValue("");
+      setSearchResults([]);
       setSuccess(`Report generated for "${data.businessName}" with ${data.reviewCount} reviews!`);
       setSelectedReport({ ...newReport, reportData: data.reportData });
     } catch {
-      setError("An error occurred. Please try again.");
+      setGenerateError("An error occurred. Please try again.");
     } finally {
       setGenerating(false);
     }
-  }
+  }, [selectedBusiness]);
+
+  // Debounced search
+  useEffect(() => {
+    const query = searchValue.trim();
+
+    if (selectedBusiness && query === selectedBusiness.label) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    const requestId = ++searchRequestIdRef.current;
+    const timer = setTimeout(() => {
+      setSearchLoading(true);
+      void fetchSearchResults(query)
+        .then((results) => {
+          if (requestId !== searchRequestIdRef.current) return;
+          setSearchResults(results);
+        })
+        .catch(() => {
+          if (requestId !== searchRequestIdRef.current) return;
+          setSearchResults([]);
+        })
+        .finally(() => {
+          if (requestId !== searchRequestIdRef.current) return;
+          setSearchLoading(false);
+        });
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchValue, selectedBusiness, fetchSearchResults]);
+
+  const handleSelectBusiness = useCallback((business: BusinessSuggestion) => {
+    setSearchValue(business.label);
+    setSelectedBusiness(business);
+    setSearchResults([]);
+    setSearchError("");
+    setGenerateError("");
+  }, []);
 
   async function handleViewReport(report: ReportSummary) {
     if (selectedReport?.id === report.id) {
@@ -328,38 +393,65 @@ export default function ReportsPageClient() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
           <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">AI Reviews Analysis</h2>
           <p className="mt-2 text-sm text-[#6A6A82]">
-            Paste any Google Maps place URL to generate an AI-powered analysis report of its reviews.
+            Search for any business below to generate an AI-powered analysis report of its Google reviews.
           </p>
         </div>
 
-        {/* URL Input Card */}
+        {/* Search Input Card */}
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5 mb-6">
           <label className="block text-sm font-medium text-[#040404] mb-2">
-            Google Maps Place URL
+            Search Business
           </label>
-          <div className="flex gap-3">
+          <div className="relative">
             <input
-              type="url"
-              value={googleMapsUrl}
+              type="text"
+              value={searchValue}
               onChange={(e) => {
-                setGoogleMapsUrl(e.target.value);
-                setError("");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void handleGenerateReport();
+                const val = e.target.value;
+                setSearchValue(val);
+                if (selectedBusiness && val !== selectedBusiness.label) {
+                  setSelectedBusiness(null);
                 }
+                setGenerateError("");
               }}
-              placeholder="https://www.google.com/maps/place/..."
-              className="flex-1 rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4F63] outline-none transition-all focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
+              placeholder="Type a business name and address..."
+              className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4A63] outline-none transition-all focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12 pr-10"
             />
+            {searchLoading && (
+              <svg className="animate-spin absolute right-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6A6A82" strokeWidth="2">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            )}
+          </div>
+
+          {/* Search Results Dropdown */}
+          {searchResults.length > 0 && (
+            <div className="mt-1 border border-[#E6E9F8] rounded-2xl overflow-hidden bg-white shadow-lg">
+              {searchResults.map((result) => (
+                <button
+                  key={result.id}
+                  type="button"
+                  onClick={() => handleSelectBusiness(result)}
+                  className="w-full border-t border-[#5F30EB14] px-4 py-3 text-left transition-colors hover:bg-[#EEF2FF] last:border-b-0"
+                >
+                  <p className="text-sm font-medium text-[#040404]">{result.name}</p>
+                  {result.address && (
+                    <p className="text-xs text-[#6A6A82] mt-0.5">{result.address}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {searchError && <p className="text-sm text-red-500 mt-2">{searchError}</p>}
+
+          <div className="mt-4 flex items-center gap-3">
             <button
               type="button"
               onClick={() => void handleGenerateReport()}
-              disabled={!googleMapsUrl.trim() || generating}
+              disabled={!selectedBusiness || generating}
               className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition-all ${
-                !googleMapsUrl.trim() || generating
+                !selectedBusiness || generating
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-[#5F30EB] text-white hover:bg-[#4a27c9] shadow-[0_4px_16px_rgba(95,48,235,0.24)]"
               }`}
@@ -383,16 +475,18 @@ export default function ReportsPageClient() {
                 </>
               )}
             </button>
+            {selectedBusiness && (
+              <span className="text-sm text-[#6A6A82]">
+                Selected: <span className="font-medium text-[#040404]">{selectedBusiness.name}</span>
+              </span>
+            )}
           </div>
-          {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+          {generateError && <p className="text-sm text-red-500 mt-3">{generateError}</p>}
           {success && <p className="text-sm text-green-500 mt-3">{success}</p>}
-          <p className="text-xs text-[#6A6A82] mt-3">
-            Open Google Maps, find your business, click &quot;Share&quot; → &quot;Copy link&quot; and paste it above.
-          </p>
         </div>
 
         {/* Most Recent Report (quick view) */}
-        {selectedReport?.reportData && (
+        {selectedReport?.reportData && !generating && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-[#040404]">
@@ -422,7 +516,7 @@ export default function ReportsPageClient() {
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              <p className="text-sm text-[#6A6A82]">No reports yet. Paste a Google Maps URL above to get started.</p>
+              <p className="text-sm text-[#6A6A82]">No reports yet. Search for a business above to get started.</p>
             </div>
           ) : (
             <div className="space-y-3">
