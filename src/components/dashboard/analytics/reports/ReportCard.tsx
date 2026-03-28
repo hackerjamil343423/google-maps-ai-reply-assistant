@@ -64,20 +64,110 @@ export type ReportDetail = {
   reportData: ReportData;
 };
 
+function isArabicText(text: string): boolean {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+function detectLanguage(report: ReportData): "ar" | "en" {
+  const sampleText = [
+    ...report.insights,
+    ...report.commonThemes.map((t) => t.theme),
+    ...report.keyPhrases.slice(0, 3),
+  ].join(" ");
+  return isArabicText(sampleText) ? "ar" : "en";
+}
+
+type Labels = {
+  totalReviews: string;
+  avgRating: string;
+  replyRate: string;
+  replied: string;
+  trend: string;
+  improving: string;
+  declining: string;
+  stable: string;
+  sentimentBreakdown: string;
+  ratingDistribution: string;
+  positive: string;
+  neutral: string;
+  negative: string;
+  commonThemes: string;
+  noThemesIdentified: string;
+  mentions: string;
+  keyReviewPhrases: string;
+  aiInsightsRecommendations: string;
+  noInsightsAvailable: string;
+};
+
+const LABELS: Record<"en" | "ar", Labels> = {
+  en: {
+    totalReviews: "Total Reviews",
+    avgRating: "Avg Rating",
+    replyRate: "Reply Rate",
+    replied: "replied",
+    trend: "Trend",
+    improving: "Improving",
+    declining: "Declining",
+    stable: "Stable",
+    sentimentBreakdown: "Sentiment Breakdown",
+    ratingDistribution: "Rating Distribution",
+    positive: "positive",
+    neutral: "neutral",
+    negative: "negative",
+    commonThemes: "Common Themes",
+    noThemesIdentified: "No themes identified",
+    mentions: "mentions",
+    keyReviewPhrases: "Key Review Phrases",
+    aiInsightsRecommendations: "AI Insights & Recommendations",
+    noInsightsAvailable: "No insights available.",
+  },
+  ar: {
+    totalReviews: "إجمالي التقييمات",
+    avgRating: "متوسط التقييم",
+    replyRate: "نسبة الردود",
+    replied: "تم الرد",
+    trend: "الاتجاه",
+    improving: "تحسين",
+    declining: "تراجع",
+    stable: "مستقر",
+    sentimentBreakdown: "توزيع المشاعر",
+    ratingDistribution: "توزيع التقييمات",
+    positive: "إيجابي",
+    neutral: "محايد",
+    negative: "سلبي",
+    commonThemes: "المواضيع الشائعة",
+    noThemesIdentified: "لم يتم تحديد مواضيع",
+    mentions: "إشارات",
+    keyReviewPhrases: "أبرز عبارات التقييم",
+    aiInsightsRecommendations: "رؤى وتوصيات الذكاء الاصطناعي",
+    noInsightsAvailable: "لا توجد رؤى متاحة.",
+  },
+};
+
 export default function ReportCard({ report }: { report: ReportData }) {
+  const lang = detectLanguage(report);
+  const L = LABELS[lang];
+  const isAr = lang === "ar";
+
   const { overall, trends, responseStats } = report;
   const sentimentTotal = overall.sentimentBreakdown.positive + overall.sentimentBreakdown.neutral + overall.sentimentBreakdown.negative;
 
+  const trendLabel = trends.periodOverPeriod === "improving" ? L.improving :
+    trends.periodOverPeriod === "declining" ? L.declining : L.stable;
+
+  const trendColor = trends.periodOverPeriod === "improving" ? "text-green-500" :
+    trends.periodOverPeriod === "declining" ? "text-red-500" : "text-gray-500";
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isAr ? "rtl" : "ltr"}>
       {/* Overall Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Total Reviews</p>
+          <p className="text-xs text-[#6A6A82] mb-1">{L.totalReviews}</p>
           <p className="text-2xl font-semibold text-[#5F30EB]">{overall.totalReviews}</p>
         </div>
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Avg Rating</p>
+          <p className="text-xs text-[#6A6A82] mb-1">{L.avgRating}</p>
           <p className="text-2xl font-semibold text-[#5F30EB]">{overall.averageRating}</p>
           <div className="flex justify-center gap-0.5 mt-1">
             {[1, 2, 3, 4, 5].map((star) => (
@@ -86,19 +176,16 @@ export default function ReportCard({ report }: { report: ReportData }) {
           </div>
         </div>
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Reply Rate</p>
+          <p className="text-xs text-[#6A6A82] mb-1">{L.replyRate}</p>
           <p className="text-2xl font-semibold text-[#5F30EB]">{responseStats.replyRatePercent}%</p>
-          <p className="text-xs text-[#6A6A82] mt-1">{responseStats.totalReplied} replied</p>
+          <p className="text-xs text-[#6A6A82] mt-1">{responseStats.totalReplied} {L.replied}</p>
         </div>
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Trend</p>
+          <p className="text-xs text-[#6A6A82] mb-1">{L.trend}</p>
           <div className="flex items-center justify-center gap-1 mt-1">
             <TrendIcon direction={trends.periodOverPeriod} />
-            <span className={`text-lg font-semibold ${
-              trends.periodOverPeriod === "improving" ? "text-green-500" :
-              trends.periodOverPeriod === "declining" ? "text-red-500" : "text-gray-500"
-            }`}>
-              {trends.periodOverPeriod.charAt(0).toUpperCase() + trends.periodOverPeriod.slice(1)}
+            <span className={`text-lg font-semibold ${trendColor}`}>
+              {trendLabel}
             </span>
           </div>
         </div>
@@ -107,7 +194,7 @@ export default function ReportCard({ report }: { report: ReportData }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sentiment & Rating Distribution */}
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">Sentiment Breakdown</h3>
+          <h3 className="text-sm font-semibold text-[#040404] mb-4">{L.sentimentBreakdown}</h3>
           <div className="space-y-3">
             {(["positive", "neutral", "negative"] as const).map((sentiment) => {
               const count = overall.sentimentBreakdown[sentiment];
@@ -115,7 +202,7 @@ export default function ReportCard({ report }: { report: ReportData }) {
               const color = sentiment === "positive" ? "#22c55e" : sentiment === "neutral" ? "#f59e0b" : "#ef4444";
               return (
                 <div key={sentiment} className="flex items-center gap-3">
-                  <span className="text-xs text-[#6A6A82] w-16 capitalize">{sentiment}</span>
+                  <span className="text-xs text-[#6A6A82] w-16 capitalize">{L[sentiment]}</span>
                   <div className="flex-1 bg-[#E6E9F8] rounded-full h-2.5 overflow-hidden">
                     <div className="h-2.5 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
                   </div>
@@ -125,7 +212,7 @@ export default function ReportCard({ report }: { report: ReportData }) {
             })}
           </div>
 
-          <h3 className="text-sm font-semibold text-[#040404] mb-3 mt-6">Rating Distribution</h3>
+          <h3 className="text-sm font-semibold text-[#040404] mb-3 mt-6">{L.ratingDistribution}</h3>
           <div className="space-y-2">
             {[5, 4, 3, 2, 1].map((star) => {
               const count = overall.ratingDistribution[String(star)] || 0;
@@ -148,16 +235,16 @@ export default function ReportCard({ report }: { report: ReportData }) {
 
         {/* Common Themes */}
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">Common Themes</h3>
+          <h3 className="text-sm font-semibold text-[#040404] mb-4">{L.commonThemes}</h3>
           {report.commonThemes.length === 0 ? (
-            <p className="text-sm text-[#6A6A82]">No themes identified</p>
+            <p className="text-sm text-[#6A6A82]">{L.noThemesIdentified}</p>
           ) : (
             <div className="space-y-4">
               {report.commonThemes.slice(0, 5).map((theme, idx) => (
                 <div key={idx}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-[#040404]">{theme.theme}</span>
-                    <span className="text-xs text-[#6A6A82]">{theme.count} mentions</span>
+                    <span className="text-xs text-[#6A6A82]">{theme.count} {L.mentions}</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {theme.examples.slice(0, 2).map((ex, i) => (
@@ -176,7 +263,7 @@ export default function ReportCard({ report }: { report: ReportData }) {
       {/* Key Phrases */}
       {report.keyPhrases.length > 0 && (
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">Key Review Phrases</h3>
+          <h3 className="text-sm font-semibold text-[#040404] mb-4">{L.keyReviewPhrases}</h3>
           <div className="flex flex-wrap gap-2">
             {report.keyPhrases.map((phrase, idx) => (
               <span key={idx} className="text-sm bg-[#F0EBFF] text-[#5F30EB] px-3 py-1.5 rounded-xl">
@@ -190,7 +277,7 @@ export default function ReportCard({ report }: { report: ReportData }) {
       {/* Insights */}
       {report.insights.length > 0 && (
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">AI Insights & Recommendations</h3>
+          <h3 className="text-sm font-semibold text-[#040404] mb-4">{L.aiInsightsRecommendations}</h3>
           <ul className="space-y-2">
             {report.insights.map((insight, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm text-[#4F4A67]">

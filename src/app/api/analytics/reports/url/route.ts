@@ -172,8 +172,8 @@ export async function POST(req: NextRequest) {
   businessName = placeDetails.displayName?.text?.trim() || "Business";
   resolvedPlaceId = placeDetails.id || placeId;
 
-  // Fetch all reviews using Text Search (supports pagination with nextPageToken)
-  const allReviews: Array<{
+  // Fetch reviews from Google Places API (returns up to 5 reviews per call)
+  let allReviews: Array<{
     rating?: number;
     text?: { text?: string };
     publishTime?: string;
@@ -181,61 +181,24 @@ export async function POST(req: NextRequest) {
   }> = [];
 
   try {
-    let pageToken: string | undefined;
-    const textSearchBody = {
-      textQuery: `place_id:${resolvedPlaceId}`,
-      pageSize: 100,
-      pageToken: undefined as string | undefined,
-    };
-
-    do {
-      if (pageToken) {
-        textSearchBody.pageToken = pageToken;
+    const reviewsRes = await fetch(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(resolvedPlaceId)}`,
+      {
+        method: "GET",
+        headers: {
+          "X-Goog-Api-Key": env.GOOGLE_MAPS_API_KEY,
+          "X-Goog-FieldMask": "reviews.rating,reviews.text,reviews.publishTime,reviews.authorAttribution.displayName",
+        },
+        cache: "no-store",
       }
+    );
 
-      const searchRes = await fetch(
-        "https://places.googleapis.com/v1/places:searchText",
-        {
-          method: "POST",
-          headers: {
-            "X-Goog-Api-Key": env.GOOGLE_MAPS_API_KEY,
-            "X-Goog-FieldMask": "places.reviews,nextPageToken",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(textSearchBody),
-          cache: "no-store",
-        }
-      );
-
-      if (!searchRes.ok) {
-        const errorText = await searchRes.text();
-        console.error("Google Places searchText error:", searchRes.status, errorText);
-        break;
-      }
-
-      const searchData = await searchRes.json() as {
-        places?: Array<{
-          reviews?: Array<{
-            rating?: number;
-            text?: { text?: string };
-            publishTime?: string;
-            authorAttribution?: { displayName?: string };
-          }>;
-        }>;
-        nextPageToken?: string;
-      };
-
-      const place = searchData.places?.[0];
-      if (place?.reviews) {
-        allReviews.push(...place.reviews);
-      }
-      pageToken = searchData.nextPageToken;
-
-      // Respect Google's rate limits between pages
-      if (pageToken) {
-        await new Promise((r) => setTimeout(r, 200));
-      }
-    } while (pageToken && allReviews.length < 500);
+    if (reviewsRes.ok) {
+      const reviewsData = await reviewsRes.json();
+      allReviews = reviewsData.reviews ?? [];
+    } else {
+      console.error("Google Places reviews fetch error:", reviewsRes.status);
+    }
   } catch (error) {
     console.error("Google Places reviews fetch failed:", error);
   }
