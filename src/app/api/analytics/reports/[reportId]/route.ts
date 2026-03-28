@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ reportId: string }> }
 ) {
   const session = await getRequestSession(req);
   if (!session) {
@@ -18,7 +18,7 @@ export async function GET(
     return NextResponse.json({ error: "Database not configured" }, { status: 500 });
   }
 
-  const { id } = await params;
+  const { reportId } = await params;
 
   const workspaceId = await ensureWorkspaceForUser(session.user.id, session.user.name);
   if (!workspaceId) {
@@ -27,7 +27,7 @@ export async function GET(
 
   const report = await db.query.reviewAnalysisReports.findFirst({
     where: and(
-      eq(reviewAnalysisReports.id, id),
+      eq(reviewAnalysisReports.id, reportId),
       eq(reviewAnalysisReports.workspaceId, workspaceId)
     ),
   });

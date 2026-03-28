@@ -293,7 +293,7 @@ export default function ReportsPageClient() {
     setCanGenerate(true);
     setCanGenerateReason("");
 
-    void fetch(`/api/analytics/reports/${selectedBusinessId}/can-generate`, { cache: "no-store" })
+    void fetch(`/api/analytics/businesses/${selectedBusinessId}/can-generate`, { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return null;
         return res.json() as Promise<{ canGenerate: boolean; reason?: string }>;
