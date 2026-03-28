@@ -138,14 +138,16 @@ export async function generateAnalysisReport(
       max_tokens: 8000,
     });
 
-    const rawContent = completion.choices[0]?.message?.content?.trim() ?? "";
+    let rawContent = completion.choices[0]?.message?.content ?? "";
+
+    // Strip MiniMax thinking tags: <think>...</think>
+    rawContent = rawContent.replace(/<[^>]*>/g, "");
 
     // Strip markdown code blocks if present
-    let jsonString = rawContent;
+    let jsonString = rawContent.trim();
     if (jsonString.startsWith("```json")) {
       jsonString = jsonString.slice(7);
-    }
-    if (jsonString.startsWith("```")) {
+    } else if (jsonString.startsWith("```")) {
       jsonString = jsonString.slice(3);
     }
     if (jsonString.endsWith("```")) {
@@ -283,13 +285,15 @@ Return format:
       max_tokens: 8000,
     });
 
-    const rawContent = completion.choices[0]?.message?.content?.trim() ?? "";
+    let rawContent = completion.choices[0]?.message?.content ?? "";
 
-    let jsonString = rawContent;
+    // Strip MiniMax thinking tags: <think>...</think>
+    rawContent = rawContent.replace(/<[^>]*>/g, "");
+
+    let jsonString = rawContent.trim();
     if (jsonString.startsWith("```json")) {
       jsonString = jsonString.slice(7);
-    }
-    if (jsonString.startsWith("```")) {
+    } else if (jsonString.startsWith("```")) {
       jsonString = jsonString.slice(3);
     }
     if (jsonString.endsWith("```")) {
