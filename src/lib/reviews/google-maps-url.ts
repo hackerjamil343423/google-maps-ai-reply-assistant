@@ -1,9 +1,9 @@
 /**
- * Parses a Google Maps URL and extracts the place ID or search query.
+ * Parses a Google Maps URL and extracts the place ID.
  * Supports:
- * - https://www.google.com/maps/place/.../@.../data=...!3m1!4b1!4m6!...
- * - https://www.google.com/maps/search/.../@.../data=...!1s...!4m...!8m...!11s...
- * - https://maps.app.goo.gl/... (short URL - returns null, needs redirect)
+ * - https://www.google.com/maps/place/.../@.../data=!3m1!4b1!4m6!3m5!1sPLACE_ID:...
+ * - https://www.google.com/maps/search/.../@.../data=!1sPLACE_ID:...
+ * - https://maps.app.goo.gl/... (short URL - returns null)
  */
 export function extractPlaceIdFromGoogleMapsUrl(url: string): string | null {
   if (!url || typeof url !== "string") return null;
@@ -11,26 +11,20 @@ export function extractPlaceIdFromGoogleMapsUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
     const pathname = parsed.pathname;
-    const hash = parsed.hash;
 
     // Short URL (maps.app.goo.gl) - can't resolve without fetching
     if (
-      pathname === "/" &&
-      (parsed.hostname.includes("goo.gl") || parsed.hostname.includes("maps.app.goo.gl"))
+      parsed.hostname.includes("goo.gl") ||
+      parsed.hostname.includes("maps.app.goo.gl")
     ) {
       return null;
     }
 
-    // Place page: /place/Business+Name/data=...!4m6!3m5!...
-    // Extract from "data=!4m6!3m5!1sPLACE_ID" pattern in path
-    const dataMatch = pathname.match(/\/data=[^!]+!/);
-    if (dataMatch) {
-      const dataSegment = dataMatch[0];
-      // Format: /data=...!...!4m6!3m5!1sPLACE_ID:...
-      const placeIdMatch = dataSegment.match(/!1s([^:!]+)/);
-      if (placeIdMatch) {
-        return placeIdMatch[1];
-      }
+    // Try to find !1sPLACE_ID pattern in the URL
+    // This pattern appears in /data=!3m1!...!1sPLACE_ID:... or similar
+    const placeIdMatch = pathname.match(/!1s([^:!]+)/);
+    if (placeIdMatch) {
+      return placeIdMatch[1];
     }
 
     // Query parameter: ?place_id=...
@@ -39,18 +33,15 @@ export function extractPlaceIdFromGoogleMapsUrl(url: string): string | null {
       return placeIdParam;
     }
 
-    // Path-based: /place/PLACE_ID
-    // e.g., /place/ChIJ.../...
+    // Path-based: /place/PLACE_ID (simple format without data= segment)
     const pathParts = pathname.split("/").filter(Boolean);
     const placeIndex = pathParts.indexOf("place");
     if (placeIndex !== -1 && pathParts[placeIndex + 1]) {
-      return decodeURIComponent(pathParts[placeIndex + 1]);
-    }
-
-    // Search page with place_id in URL (old format)
-    const placeIdSearch = parsed.searchParams.get("pasted");
-    if (placeIdSearch) {
-      return placeIdSearch;
+      const candidate = decodeURIComponent(pathParts[placeIndex + 1]);
+      // If it looks like a place ID (starts with 0x) return it
+      if (candidate.startsWith("0x")) {
+        return candidate;
+      }
     }
 
     return null;
