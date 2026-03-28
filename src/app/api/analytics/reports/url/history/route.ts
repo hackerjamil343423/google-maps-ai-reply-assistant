@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
     columns: {
       id: true,
       businessId: true,
+      businessName: true,
+      language: true,
       generatedAt: true,
       reviewCount: true,
       periodStart: true,
@@ -37,6 +39,7 @@ export async function GET(req: NextRequest) {
     reports: reports.map((r) => ({
       id: r.id,
       businessId: r.businessId,
+      businessName: r.businessName || "Google Business",
       generatedAt: r.generatedAt.toISOString(),
       reviewCount: r.reviewCount,
       periodStart: r.periodStart.toISOString(),

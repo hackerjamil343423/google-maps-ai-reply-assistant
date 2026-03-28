@@ -275,7 +275,7 @@ export default function ReportsPageClient() {
                     onChange={(e) => setSpecificYear(Number(e.target.value))}
                     className="w-24 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
                   >
-                    {[2024, 2025, 2026].map((y) => (
+                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
                       <option key={y} value={y}>{y}</option>
                     ))}
                   </select>

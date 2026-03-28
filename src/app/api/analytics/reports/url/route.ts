@@ -260,6 +260,8 @@ export async function POST(req: NextRequest) {
       .insert(reviewAnalysisReports)
       .values({
         businessId: resolvedPlaceId,
+        businessName,
+        language: selectedLanguage,
         workspaceId,
         reportData: JSON.stringify(reportData),
         reviewCount: reviewsData.length,

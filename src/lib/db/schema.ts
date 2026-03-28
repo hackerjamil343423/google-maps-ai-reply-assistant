@@ -424,6 +424,8 @@ export const reviewAnalysisReports = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     businessId: text("business_id").notNull(), // Google place ID (string), not a UUID
+    businessName: text("business_name"), // Cached business name at generation time
+    language: text("language").default("en"), // Report language: "en" or "ar"
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),

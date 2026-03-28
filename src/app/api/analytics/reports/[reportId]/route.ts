@@ -46,6 +46,7 @@ export async function GET(
   return NextResponse.json({
     id: report.id,
     businessId: report.businessId,
+    businessName: report.businessName || "Google Business",
     generatedAt: report.generatedAt.toISOString(),
     reviewCount: report.reviewCount,
     periodStart: report.periodStart.toISOString(),
