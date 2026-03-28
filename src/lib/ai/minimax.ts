@@ -1,6 +1,6 @@
 import { env } from "@/lib/env";
 
-const MINIMAX_API_BASE = "https://api.minimax.chat/v1";
+const MINIMAX_API_BASE = "https://api.minimax.io/v1";
 
 export interface MiniMaxMessage {
   role: "system" | "user" | "assistant";
@@ -26,9 +26,9 @@ export interface MiniMaxChatCompletion {
 }
 
 export async function createMiniMaxChatCompletion({
-  model = "MiniMax-Text-01",
+  model = "MiniMax-M2.7",
   messages,
-  temperature = 0.3,
+  temperature = 0.1,
   max_tokens,
 }: {
   model?: string;

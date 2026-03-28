@@ -122,7 +122,7 @@ export async function generateAnalysisReport(
 
   try {
     const completion = await createMiniMaxChatCompletion({
-      model: "MiniMax-Text-01",
+      model: "MiniMax-M2.7",
       messages: [
         {
           role: "system",
@@ -134,8 +134,8 @@ export async function generateAnalysisReport(
           content: prompt,
         },
       ],
-      temperature: 0.3,
-      max_tokens: 4000,
+      temperature: 0.1,
+      max_tokens: 8000,
     });
 
     const rawContent = completion.choices[0]?.message?.content?.trim() ?? "";
@@ -267,7 +267,7 @@ Return format:
 
   try {
     const completion = await createMiniMaxChatCompletion({
-      model: "MiniMax-Text-01",
+      model: "MiniMax-M2.7",
       messages: [
         {
           role: "system",
@@ -279,8 +279,8 @@ Return format:
           content: prompt,
         },
       ],
-      temperature: 0.3,
-      max_tokens: 4000,
+      temperature: 0.1,
+      max_tokens: 8000,
     });
 
     const rawContent = completion.choices[0]?.message?.content?.trim() ?? "";
