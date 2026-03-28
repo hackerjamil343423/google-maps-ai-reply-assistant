@@ -45,6 +45,18 @@ export const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    title: "AI Reports",
+    href: "/dashboard/reports",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 2v4" /><path d="m6.34 7.34 2.83 2.83" /><path d="M2 12h4" />
+        <path d="m17.66 7.34-2.83 2.83" /><path d="M22 12h-4" />
+        <path d="M12 18v4" /><path d="m6.34 16.66 2.83-2.83" />
+        <path d="m17.66 16.66-2.83-2.83" />
+      </svg>
+    ),
+  },
+  {
     title: "Review Link",
     href: "/dashboard/review-link",
     icon: (

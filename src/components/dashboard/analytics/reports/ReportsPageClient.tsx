@@ -385,7 +385,7 @@ export default function ReportsPageClient() {
   const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId);
 
   return (
-    <DashboardShell activeHref="/dashboard/analytics/reports">
+    <DashboardShell activeHref="/dashboard/reports">
       <div>
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
