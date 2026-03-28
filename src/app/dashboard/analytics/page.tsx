@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 import DashboardShell from "@/components/DashboardShell";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -369,6 +370,18 @@ export default function AnalyticsPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
           <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Review Performance</h2>
           <p className="mt-2 text-sm text-[#6A6A82]">Track rating quality, response rate, and monthly trends in a wider dashboard view.</p>
+          <Link
+            href="/dashboard/analytics/reports"
+            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-[#5F30EB] hover:text-[#4a27c9] transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M12 2v4" /><path d="m6.34 7.34 2.83 2.83" /><path d="M2 12h4" />
+              <path d="m17.66 7.34-2.83 2.83" /><path d="M22 12h-4" />
+              <path d="M12 18v4" /><path d="m6.34 16.66 2.83-2.83" />
+              <path d="m17.66 16.66-2.83-2.83" />
+            </svg>
+            AI Reviews Analysis Report
+          </Link>
         </div>
 
         {error && <p className="text-sm text-red-400 mb-4">{error}</p>}

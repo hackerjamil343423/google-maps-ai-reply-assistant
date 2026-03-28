@@ -419,4 +419,32 @@ export const assistantMessages = pgTable(
   ]
 );
 
+export const reviewAnalysisReports = pgTable(
+  "review_analysis_reports",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    generatedAt: timestamp("generated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    reportData: text("report_data").notNull(), // JSON string
+    reviewCount: integer("review_count").notNull(),
+    periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+    periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("review_analysis_reports_business_id_idx").on(table.businessId),
+    index("review_analysis_reports_workspace_id_idx").on(table.workspaceId),
+    index("review_analysis_reports_generated_at_idx").on(table.generatedAt),
+  ]
+);
+
 export type WorkspaceRole = (typeof memberRoleEnum.enumValues)[number];
