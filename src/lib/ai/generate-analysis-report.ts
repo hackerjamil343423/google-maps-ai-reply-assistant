@@ -1,6 +1,14 @@
 import { createMiniMaxChatCompletion } from "@/lib/ai/minimax";
 import { aggregateReviewsForBusiness, type AggregatedReviewData } from "@/lib/reviews/analysis";
 
+export type ReviewFromUrl = {
+  id: string;
+  authorName: string;
+  rating: number;
+  text: string;
+  reviewedAt: Date;
+};
+
 export interface ReportData {
   overall: {
     totalReviews: number;
@@ -150,6 +158,150 @@ export async function generateAnalysisReport(
     return {
       reportData: parsed,
       reviewCount: aggregatedData.totalCount,
+    };
+  } catch (error) {
+    console.error("MiniMax analysis failed:", error);
+    throw error;
+  }
+}
+
+export async function generateAnalysisReportFromUrl(
+  reviews: ReviewFromUrl[],
+  businessName: string
+): Promise<{ reportData: ReportData; reviewCount: number }> {
+  if (reviews.length === 0) {
+    return {
+      reportData: {
+        overall: {
+          totalReviews: 0,
+          averageRating: 0,
+          sentimentBreakdown: { positive: 0, neutral: 0, negative: 0 },
+          ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        },
+        commonThemes: [],
+        keyPhrases: [],
+        trends: { periodOverPeriod: "stable", changePercent: 0 },
+        insights: ["No reviews available to analyze."],
+        responseStats: { totalReplied: 0, replyRatePercent: 0 },
+      },
+      reviewCount: 0,
+    };
+  }
+
+  // Build rating distribution
+  const ratingDistribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  let ratingSum = 0;
+  for (const review of reviews) {
+    const star = Math.min(5, Math.max(1, review.rating));
+    ratingDistribution[star] = (ratingDistribution[star] || 0) + 1;
+    ratingSum += review.rating;
+  }
+
+  const sentimentBreakdown = {
+    positive: (ratingDistribution[5] || 0) + (ratingDistribution[4] || 0),
+    neutral: ratingDistribution[3] || 0,
+    negative: (ratingDistribution[2] || 0) + (ratingDistribution[1] || 0),
+  };
+
+  const positiveExamples = reviews
+    .filter((r) => r.rating >= 4)
+    .slice(0, 5)
+    .map((r) => `- "${r.text.substring(0, 200)}" (${r.rating}★ by ${r.authorName})`);
+
+  const negativeExamples = reviews
+    .filter((r) => r.rating <= 2)
+    .slice(0, 5)
+    .map((r) => `- "${r.text.substring(0, 200)}" (${r.rating}★ by ${r.authorName})`);
+
+  const sortedByDate = [...reviews].sort(
+    (a, b) => new Date(a.reviewedAt).getTime() - new Date(b.reviewedAt).getTime()
+  );
+  const periodStart = sortedByDate[0]?.reviewedAt || new Date();
+  const periodEnd = sortedByDate[sortedByDate.length - 1]?.reviewedAt || new Date();
+
+  const prompt = `You are an expert business analyst specializing in Google Business Profile reviews.
+
+Analyze the following review data for "${businessName}" and generate a comprehensive report in JSON format.
+
+## REVIEW DATA SUMMARY
+- Total Reviews: ${reviews.length}
+- Average Rating: ${(ratingSum / reviews.length).toFixed(2)}/5
+- Rating Distribution: 5★=${ratingDistribution[5]}, 4★=${ratingDistribution[4]}, 3★=${ratingDistribution[3]}, 2★=${ratingDistribution[2]}, 1★=${ratingDistribution[1]}
+- Period: ${periodStart.toISOString().split("T")[0]} to ${periodEnd.toISOString().split("T")[0]}
+
+## POSITIVE REVIEW EXAMPLES
+${positiveExamples.length > 0 ? positiveExamples.join("\n") : "(No positive reviews)"}
+
+## NEGATIVE REVIEW EXAMPLES
+${negativeExamples.length > 0 ? negativeExamples.join("\n") : "(No negative reviews)"}
+
+## INSTRUCTIONS
+Analyze all reviews and return a structured JSON report with:
+
+1. **overall**: Overall summary with totalReviews, averageRating, sentimentBreakdown (positive/neutral/negative counts based on star ratings: 4-5=positive, 3=neutral, 1-2=negative), and ratingDistribution
+
+2. **commonThemes**: Array of up to 5 most common themes found in reviews. Each theme should have:
+   - theme: A short label (e.g., "Service Quality", "Wait Time", "Cleanliness")
+   - count: How many reviews mention this theme
+   - examples: Array of 2-3 short example snippets from actual reviews
+
+3. **keyPhrases**: Array of 5-10 most impactful or memorable short phrases/quotes from reviews
+
+4. **trends**: Analyze if the reviews show improving, declining, or stable patterns. Include changePercent (estimated % change in average rating or sentiment from older to newer reviews)
+
+5. **insights**: Array of 3-5 actionable business recommendations based on patterns found in the reviews
+
+6. **responseStats**: For responseStats, since these reviews are fetched from Google Maps (not from our system), set totalReplied to 0 and replyRatePercent to 0.
+
+IMPORTANT: Return ONLY valid JSON. No markdown, no explanation, just the raw JSON object.
+
+Return format:
+{
+  "overall": { "totalReviews": number, "averageRating": number, "sentimentBreakdown": { "positive": number, "neutral": number, "negative": number }, "ratingDistribution": { "1": number, "2": number, "3": number, "4": number, "5": number } },
+  "commonThemes": [{ "theme": string, "count": number, "examples": string[] }],
+  "keyPhrases": string[],
+  "trends": { "periodOverPeriod": "improving" | "declining" | "stable", "changePercent": number },
+  "insights": string[],
+  "responseStats": { "totalReplied": number, "replyRatePercent": number }
+}`;
+
+  try {
+    const completion = await createMiniMaxChatCompletion({
+      model: "MiniMax-Text-01",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert business analyst. Always respond with valid JSON only.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 4000,
+    });
+
+    const rawContent = completion.choices[0]?.message?.content?.trim() ?? "";
+
+    let jsonString = rawContent;
+    if (jsonString.startsWith("```json")) {
+      jsonString = jsonString.slice(7);
+    }
+    if (jsonString.startsWith("```")) {
+      jsonString = jsonString.slice(3);
+    }
+    if (jsonString.endsWith("```")) {
+      jsonString = jsonString.slice(0, -3);
+    }
+    jsonString = jsonString.trim();
+
+    const parsed = JSON.parse(jsonString) as ReportData;
+
+    return {
+      reportData: parsed,
+      reviewCount: reviews.length,
     };
   } catch (error) {
     console.error("MiniMax analysis failed:", error);

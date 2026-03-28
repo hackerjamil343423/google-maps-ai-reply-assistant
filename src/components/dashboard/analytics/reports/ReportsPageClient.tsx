@@ -4,16 +4,10 @@ import { useEffect, useState } from "react";
 
 import DashboardShell from "@/components/DashboardShell";
 
-type Business = {
-  id: string;
-  name: string;
-  googleLocationId: string | null;
-  connectedAt: string | null;
-};
-
 type ReportSummary = {
   id: string;
   businessId: string;
+  businessName?: string;
   generatedAt: string;
   reviewCount: number;
   periodStart: string;
@@ -221,53 +215,21 @@ function ReportCard({ report }: { report: ReportData }) {
 }
 
 export default function ReportsPageClient() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
+  const [googleMapsUrl, setGoogleMapsUrl] = useState("");
   const [reports, setReports] = useState<ReportSummary[]>([]);
-  const [loadingBusinesses, setLoadingBusinesses] = useState(true);
-  const [loadingReports, setLoadingReports] = useState(false);
+  const [loadingReports, setLoadingReports] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [canGenerate, setCanGenerate] = useState(true);
-  const [canGenerateReason, setCanGenerateReason] = useState("");
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Load businesses
+  // Load report history on mount
   useEffect(() => {
-    let mounted = true;
-    setLoadingBusinesses(true);
-    void fetch("/api/analytics/businesses", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) return null;
-        return res.json() as Promise<{ businesses: Business[] }>;
-      })
-      .then((data) => {
-        if (!mounted || !data) return;
-        setBusinesses(data.businesses);
-        if (data.businesses.length > 0 && !selectedBusinessId) {
-          setSelectedBusinessId(data.businesses[0].id);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setLoadingBusinesses(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Load reports when business changes
-  useEffect(() => {
-    if (!selectedBusinessId) return;
     let mounted = true;
     setLoadingReports(true);
-    setReports([]);
-    setSelectedReport(null);
 
-    void fetch(`/api/analytics/reports?businessId=${selectedBusinessId}`, { cache: "no-store" })
+    void fetch("/api/analytics/reports/url/history", { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return null;
         return res.json() as Promise<{ reports: ReportSummary[] }>;
@@ -284,48 +246,25 @@ export default function ReportsPageClient() {
     return () => {
       mounted = false;
     };
-  }, [selectedBusinessId]);
-
-  // Check if can generate
-  useEffect(() => {
-    if (!selectedBusinessId) return;
-    let mounted = true;
-    setCanGenerate(true);
-    setCanGenerateReason("");
-
-    void fetch(`/api/analytics/businesses/${selectedBusinessId}/can-generate`, { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) return null;
-        return res.json() as Promise<{ canGenerate: boolean; reason?: string }>;
-      })
-      .then((data) => {
-        if (!mounted) return;
-        if (data) {
-          setCanGenerate(data.canGenerate);
-          setCanGenerateReason(data.reason || "");
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setGenerating(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [selectedBusinessId, generating]);
+  }, []);
 
   async function handleGenerateReport() {
-    if (!selectedBusinessId || !canGenerate) return;
+    const url = googleMapsUrl.trim();
+    if (!url) {
+      setError("Please enter a Google Maps URL");
+      return;
+    }
 
     setGenerating(true);
     setError("");
+    setSuccess("");
+    setSelectedReport(null);
 
     try {
-      const res = await fetch("/api/analytics/reports", {
+      const res = await fetch("/api/analytics/reports/url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId: selectedBusinessId }),
+        body: JSON.stringify({ url }),
       });
 
       const data = await res.json();
@@ -333,16 +272,15 @@ export default function ReportsPageClient() {
       if (!res.ok) {
         setError(data.error || "Failed to generate report");
         if (res.status === 429) {
-          setCanGenerate(false);
-          setCanGenerateReason(data.nextAvailable ? `Next available: ${new Date(data.nextAvailable).toLocaleDateString()}` : "Limit reached");
+          setError(data.error || "Monthly limit reached");
         }
         return;
       }
 
-      // Add new report to list
       const newReport: ReportSummary = {
         id: data.id,
         businessId: data.businessId,
+        businessName: data.businessName,
         generatedAt: data.generatedAt,
         reviewCount: data.reviewCount,
         periodStart: data.periodStart,
@@ -350,17 +288,18 @@ export default function ReportsPageClient() {
       };
 
       setReports((prev) => [newReport, ...prev]);
-      setCanGenerate(false);
-      setCanGenerateReason("Report generated. Next available next month.");
-    } catch (err) {
+      setGoogleMapsUrl("");
+      setSuccess(`Report generated for "${data.businessName}" with ${data.reviewCount} reviews!`);
+      setSelectedReport({ ...newReport, reportData: data.reportData });
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setGenerating(false);
     }
   }
 
-  async function handleViewReport(reportId: string) {
-    if (selectedReport?.id === reportId) {
+  async function handleViewReport(report: ReportSummary) {
+    if (selectedReport?.id === report.id) {
       setSelectedReport(null);
       return;
     }
@@ -369,7 +308,7 @@ export default function ReportsPageClient() {
     setSelectedReport(null);
 
     try {
-      const res = await fetch(`/api/analytics/reports/${reportId}`, { cache: "no-store" });
+      const res = await fetch(`/api/analytics/reports/${report.id}`, { cache: "no-store" });
       const data = await res.json();
 
       if (res.ok) {
@@ -382,88 +321,92 @@ export default function ReportsPageClient() {
     }
   }
 
-  const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId);
-
   return (
     <DashboardShell activeHref="/dashboard/reports">
       <div>
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
-          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Reviews Analysis</h2>
+          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">AI Reviews Analysis</h2>
           <p className="mt-2 text-sm text-[#6A6A82]">
-            Generate AI-powered analysis reports for your Google Business reviews.
+            Paste any Google Maps place URL to generate an AI-powered analysis report of its reviews.
           </p>
         </div>
 
-        {/* Business Selector */}
+        {/* URL Input Card */}
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5 mb-6">
           <label className="block text-sm font-medium text-[#040404] mb-2">
-            Select Business
+            Google Maps Place URL
           </label>
-          {loadingBusinesses ? (
-            <p className="text-sm text-[#6A6A82]">Loading businesses...</p>
-          ) : businesses.length === 0 ? (
-            <p className="text-sm text-[#6A6A82]">No connected businesses found.</p>
-          ) : (
-            <select
-              value={selectedBusinessId}
-              onChange={(e) => setSelectedBusinessId(e.target.value)}
-              className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4F63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
+          <div className="flex gap-3">
+            <input
+              type="url"
+              value={googleMapsUrl}
+              onChange={(e) => {
+                setGoogleMapsUrl(e.target.value);
+                setError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void handleGenerateReport();
+                }
+              }}
+              placeholder="https://www.google.com/maps/place/..."
+              className="flex-1 rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4F63] outline-none transition-all focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
+            />
+            <button
+              type="button"
+              onClick={() => void handleGenerateReport()}
+              disabled={!googleMapsUrl.trim() || generating}
+              className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition-all ${
+                !googleMapsUrl.trim() || generating
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-[#5F30EB] text-white hover:bg-[#4a27c9] shadow-[0_4px_16px_rgba(95,48,235,0.24)]"
+              }`}
             >
-              {businesses.map((biz) => (
-                <option key={biz.id} value={biz.id}>
-                  {biz.name}
-                </option>
-              ))}
-            </select>
-          )}
+              {generating ? (
+                <>
+                  <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="M12 2v4" /><path d="m6.34 7.34 2.83 2.83" /><path d="M2 12h4" />
+                    <path d="m17.66 7.34-2.83 2.83" /><path d="M22 12h-4" />
+                    <path d="M12 18v4" /><path d="m6.34 16.66 2.83-2.83" />
+                    <path d="m17.66 16.66-2.83-2.83" />
+                  </svg>
+                  Generate Report
+                </>
+              )}
+            </button>
+          </div>
+          {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+          {success && <p className="text-sm text-green-500 mt-3">{success}</p>}
+          <p className="text-xs text-[#6A6A82] mt-3">
+            Open Google Maps, find your business, click &quot;Share&quot; → &quot;Copy link&quot; and paste it above.
+          </p>
         </div>
 
-        {/* Generate Report Card */}
-        {selectedBusinessId && (
-          <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5 mb-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-semibold text-[#040404]">
-                  {selectedBusiness?.name || "Business"} — Analysis Report
-                </h3>
-                <p className="text-xs text-[#6A6A82] mt-1">
-                  {canGenerate
-                    ? "Generate a comprehensive AI-powered analysis of all reviews."
-                    : canGenerateReason}
-                </p>
-              </div>
+        {/* Most Recent Report (quick view) */}
+        {selectedReport?.reportData && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-[#040404]">
+                Latest Report{selectedReport.businessName ? ` — ${selectedReport.businessName}` : ""}
+              </h3>
               <button
                 type="button"
-                onClick={() => void handleGenerateReport()}
-                disabled={!canGenerate || generating || loadingBusinesses}
-                className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition-all ${
-                  !canGenerate || generating
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-[#5F30EB] text-white hover:bg-[#4a27c9] shadow-[0_4px_16px_rgba(95,48,235,0.24)]"
-                }`}
+                onClick={() => setSelectedReport(null)}
+                className="text-xs text-[#6A6A82] hover:text-[#5F30EB] transition-colors"
               >
-                {generating ? (
-                  <>
-                    <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                    </svg>
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                      <path d="M12 2v4" /><path d="m6.34 7.34 2.83 2.83" /><path d="M2 12h4" />
-                      <path d="m17.66 7.34-2.83 2.83" /><path d="M22 12h-4" />
-                      <path d="M12 18v4" /><path d="m6.34 16.66 2.83-2.83" />
-                      <path d="m17.66 16.66-2.83-2.83" />
-                    </svg>
-                    Generate Report
-                  </>
-                )}
+                Close
               </button>
             </div>
-            {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+            <ReportCard report={selectedReport.reportData} />
           </div>
         )}
 
@@ -479,7 +422,7 @@ export default function ReportsPageClient() {
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              <p className="text-sm text-[#6A6A82]">No reports yet. Generate your first report above.</p>
+              <p className="text-sm text-[#6A6A82]">No reports yet. Paste a Google Maps URL above to get started.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -489,7 +432,7 @@ export default function ReportsPageClient() {
                   <div key={report.id}>
                     <button
                       type="button"
-                      onClick={() => void handleViewReport(report.id)}
+                      onClick={() => void handleViewReport(report)}
                       className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all text-left ${
                         isSelected
                           ? "border-[#5F30EB] bg-[#F0EBFF]"
@@ -507,14 +450,14 @@ export default function ReportsPageClient() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-[#040404]">
-                            {new Date(report.generatedAt).toLocaleDateString(undefined, {
+                            {report.businessName || "Google Business"}
+                          </p>
+                          <p className="text-xs text-[#6A6A82] mt-0.5">
+                            {report.reviewCount} reviews &bull; {new Date(report.generatedAt).toLocaleDateString(undefined, {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
                             })}
-                          </p>
-                          <p className="text-xs text-[#6A6A82] mt-0.5">
-                            {report.reviewCount} reviews analyzed &bull; Period: {new Date(report.periodStart).toLocaleDateString()} – {new Date(report.periodEnd).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
