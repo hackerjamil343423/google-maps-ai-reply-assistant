@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import DashboardShell from "@/components/DashboardShell";
+import ReportCard from "@/components/dashboard/analytics/reports/ReportCard";
+import type { ReportDetail } from "@/components/dashboard/analytics/reports/ReportCard";
 
 type BusinessSuggestion = {
   id: string;
@@ -21,206 +24,6 @@ type ReportSummary = {
   periodEnd: string;
 };
 
-type ReportData = {
-  overall: {
-    totalReviews: number;
-    averageRating: number;
-    sentimentBreakdown: { positive: number; neutral: number; negative: number };
-    ratingDistribution: Record<string, number>;
-  };
-  commonThemes: Array<{ theme: string; count: number; examples: string[] }>;
-  keyPhrases: string[];
-  trends: { periodOverPeriod: "improving" | "declining" | "stable"; changePercent: number };
-  insights: string[];
-  responseStats: { totalReplied: number; replyRatePercent: number };
-};
-
-type ReportDetail = ReportSummary & {
-  reportData: ReportData;
-};
-
-function StarIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill={filled ? "#FFD700" : "none"}
-      stroke="#FFD700"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-
-function TrendIcon({ direction }: { direction: "improving" | "declining" | "stable" }) {
-  if (direction === "improving") {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" aria-hidden="true">
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-        <polyline points="17 6 23 6 23 12" />
-      </svg>
-    );
-  }
-  if (direction === "declining") {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" aria-hidden="true">
-        <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
-        <polyline points="17 18 23 18 23 12" />
-      </svg>
-    );
-  }
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" aria-hidden="true">
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function ReportCard({ report }: { report: ReportData }) {
-  const { overall, trends, responseStats } = report;
-  const sentimentTotal = overall.sentimentBreakdown.positive + overall.sentimentBreakdown.neutral + overall.sentimentBreakdown.negative;
-
-  return (
-    <div className="space-y-6">
-      {/* Overall Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Total Reviews</p>
-          <p className="text-2xl font-semibold text-[#5F30EB]">{overall.totalReviews}</p>
-        </div>
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Avg Rating</p>
-          <p className="text-2xl font-semibold text-[#5F30EB]">{overall.averageRating}</p>
-          <div className="flex justify-center gap-0.5 mt-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <StarIcon key={star} filled={star <= Math.round(overall.averageRating)} />
-            ))}
-          </div>
-        </div>
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Reply Rate</p>
-          <p className="text-2xl font-semibold text-[#5F30EB]">{responseStats.replyRatePercent}%</p>
-          <p className="text-xs text-[#6A6A82] mt-1">{responseStats.totalReplied} replied</p>
-        </div>
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4 text-center">
-          <p className="text-xs text-[#6A6A82] mb-1">Trend</p>
-          <div className="flex items-center justify-center gap-1 mt-1">
-            <TrendIcon direction={trends.periodOverPeriod} />
-            <span className={`text-lg font-semibold ${
-              trends.periodOverPeriod === "improving" ? "text-green-500" :
-              trends.periodOverPeriod === "declining" ? "text-red-500" : "text-gray-500"
-            }`}>
-              {trends.periodOverPeriod.charAt(0).toUpperCase() + trends.periodOverPeriod.slice(1)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sentiment & Rating Distribution */}
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">Sentiment Breakdown</h3>
-          <div className="space-y-3">
-            {(["positive", "neutral", "negative"] as const).map((sentiment) => {
-              const count = overall.sentimentBreakdown[sentiment];
-              const pct = sentimentTotal > 0 ? Math.round((count / sentimentTotal) * 100) : 0;
-              const color = sentiment === "positive" ? "#22c55e" : sentiment === "neutral" ? "#f59e0b" : "#ef4444";
-              return (
-                <div key={sentiment} className="flex items-center gap-3">
-                  <span className="text-xs text-[#6A6A82] w-16 capitalize">{sentiment}</span>
-                  <div className="flex-1 bg-[#E6E9F8] rounded-full h-2.5 overflow-hidden">
-                    <div className="h-2.5 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
-                  </div>
-                  <span className="text-xs font-medium text-[#040404] w-10 text-right">{pct}%</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <h3 className="text-sm font-semibold text-[#040404] mb-3 mt-6">Rating Distribution</h3>
-          <div className="space-y-2">
-            {[5, 4, 3, 2, 1].map((star) => {
-              const count = overall.ratingDistribution[String(star)] || 0;
-              const pct = overall.totalReviews > 0 ? Math.round((count / overall.totalReviews) * 100) : 0;
-              return (
-                <div key={star} className="flex items-center gap-3">
-                  <span className="text-xs text-[#6A6A82] w-8">{star}*</span>
-                  <div className="flex-1 bg-[#E6E9F8] rounded-full h-2 overflow-hidden">
-                    <div
-                      className="h-2 rounded-full transition-all"
-                      style={{ width: `${pct}%`, background: star >= 4 ? "#5F30EB" : star === 3 ? "#f59e0b" : "#ef4444" }}
-                    />
-                  </div>
-                  <span className="text-xs text-[#8A8AA0] w-8 text-right">{count}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Common Themes */}
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">Common Themes</h3>
-          {report.commonThemes.length === 0 ? (
-            <p className="text-sm text-[#6A6A82]">No themes identified</p>
-          ) : (
-            <div className="space-y-4">
-              {report.commonThemes.slice(0, 5).map((theme, idx) => (
-                <div key={idx}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-[#040404]">{theme.theme}</span>
-                    <span className="text-xs text-[#6A6A82]">{theme.count} mentions</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {theme.examples.slice(0, 2).map((ex, i) => (
-                      <span key={i} className="text-xs bg-[#F0EBFF] text-[#5F30EB] px-2 py-1 rounded-lg">
-                        &ldquo;{ex.substring(0, 60)}...&rdquo;
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Key Phrases */}
-      {report.keyPhrases.length > 0 && (
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">Key Review Phrases</h3>
-          <div className="flex flex-wrap gap-2">
-            {report.keyPhrases.map((phrase, idx) => (
-              <span key={idx} className="text-sm bg-[#F0EBFF] text-[#5F30EB] px-3 py-1.5 rounded-xl">
-                &ldquo;{phrase}&rdquo;
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Insights */}
-      {report.insights.length > 0 && (
-        <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#040404] mb-4">AI Insights & Recommendations</h3>
-          <ul className="space-y-2">
-            {report.insights.map((insight, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-[#4F4A67]">
-                <span className="text-[#5F30EB] mt-0.5">•</span>
-                {insight}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function ReportsPageClient() {
   const [searchValue, setSearchValue] = useState("");
   const [searchResults, setSearchResults] = useState<BusinessSuggestion[]>([]);
@@ -231,10 +34,14 @@ export default function ReportsPageClient() {
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [success, setSuccess] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState<"this_week" | "last_week" | "this_month" | "last_month" | "last_3_months" | "specific">("this_month");
+  const [specificYear, setSpecificYear] = useState(new Date().getFullYear());
+  const [specificMonth, setSpecificMonth] = useState(new Date().getMonth() + 1);
+  const [reportLanguage, setReportLanguage] = useState<"en" | "ar">("en");
 
+  const router = useRouter();
   const searchRequestIdRef = useRef(0);
 
   // Load report history on mount
@@ -283,7 +90,13 @@ export default function ReportsPageClient() {
       const res = await fetch("/api/analytics/reports/url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placeId: selectedBusiness.id }),
+        body: JSON.stringify({
+          placeId: selectedBusiness.id,
+          period: selectedPeriod,
+          year: selectedPeriod === "specific" ? specificYear : undefined,
+          month: selectedPeriod === "specific" ? specificMonth : undefined,
+          language: reportLanguage,
+        }),
       });
 
       const data = await res.json();
@@ -314,7 +127,7 @@ export default function ReportsPageClient() {
     } finally {
       setGenerating(false);
     }
-  }, [selectedBusiness]);
+  }, [selectedBusiness, selectedPeriod, specificYear, specificMonth, reportLanguage]);
 
   // Debounced search
   useEffect(() => {
@@ -364,26 +177,7 @@ export default function ReportsPageClient() {
   }, []);
 
   async function handleViewReport(report: ReportSummary) {
-    if (selectedReport?.id === report.id) {
-      setSelectedReport(null);
-      return;
-    }
-
-    setLoadingDetail(true);
-    setSelectedReport(null);
-
-    try {
-      const res = await fetch(`/api/analytics/reports/${report.id}`, { cache: "no-store" });
-      const data = await res.json();
-
-      if (res.ok) {
-        setSelectedReport(data as ReportDetail);
-      }
-    } catch {
-      // Silently fail
-    } finally {
-      setLoadingDetail(false);
-    }
+    router.push(`/dashboard/reports/${report.id}`);
   }
 
   return (
@@ -444,6 +238,80 @@ export default function ReportsPageClient() {
           )}
 
           {searchError && <p className="text-sm text-red-500 mt-2">{searchError}</p>}
+
+          {/* Period & Language Controls */}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Period Selector */}
+            <div>
+              <label className="block text-xs font-medium text-[#6A6A82] mb-1.5">Period</label>
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value as typeof selectedPeriod)}
+                className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2.5 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
+              >
+                <option value="this_week">This Week (Mon–Today)</option>
+                <option value="last_week">Last Week (Mon–Sun)</option>
+                <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="last_3_months">Last 3 Months</option>
+                <option value="specific">Specific Month</option>
+              </select>
+
+              {selectedPeriod === "specific" && (
+                <div className="flex gap-2 mt-2">
+                  <select
+                    value={specificMonth}
+                    onChange={(e) => setSpecificMonth(Number(e.target.value))}
+                    className="flex-1 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                      <option key={m} value={m}>
+                        {new Date(2000, m - 1, 1).toLocaleString("en", { month: "long" })}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={specificYear}
+                    onChange={(e) => setSpecificYear(Number(e.target.value))}
+                    className="w-24 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
+                  >
+                    {[2024, 2025, 2026].map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Language Selector */}
+            <div>
+              <label className="block text-xs font-medium text-[#6A6A82] mb-1.5">Report Language</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReportLanguage("en")}
+                  className={`flex-1 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all ${
+                    reportLanguage === "en"
+                      ? "border-[#5F30EB] bg-[#5F30EB] text-white"
+                      : "border-[#E6E9F8] text-[#6A6A82] hover:border-[#5F30EB]/30"
+                  }`}
+                >
+                  🇬🇧 English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReportLanguage("ar")}
+                  className={`flex-1 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all ${
+                    reportLanguage === "ar"
+                      ? "border-[#5F30EB] bg-[#5F30EB] text-white"
+                      : "border-[#E6E9F8] text-[#6A6A82] hover:border-[#5F30EB]/30"
+                  }`}
+                >
+                  🇸🇦 العربية
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div className="mt-4 flex items-center gap-3">
             <button
@@ -520,75 +388,48 @@ export default function ReportsPageClient() {
             </div>
           ) : (
             <div className="space-y-3">
-              {reports.map((report) => {
-                const isSelected = selectedReport?.id === report.id;
-                return (
-                  <div key={report.id}>
-                    <button
-                      type="button"
-                      onClick={() => void handleViewReport(report)}
-                      className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all text-left ${
-                        isSelected
-                          ? "border-[#5F30EB] bg-[#F0EBFF]"
-                          : "border-[#E6E9F8] hover:border-[#5F30EB]/30 hover:bg-[#F8F7FF]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                          isSelected ? "bg-[#5F30EB] text-white" : "bg-[#F0EBFF] text-[#5F30EB]"
-                        }`}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                            <polyline points="14 2 14 8 20 8" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-[#040404]">
-                            {report.businessName || "Google Business"}
-                          </p>
-                          <p className="text-xs text-[#6A6A82] mt-0.5">
-                            {report.reviewCount} reviews &bull; {new Date(report.generatedAt).toLocaleDateString(undefined, {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className={`text-[#6A6A82] transition-transform ${isSelected ? "rotate-180" : ""}`}
-                        aria-hidden="true"
-                      >
-                        <polyline points="6 9 12 15 18 9" />
+              {reports.map((report) => (
+                <button
+                  key={report.id}
+                  type="button"
+                  onClick={() => void handleViewReport(report)}
+                  className="w-full flex items-center justify-between p-4 rounded-2xl border border-[#E6E9F8] hover:border-[#5F30EB]/30 hover:bg-[#F8F7FF] transition-all text-left"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#F0EBFF] text-[#5F30EB] flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                        <polyline points="14 2 14 8 20 8" />
                       </svg>
-                    </button>
-
-                    {isSelected && (
-                      <div className="mt-3 pl-4 border-l-2 border-[#5F30EB]/20">
-                        {loadingDetail ? (
-                          <div className="flex items-center gap-2 p-4">
-                            <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                            </svg>
-                            <span className="text-sm text-[#6A6A82]">Loading report...</span>
-                          </div>
-                        ) : selectedReport?.reportData ? (
-                          <ReportCard report={selectedReport.reportData} />
-                        ) : (
-                          <p className="text-sm text-[#6A6A82] p-4">Failed to load report data.</p>
-                        )}
-                      </div>
-                    )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#040404]">
+                        {report.businessName || "Google Business"}
+                      </p>
+                      <p className="text-xs text-[#6A6A82] mt-0.5">
+                        {report.reviewCount} reviews &bull; {new Date(report.generatedAt).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-[#6A6A82]"
+                    aria-hidden="true"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              ))}
             </div>
           )}
         </div>

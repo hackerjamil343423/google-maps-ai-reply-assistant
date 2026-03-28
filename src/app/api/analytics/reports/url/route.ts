@@ -7,6 +7,64 @@ import { and, eq, gte } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { generateAnalysisReportFromUrl } from "@/lib/ai/generate-analysis-report";
 
+type Period = "this_week" | "last_week" | "this_month" | "last_month" | "last_3_months" | "specific";
+
+function computePeriodBounds(period: Period, specificYear?: number, specificMonth?: number): { start: Date; end: Date } {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Get Monday of current week (day index 0 = Sunday, 1 = Monday, ...)
+  const dayOfWeek = today.getDay();
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - daysToMonday);
+
+  const lastMonday = new Date(thisMonday);
+  lastMonday.setDate(thisMonday.getDate() - 7);
+  const lastSunday = new Date(lastMonday);
+  lastSunday.setDate(lastMonday.getDate() + 6);
+
+  const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+
+  const threeMonthsStart = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+
+  switch (period) {
+    case "this_week":
+      return { start: thisMonday, end: today };
+    case "last_week":
+      return { start: lastMonday, end: lastSunday };
+    case "this_month":
+      return { start: thisMonthStart, end: today };
+    case "last_month":
+      return { start: lastMonthStart, end: lastMonthEnd };
+    case "last_3_months":
+      return { start: threeMonthsStart, end: today };
+    case "specific": {
+      const year = specificYear ?? today.getFullYear();
+      const month = (specificMonth ?? today.getMonth() + 1) - 1;
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
+      return { start, end };
+    }
+  }
+}
+
+function periodLabel(period: Period, specificYear?: number, specificMonth?: number): string {
+  switch (period) {
+    case "this_week": return "This Week";
+    case "last_week": return "Last Week";
+    case "this_month": return "This Month";
+    case "last_month": return "Last Month";
+    case "last_3_months": return "Last 3 Months";
+    case "specific": {
+      const d = new Date(specificYear ?? 2026, (specificMonth ?? 1) - 1, 1);
+      return d.toLocaleString("en", { month: "long", year: "numeric" });
+    }
+  }
+}
+
 export async function POST(req: NextRequest) {
   const session = await getRequestSession(req);
   if (!session) {
@@ -27,11 +85,22 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { placeId } = body;
+  const { placeId, period, year, month, language } = body as {
+    placeId?: string;
+    period?: Period;
+    year?: number;
+    month?: number;
+    language?: "en" | "ar";
+  };
 
   if (!placeId || typeof placeId !== "string") {
     return NextResponse.json({ error: "placeId is required" }, { status: 400 });
   }
+
+  const selectedPeriod: Period = period ?? "this_month";
+  const selectedLanguage: "en" | "ar" = language ?? "en";
+  const periodBounds = computePeriodBounds(selectedPeriod, year, month);
+  const periodLabelStr = periodLabel(selectedPeriod, year, month);
 
   // Check monthly limit per placeId
   const thisMonth = new Date();
@@ -119,20 +188,26 @@ export async function POST(req: NextRequest) {
     .map((review, index) => {
       const text = review.text?.text?.trim() || "";
       if (!text) return null;
+      const reviewedAt = review.publishTime ? new Date(review.publishTime) : new Date();
       return {
         id: `${resolvedPlaceId}-review-${index}`,
         authorName: review.authorAttribution?.displayName?.trim() || "Customer",
         rating: Math.max(1, Math.min(5, Number(review.rating) || 5)),
         text,
-        reviewedAt: review.publishTime ? new Date(review.publishTime) : new Date(),
+        reviewedAt,
       };
     })
-    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    // Filter to selected period
+    .filter((item) => {
+      const t = item.reviewedAt.getTime();
+      return t >= periodBounds.start.getTime() && t <= periodBounds.end.getTime() + 86400000;
+    });
 
   if (reviewsData.length === 0) {
     return NextResponse.json(
       {
-        error: `No public reviews found for "${businessName}". This can happen if the business has no reviews or they're not publicly accessible.`,
+        error: `No public reviews found for "${businessName}" for ${periodLabelStr}. Try a different period.`,
       },
       { status: 422 }
     );
@@ -141,7 +216,13 @@ export async function POST(req: NextRequest) {
   // Generate report via MiniMax
   let reportData;
   try {
-    const result = await generateAnalysisReportFromUrl(reviewsData, businessName);
+    const result = await generateAnalysisReportFromUrl(
+      reviewsData,
+      businessName,
+      selectedLanguage,
+      periodBounds.start,
+      periodBounds.end
+    );
     reportData = result.reportData;
   } catch (error) {
     console.error("MiniMax report generation failed:", error);
@@ -152,8 +233,6 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date();
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   if (db) {
     const [newReport] = await db
@@ -163,8 +242,8 @@ export async function POST(req: NextRequest) {
         workspaceId,
         reportData: JSON.stringify(reportData),
         reviewCount: reviewsData.length,
-        periodStart: thirtyDaysAgo,
-        periodEnd: now,
+        periodStart: periodBounds.start,
+        periodEnd: periodBounds.end,
       })
       .returning();
 
@@ -186,8 +265,8 @@ export async function POST(req: NextRequest) {
     businessName,
     generatedAt: now.toISOString(),
     reviewCount: reviewsData.length,
-    periodStart: thirtyDaysAgo.toISOString(),
-    periodEnd: now.toISOString(),
+    periodStart: periodBounds.start.toISOString(),
+    periodEnd: periodBounds.end.toISOString(),
     reportData,
   });
 }

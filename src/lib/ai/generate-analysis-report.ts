@@ -182,7 +182,10 @@ export async function generateAnalysisReport(
 
 export async function generateAnalysisReportFromUrl(
   reviews: ReviewFromUrl[],
-  businessName: string
+  businessName: string,
+  language: "en" | "ar" = "en",
+  periodStart?: Date,
+  periodEnd?: Date,
 ): Promise<{ reportData: ReportData; reviewCount: number }> {
   if (reviews.length === 0) {
     return {
@@ -231,10 +234,17 @@ export async function generateAnalysisReportFromUrl(
   const sortedByDate = [...reviews].sort(
     (a, b) => new Date(a.reviewedAt).getTime() - new Date(b.reviewedAt).getTime()
   );
-  const periodStart = sortedByDate[0]?.reviewedAt || new Date();
-  const periodEnd = sortedByDate[sortedByDate.length - 1]?.reviewedAt || new Date();
+  const computedPeriodStart = periodStart ?? (sortedByDate[0]?.reviewedAt || new Date());
+  const computedPeriodEnd = periodEnd ?? (sortedByDate[sortedByDate.length - 1]?.reviewedAt || new Date());
+
+  const isArabic = language === "ar";
+  const langInstruction = isArabic
+    ? "انت محلل اعمال خبير متخصص في تحليل تقييمات Google Business Profile. قدم التقرير باللغة العربية. يجب ان يكون كل شيء في الاستجابة باللغة العربية، بما في ذلك العناوين والقيم والنص."
+    : "You are an expert business analyst specializing in Google Business Profile reviews. Generate the entire report in English. All text, labels, and content must be in English.";
 
   const prompt = `You are an expert business analyst specializing in Google Business Profile reviews.
+
+${langInstruction}
 
 Analyze the following review data for "${businessName}" and generate a comprehensive report in JSON format.
 
@@ -242,7 +252,7 @@ Analyze the following review data for "${businessName}" and generate a comprehen
 - Total Reviews: ${reviews.length}
 - Average Rating: ${(ratingSum / reviews.length).toFixed(2)}/5
 - Rating Distribution: 5★=${ratingDistribution[5]}, 4★=${ratingDistribution[4]}, 3★=${ratingDistribution[3]}, 2★=${ratingDistribution[2]}, 1★=${ratingDistribution[1]}
-- Period: ${periodStart.toISOString().split("T")[0]} to ${periodEnd.toISOString().split("T")[0]}
+- Period: ${computedPeriodStart.toISOString().split("T")[0]} to ${computedPeriodEnd.toISOString().split("T")[0]}
 
 ## POSITIVE REVIEW EXAMPLES
 ${positiveExamples.length > 0 ? positiveExamples.join("\n") : "(No positive reviews)"}
