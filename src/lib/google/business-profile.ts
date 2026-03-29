@@ -49,6 +49,7 @@ interface GoogleReviewsResponse {
       updateTime?: string;
     };
   }>;
+  nextPageToken?: string;
 }
 
 interface GoogleApiErrorBody {
@@ -298,86 +299,103 @@ export async function syncWorkspaceReviewsFromGoogle(
     orderBy: "updateTime desc",
   });
 
-  const reviewsRes = await googleApiFetch<GoogleReviewsResponse>(
-    `${GOOGLE_MY_BUSINESS_V4_BASE}/${connectedBusiness.googleLocationId}/reviews?${reviewQuery.toString()}`,
-    accessToken
-  );
-
-  const remoteReviews = reviewsRes.reviews ?? [];
   let synced = 0;
+  let pageToken: string | undefined;
+  let totalPages = 0;
+  const MAX_PAGES = 20; // Safety limit: 20 pages × 50 = 1000 reviews max
 
-  for (const remoteReview of remoteReviews) {
-    const reviewName = normalizeGoogleReviewName(
-      connectedBusiness.googleLocationId,
-      remoteReview
-    );
-
-    if (!reviewName) {
-      continue;
+  do {
+    if (pageToken) {
+      reviewQuery.set("pageToken", pageToken);
     }
 
-    const [savedReview] = await db
-      .insert(reviews)
-      .values({
-        businessId: connectedBusiness.businessId,
-        googleReviewId: reviewName,
-        authorName: remoteReview.reviewer?.displayName?.trim() || "Anonymous",
-        rating: mapStarRating(remoteReview.starRating),
-        text: remoteReview.comment?.trim() || "",
-        reviewedAt: toDate(remoteReview.updateTime ?? remoteReview.createTime),
-        syncedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: reviews.googleReviewId,
-        set: {
+    const reviewsRes = await googleApiFetch<GoogleReviewsResponse>(
+      `${GOOGLE_MY_BUSINESS_V4_BASE}/${connectedBusiness.googleLocationId}/reviews?${reviewQuery.toString()}`,
+      accessToken
+    );
+
+    const remoteReviews = reviewsRes.reviews ?? [];
+    pageToken = reviewsRes.nextPageToken;
+    totalPages += 1;
+
+    for (const remoteReview of remoteReviews) {
+      const reviewName = normalizeGoogleReviewName(
+        connectedBusiness.googleLocationId,
+        remoteReview
+      );
+
+      if (!reviewName) {
+        continue;
+      }
+
+      const [savedReview] = await db
+        .insert(reviews)
+        .values({
+          businessId: connectedBusiness.businessId,
+          googleReviewId: reviewName,
           authorName: remoteReview.reviewer?.displayName?.trim() || "Anonymous",
           rating: mapStarRating(remoteReview.starRating),
           text: remoteReview.comment?.trim() || "",
           reviewedAt: toDate(remoteReview.updateTime ?? remoteReview.createTime),
           syncedAt: new Date(),
-          updatedAt: new Date(),
-        },
-      })
-      .returning({ id: reviews.id });
+        })
+        .onConflictDoUpdate({
+          target: reviews.googleReviewId,
+          set: {
+            authorName: remoteReview.reviewer?.displayName?.trim() || "Anonymous",
+            rating: mapStarRating(remoteReview.starRating),
+            text: remoteReview.comment?.trim() || "",
+            reviewedAt: toDate(remoteReview.updateTime ?? remoteReview.createTime),
+            syncedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ id: reviews.id });
 
-    if (!savedReview?.id) {
-      continue;
-    }
+      if (!savedReview?.id) {
+        continue;
+      }
 
-    synced += 1;
+      synced += 1;
 
-    const remoteReplyText = remoteReview.reviewReply?.comment?.trim();
-    if (!remoteReplyText) {
-      continue;
-    }
+      const remoteReplyText = remoteReview.reviewReply?.comment?.trim();
+      if (!remoteReplyText) {
+        continue;
+      }
 
-    const existingReply = await db.query.reviewReplies.findFirst({
-      where: eq(reviewReplies.reviewId, savedReview.id),
-      columns: { id: true },
-      orderBy: [desc(reviewReplies.createdAt)],
-    });
+      const existingReply = await db.query.reviewReplies.findFirst({
+        where: eq(reviewReplies.reviewId, savedReview.id),
+        columns: { id: true },
+        orderBy: [desc(reviewReplies.createdAt)],
+      });
 
-    if (existingReply?.id) {
-      await db
-        .update(reviewReplies)
-        .set({
+      if (existingReply?.id) {
+        await db
+          .update(reviewReplies)
+          .set({
+            content: remoteReplyText,
+            source: "manual",
+            status: "posted",
+            postedAt: toDate(remoteReview.reviewReply?.updateTime),
+            updatedAt: new Date(),
+          })
+          .where(eq(reviewReplies.id, existingReply.id));
+      } else {
+        await db.insert(reviewReplies).values({
+          reviewId: savedReview.id,
           content: remoteReplyText,
           source: "manual",
           status: "posted",
           postedAt: toDate(remoteReview.reviewReply?.updateTime),
-          updatedAt: new Date(),
-        })
-        .where(eq(reviewReplies.id, existingReply.id));
-    } else {
-      await db.insert(reviewReplies).values({
-        reviewId: savedReview.id,
-        content: remoteReplyText,
-        source: "manual",
-        status: "posted",
-        postedAt: toDate(remoteReview.reviewReply?.updateTime),
-      });
+        });
+      }
     }
-  }
+
+    // Small delay between pages to respect rate limits
+    if (pageToken && totalPages < MAX_PAGES) {
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  } while (pageToken && totalPages < MAX_PAGES);
 
   return {
     business: connectedBusiness,
