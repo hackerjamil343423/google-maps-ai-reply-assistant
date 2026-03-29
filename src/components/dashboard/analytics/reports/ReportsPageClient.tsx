@@ -1,17 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DashboardShell from "@/components/DashboardShell";
 import ReportCard from "@/components/dashboard/analytics/reports/ReportCard";
 import type { ReportDetail } from "@/components/dashboard/analytics/reports/ReportCard";
 
-type BusinessSuggestion = {
+type ConnectedBusiness = {
   id: string;
   name: string;
-  address: string;
-  label: string;
+  googleLocationId: string | null;
+  connectedAt: string;
 };
 
 type ReportSummary = {
@@ -25,11 +25,9 @@ type ReportSummary = {
 };
 
 export default function ReportsPageClient() {
-  const [searchValue, setSearchValue] = useState("");
-  const [searchResults, setSearchResults] = useState<BusinessSuggestion[]>([]);
-  const [selectedBusiness, setSelectedBusiness] = useState<BusinessSuggestion | null>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState("");
+  const [businesses, setBusinesses] = useState<ConnectedBusiness[]>([]);
+  const [loadingBusinesses, setLoadingBusinesses] = useState(true);
+  const [selectedBusiness, setSelectedBusiness] = useState<ConnectedBusiness | null>(null);
   const [generating, setGenerating] = useState(false);
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
@@ -42,7 +40,31 @@ export default function ReportsPageClient() {
   const [reportLanguage, setReportLanguage] = useState<"en" | "ar">("en");
 
   const router = useRouter();
-  const searchRequestIdRef = useRef(0);
+
+  // Load connected businesses on mount
+  useEffect(() => {
+    let mounted = true;
+    setLoadingBusinesses(true);
+
+    void fetch("/api/analytics/businesses", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return [];
+        const data = await res.json() as { businesses: ConnectedBusiness[] };
+        return data.businesses ?? [];
+      })
+      .then((list) => {
+        if (!mounted) return;
+        setBusinesses(list);
+        // Auto-select if only one business
+        if (list.length === 1) setSelectedBusiness(list[0]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setLoadingBusinesses(false);
+      });
+
+    return () => { mounted = false; };
+  }, []);
 
   // Load report history on mount
   useEffect(() => {
@@ -63,19 +85,7 @@ export default function ReportsPageClient() {
         if (mounted) setLoadingReports(false);
       });
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const fetchSearchResults = useCallback(async (query: string) => {
-    const res = await fetch(
-      `/api/public/business-search?q=${encodeURIComponent(query)}`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) return [];
-    const json = await res.json() as { results?: BusinessSuggestion[] };
-    return json.results ?? [];
+    return () => { mounted = false; };
   }, []);
 
   const handleGenerateReport = useCallback(async () => {
@@ -91,7 +101,7 @@ export default function ReportsPageClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          placeId: selectedBusiness.id,
+          businessId: selectedBusiness.id,
           period: selectedPeriod,
           year: selectedPeriod === "specific" ? specificYear : undefined,
           month: selectedPeriod === "specific" ? specificMonth : undefined,
@@ -117,9 +127,6 @@ export default function ReportsPageClient() {
       };
 
       setReports((prev) => [newReport, ...prev]);
-      setSelectedBusiness(null);
-      setSearchValue("");
-      setSearchResults([]);
       setSuccess(`Report generated for "${data.businessName}" with ${data.reviewCount} reviews!`);
       setSelectedReport({ ...newReport, reportData: data.reportData });
     } catch {
@@ -128,53 +135,6 @@ export default function ReportsPageClient() {
       setGenerating(false);
     }
   }, [selectedBusiness, selectedPeriod, specificYear, specificMonth, reportLanguage]);
-
-  // Debounced search
-  useEffect(() => {
-    const query = searchValue.trim();
-
-    if (selectedBusiness && query === selectedBusiness.label) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      return;
-    }
-
-    if (query.length < 2) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      return;
-    }
-
-    const requestId = ++searchRequestIdRef.current;
-    const timer = setTimeout(() => {
-      setSearchLoading(true);
-      void fetchSearchResults(query)
-        .then((results) => {
-          if (requestId !== searchRequestIdRef.current) return;
-          setSearchResults(results);
-        })
-        .catch(() => {
-          if (requestId !== searchRequestIdRef.current) return;
-          setSearchResults([]);
-        })
-        .finally(() => {
-          if (requestId !== searchRequestIdRef.current) return;
-          setSearchLoading(false);
-        });
-    }, 350);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchValue, selectedBusiness, fetchSearchResults]);
-
-  const handleSelectBusiness = useCallback((business: BusinessSuggestion) => {
-    setSearchValue(business.label);
-    setSelectedBusiness(business);
-    setSearchResults([]);
-    setSearchError("");
-    setGenerateError("");
-  }, []);
 
   async function handleViewReport(report: ReportSummary) {
     router.push(`/dashboard/reports/${report.id}`);
@@ -187,168 +147,192 @@ export default function ReportsPageClient() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
           <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">AI Reviews Analysis</h2>
           <p className="mt-2 text-sm text-[#6A6A82]">
-            Search for any business below to generate an AI-powered analysis report of its Google reviews.
+            Generate an AI-powered analysis report from your connected business reviews.
           </p>
         </div>
 
-        {/* Search Input Card */}
+        {/* Business Selection Card */}
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5 mb-6">
-          <label className="block text-sm font-medium text-[#040404] mb-2">
-            Search Business
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearchValue(val);
-                if (selectedBusiness && val !== selectedBusiness.label) {
-                  setSelectedBusiness(null);
-                }
-                setGenerateError("");
-              }}
-              placeholder="Type a business name and address..."
-              className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4A63] outline-none transition-all focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12 pr-10"
-            />
-            {searchLoading && (
-              <svg className="animate-spin absolute right-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6A6A82" strokeWidth="2">
+          {loadingBusinesses ? (
+            <div className="flex items-center gap-2 py-4">
+              <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6A6A82" strokeWidth="2">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
-            )}
-          </div>
+              <span className="text-sm text-[#6A6A82]">Loading businesses...</span>
+            </div>
+          ) : businesses.length === 0 ? (
+            <div className="text-center py-6">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E6E9F8" strokeWidth="2" className="mx-auto mb-3" aria-hidden="true">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              <p className="text-sm text-[#6A6A82] mb-3">No connected businesses found.</p>
+              <a
+                href="/dashboard/settings"
+                className="text-sm text-[#5F30EB] hover:underline font-medium"
+              >
+                Connect your Google Business in Settings
+              </a>
+            </div>
+          ) : (
+            <>
+              <label className="block text-sm font-medium text-[#040404] mb-2">
+                Select Business
+              </label>
+              {businesses.length === 1 ? (
+                <div className="flex items-center gap-3 p-3 rounded-2xl border border-[#5F30EB] bg-[#F0EBFF]">
+                  <div className="w-8 h-8 rounded-lg bg-[#5F30EB] text-white flex items-center justify-center text-xs font-bold">
+                    {selectedBusiness?.name?.charAt(0) || "B"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#040404]">{selectedBusiness?.name || businesses[0].name}</p>
+                    <p className="text-xs text-[#6A6A82]">Connected</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {businesses.map((biz) => (
+                    <button
+                      key={biz.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedBusiness(biz);
+                        setGenerateError("");
+                      }}
+                      className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-all text-left ${
+                        selectedBusiness?.id === biz.id
+                          ? "border-[#5F30EB] bg-[#F0EBFF]"
+                          : "border-[#E6E9F8] hover:border-[#5F30EB]/30 hover:bg-[#F8F7FF]"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                        selectedBusiness?.id === biz.id
+                          ? "bg-[#5F30EB] text-white"
+                          : "bg-[#F0EBFF] text-[#5F30EB]"
+                      }`}>
+                        {biz.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[#040404]">{biz.name}</p>
+                        <p className="text-xs text-[#6A6A82]">
+                          Connected {biz.connectedAt ? new Date(biz.connectedAt).toLocaleDateString() : ""}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
 
-          {/* Search Results Dropdown */}
-          {searchResults.length > 0 && (
-            <div className="mt-1 border border-[#E6E9F8] rounded-2xl overflow-hidden bg-white shadow-lg">
-              {searchResults.map((result) => (
-                <button
-                  key={result.id}
-                  type="button"
-                  onClick={() => handleSelectBusiness(result)}
-                  className="w-full border-t border-[#5F30EB14] px-4 py-3 text-left transition-colors hover:bg-[#EEF2FF] last:border-b-0"
+          {/* Period & Language Controls */}
+          {businesses.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-[#6A6A82] mb-1.5">Period</label>
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value as typeof selectedPeriod)}
+                  className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2.5 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
                 >
-                  <p className="text-sm font-medium text-[#040404]">{result.name}</p>
-                  {result.address && (
-                    <p className="text-xs text-[#6A6A82] mt-0.5">{result.address}</p>
-                  )}
-                </button>
-              ))}
+                  <option value="this_week">This Week (Mon–Today)</option>
+                  <option value="last_week">Last Week (Mon–Sun)</option>
+                  <option value="this_month">This Month</option>
+                  <option value="last_month">Last Month</option>
+                  <option value="last_3_months">Last 3 Months</option>
+                  <option value="specific">Specific Month</option>
+                </select>
+
+                {selectedPeriod === "specific" && (
+                  <div className="flex gap-2 mt-2">
+                    <select
+                      value={specificMonth}
+                      onChange={(e) => setSpecificMonth(Number(e.target.value))}
+                      className="flex-1 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                        <option key={m} value={m}>
+                          {new Date(2000, m - 1, 1).toLocaleString("en", { month: "long" })}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={specificYear}
+                      onChange={(e) => setSpecificYear(Number(e.target.value))}
+                      className="w-24 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
+                    >
+                      {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#6A6A82] mb-1.5">Report Language</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReportLanguage("en")}
+                    className={`flex-1 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all ${
+                      reportLanguage === "en"
+                        ? "border-[#5F30EB] bg-[#5F30EB] text-white"
+                        : "border-[#E6E9F8] text-[#6A6A82] hover:border-[#5F30EB]/30"
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReportLanguage("ar")}
+                    className={`flex-1 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all ${
+                      reportLanguage === "ar"
+                        ? "border-[#5F30EB] bg-[#5F30EB] text-white"
+                        : "border-[#E6E9F8] text-[#6A6A82] hover:border-[#5F30EB]/30"
+                    }`}
+                  >
+                    العربية
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
-          {searchError && <p className="text-sm text-red-500 mt-2">{searchError}</p>}
-
-          {/* Period & Language Controls */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Period Selector */}
-            <div>
-              <label className="block text-xs font-medium text-[#6A6A82] mb-1.5">Period</label>
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value as typeof selectedPeriod)}
-                className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2.5 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
+          {/* Generate Button */}
+          {businesses.length > 0 && (
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleGenerateReport()}
+                disabled={!selectedBusiness || generating}
+                className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition-all ${
+                  !selectedBusiness || generating
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-[#5F30EB] text-white hover:bg-[#4a27c9] shadow-[0_4px_16px_rgba(95,48,235,0.24)]"
+                }`}
               >
-                <option value="this_week">This Week (Mon–Today)</option>
-                <option value="last_week">Last Week (Mon–Sun)</option>
-                <option value="this_month">This Month</option>
-                <option value="last_month">Last Month</option>
-                <option value="last_3_months">Last 3 Months</option>
-                <option value="specific">Specific Month</option>
-              </select>
-
-              {selectedPeriod === "specific" && (
-                <div className="flex gap-2 mt-2">
-                  <select
-                    value={specificMonth}
-                    onChange={(e) => setSpecificMonth(Number(e.target.value))}
-                    className="flex-1 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                      <option key={m} value={m}>
-                        {new Date(2000, m - 1, 1).toLocaleString("en", { month: "long" })}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={specificYear}
-                    onChange={(e) => setSpecificYear(Number(e.target.value))}
-                    className="w-24 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
-                  >
-                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+                {generating ? (
+                  <>
+                    <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d="M12 2v4" /><path d="m6.34 7.34 2.83 2.83" /><path d="M2 12h4" />
+                      <path d="m17.66 7.34-2.83 2.83" /><path d="M22 12h-4" />
+                      <path d="M12 18v4" /><path d="m6.34 16.66 2.83-2.83" />
+                      <path d="m17.66 16.66-2.83-2.83" />
+                    </svg>
+                    Generate Report
+                  </>
+                )}
+              </button>
             </div>
-
-            {/* Language Selector */}
-            <div>
-              <label className="block text-xs font-medium text-[#6A6A82] mb-1.5">Report Language</label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setReportLanguage("en")}
-                  className={`flex-1 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all ${
-                    reportLanguage === "en"
-                      ? "border-[#5F30EB] bg-[#5F30EB] text-white"
-                      : "border-[#E6E9F8] text-[#6A6A82] hover:border-[#5F30EB]/30"
-                  }`}
-                >
-                  🇬🇧 English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setReportLanguage("ar")}
-                  className={`flex-1 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all ${
-                    reportLanguage === "ar"
-                      ? "border-[#5F30EB] bg-[#5F30EB] text-white"
-                      : "border-[#E6E9F8] text-[#6A6A82] hover:border-[#5F30EB]/30"
-                  }`}
-                >
-                  🇸🇦 العربية
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void handleGenerateReport()}
-              disabled={!selectedBusiness || generating}
-              className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition-all ${
-                !selectedBusiness || generating
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-[#5F30EB] text-white hover:bg-[#4a27c9] shadow-[0_4px_16px_rgba(95,48,235,0.24)]"
-              }`}
-            >
-              {generating ? (
-                <>
-                  <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                  </svg>
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <path d="M12 2v4" /><path d="m6.34 7.34 2.83 2.83" /><path d="M2 12h4" />
-                    <path d="m17.66 7.34-2.83 2.83" /><path d="M22 12h-4" />
-                    <path d="M12 18v4" /><path d="m6.34 16.66 2.83-2.83" />
-                    <path d="m17.66 16.66-2.83-2.83" />
-                  </svg>
-                  Generate Report
-                </>
-              )}
-            </button>
-            {selectedBusiness && (
-              <span className="text-sm text-[#6A6A82]">
-                Selected: <span className="font-medium text-[#040404]">{selectedBusiness.name}</span>
-              </span>
-            )}
-          </div>
+          )}
           {generateError && <p className="text-sm text-red-500 mt-3">{generateError}</p>}
           {success && <p className="text-sm text-green-500 mt-3">{success}</p>}
         </div>
@@ -384,7 +368,7 @@ export default function ReportsPageClient() {
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              <p className="text-sm text-[#6A6A82]">No reports yet. Search for a business above to get started.</p>
+              <p className="text-sm text-[#6A6A82]">No reports yet. Select a business above to get started.</p>
             </div>
           ) : (
             <div className="space-y-3">
