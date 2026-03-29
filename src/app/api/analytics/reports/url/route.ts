@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
-import { reviewAnalysisReports } from "@/lib/db/schema";
+import { businesses, reviewAnalysisReports, reviews as reviewsTable } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
-import { and, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { generateAnalysisReportFromUrl } from "@/lib/ai/generate-analysis-report";
 
@@ -180,50 +180,95 @@ export async function POST(req: NextRequest) {
     authorAttribution?: { displayName?: string };
   }> = [];
 
-  try {
-    const reviewsRes = await fetch(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(resolvedPlaceId)}`,
-      {
-        method: "GET",
-        headers: {
-          "X-Goog-Api-Key": env.GOOGLE_MAPS_API_KEY,
-          "X-Goog-FieldMask": "reviews.rating,reviews.text,reviews.publishTime,reviews.authorAttribution.displayName",
-        },
-        cache: "no-store",
-      }
-    );
+  // First check: does this workspace have a connected business matching this placeId?
+  let useConnectedReviews = false;
+  let connectedBusinessReviews: Array<{
+    id: string;
+    authorName: string;
+    rating: number;
+    text: string;
+    reviewedAt: Date;
+  }> = [];
 
-    if (reviewsRes.ok) {
-      const reviewsData = await reviewsRes.json();
-      allReviews = reviewsData.reviews ?? [];
-    } else {
-      console.error("Google Places reviews fetch error:", reviewsRes.status);
+  if (db) {
+    // Check if workspace has an active connected business
+    const connectedBusiness = await db.query.businesses.findFirst({
+      where: and(
+        eq(businesses.workspaceId, workspaceId),
+        eq(businesses.status, "active")
+      ),
+      columns: { id: true, name: true, googleLocationId: true },
+    });
+
+    if (connectedBusiness?.id) {
+      // Fetch ALL synced reviews from the database for this connected business
+      const dbReviews = await db.query.reviews.findMany({
+        where: eq(reviewsTable.businessId, connectedBusiness.id),
+        orderBy: [desc(reviewsTable.reviewedAt)],
+        columns: { id: true, authorName: true, rating: true, text: true, reviewedAt: true },
+      });
+
+      if (dbReviews.length > 0) {
+        useConnectedReviews = true;
+        connectedBusinessReviews = dbReviews;
+        console.log(`Using ${dbReviews.length} connected business reviews from DB (vs 5 from Places API)`);
+      }
     }
-  } catch (error) {
-    console.error("Google Places reviews fetch failed:", error);
   }
 
-  const reviewsData = allReviews
-    .map((review, index) => {
-      const text = review.text?.text?.trim() || "";
-      if (!text) return null;
-      const reviewedAt = review.publishTime ? new Date(review.publishTime) : new Date();
-      // Use crypto for unique IDs across paginated pages
-      const uniqueSuffix = `${Date.now().toString(36)}-${index.toString(36)}`;
-      return {
-        id: `${resolvedPlaceId}-review-${uniqueSuffix}`,
-        authorName: review.authorAttribution?.displayName?.trim() || "Customer",
-        rating: Math.max(1, Math.min(5, Number(review.rating) || 5)),
-        text,
-        reviewedAt,
-      };
-    })
-    .filter((item): item is NonNullable<typeof item> => Boolean(item))
-    // Filter to selected period
-    .filter((item) => {
-      const t = item.reviewedAt.getTime();
-      return t >= periodBounds.start.getTime() && t <= periodBounds.end.getTime() + 86400000;
-    });
+  if (!useConnectedReviews) {
+    // Fallback: fetch up to 5 reviews from Google Places API
+    try {
+      const reviewsRes = await fetch(
+        `https://places.googleapis.com/v1/places/${encodeURIComponent(resolvedPlaceId)}`,
+        {
+          method: "GET",
+          headers: {
+            "X-Goog-Api-Key": env.GOOGLE_MAPS_API_KEY,
+            "X-Goog-FieldMask": "reviews.rating,reviews.text,reviews.publishTime,reviews.authorAttribution.displayName",
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (reviewsRes.ok) {
+        const reviewsJson = await reviewsRes.json();
+        allReviews = reviewsJson.reviews ?? [];
+      } else {
+        console.error("Google Places reviews fetch error:", reviewsRes.status);
+      }
+    } catch (error) {
+      console.error("Google Places reviews fetch failed:", error);
+    }
+  }
+
+  const reviewsData = useConnectedReviews
+    ? connectedBusinessReviews
+        // Filter to selected period
+        .filter((item) => {
+          const t = item.reviewedAt.getTime();
+          return t >= periodBounds.start.getTime() && t <= periodBounds.end.getTime() + 86400000;
+        })
+    : allReviews
+        .map((review, index) => {
+          const text = review.text?.text?.trim() || "";
+          if (!text) return null;
+          const reviewedAt = review.publishTime ? new Date(review.publishTime) : new Date();
+          const uniqueSuffix = `${Date.now().toString(36)}-${index.toString(36)}`;
+          return {
+            id: `${resolvedPlaceId}-review-${uniqueSuffix}`,
+            authorName: review.authorAttribution?.displayName?.trim() || "Customer",
+            rating: Math.max(1, Math.min(5, Number(review.rating) || 5)),
+            text,
+            reviewedAt,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item))
+        // Filter to selected period
+        .filter((item) => {
+          const t = item.reviewedAt.getTime();
+          return t >= periodBounds.start.getTime() && t <= periodBounds.end.getTime() + 86400000;
+        });
 
   if (reviewsData.length === 0) {
     return NextResponse.json(
