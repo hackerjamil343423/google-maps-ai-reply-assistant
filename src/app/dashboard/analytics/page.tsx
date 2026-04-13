@@ -28,6 +28,7 @@ type ReviewsResponse = {
       manual: number;
     };
   };
+  analytics?: ApiAnalytics;
 };
 
 type RatingDistributionItem = {
@@ -46,14 +47,16 @@ type AnalyticsData = {
   ratingDist: RatingDistributionItem[];
 };
 
-function buildEmptyAnalytics(language: AppLanguage): AnalyticsData {
+function buildMonthLabels(language: AppLanguage): string[] {
   const locale = language === "ar" ? "ar-EG" : "en-US";
-  const monthLabels = Array.from({ length: 12 }).map((_, index) => {
+  return Array.from({ length: 12 }).map((_, index) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (11 - index));
     return new Intl.DateTimeFormat(locale, { month: "short" }).format(date);
   });
+}
 
+function buildEmptyAnalytics(language: AppLanguage): AnalyticsData {
   return {
     stats: [
       { label: "Total Reviews", value: 0, suffix: "" },
@@ -61,7 +64,7 @@ function buildEmptyAnalytics(language: AppLanguage): AnalyticsData {
       { label: "Manual Reviews", value: 0, suffix: "" },
       { label: "Five Star Reviews", value: 0, suffix: "%" },
     ],
-    monthLabels,
+    monthLabels: buildMonthLabels(language),
     impactData: Array.from({ length: 12 }).map(() => 0),
     reviewsData: Array.from({ length: 12 }).map(() => 0),
     avgRating: 0,
@@ -70,73 +73,33 @@ function buildEmptyAnalytics(language: AppLanguage): AnalyticsData {
   };
 }
 
-function buildAnalyticsData(data: ReviewsResponse, language: AppLanguage): AnalyticsData {
-  const locale = language === "ar" ? "ar-EG" : "en-US";
-  const totalReviews = data.summary.total;
-  const autoReviews = data.summary.counts.auto;
-  const manualReviews = data.summary.counts.manual;
-  const fiveStarCount = data.reviews.filter((item) => item.rating === 5).length;
-  const fiveStarPct = totalReviews > 0 ? Math.round((fiveStarCount / totalReviews) * 100) : 0;
+type ApiAnalytics = {
+  fiveStarPct: number;
+  monthly: Array<{ total: number; replied: number }>;
+  ratingDist: RatingDistributionItem[];
+};
 
-  const monthMeta = Array.from({ length: 12 }).map((_, index) => {
-    const date = new Date();
-    date.setDate(1);
-    date.setHours(0, 0, 0, 0);
-    date.setMonth(date.getMonth() - (11 - index));
-
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const label = new Intl.DateTimeFormat(locale, { month: "short" }).format(date);
-
-    return {
-      key,
-      label,
-      total: 0,
-      replied: 0,
-    };
-  });
-
-  const monthIndexByKey = new Map(monthMeta.map((item, index) => [item.key, index]));
-
-  for (const review of data.reviews) {
-    const reviewedDate = new Date(review.reviewedAt);
-    if (Number.isNaN(reviewedDate.getTime())) continue;
-
-    const key = `${reviewedDate.getFullYear()}-${String(reviewedDate.getMonth() + 1).padStart(2, "0")}`;
-    const monthIndex = monthIndexByKey.get(key);
-    if (monthIndex === undefined) continue;
-
-    monthMeta[monthIndex].total += 1;
-    if (review.status === "auto" || review.status === "manual") {
-      monthMeta[monthIndex].replied += 1;
-    }
-  }
-
-  const ratingCounts = new Map<number, number>();
-  for (const review of data.reviews) {
-    ratingCounts.set(review.rating, (ratingCounts.get(review.rating) || 0) + 1);
-  }
-
-  const ratingDist = [5, 4, 3, 2, 1].map((stars) => {
-    const count = ratingCounts.get(stars) || 0;
-    const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
-    return { stars, count, pct };
-  });
-
-  const responseRate = totalReviews > 0 ? Math.round((data.summary.replied / totalReviews) * 100) : 0;
+function buildAnalyticsData(
+  summary: ReviewsResponse["summary"],
+  apiAnalytics: ApiAnalytics | undefined,
+  language: AppLanguage,
+): AnalyticsData {
+  const totalReviews = summary.total;
+  const responseRate = totalReviews > 0 ? Math.round((summary.replied / totalReviews) * 100) : 0;
 
   return {
     stats: [
       { label: "Total Reviews", value: totalReviews, suffix: "" },
-      { label: "AI Reviews", value: autoReviews, suffix: "" },
-      { label: "Manual Reviews", value: manualReviews, suffix: "" },
-      { label: "Five Star Reviews", value: fiveStarPct, suffix: "%" },
+      { label: "AI Reviews", value: summary.counts.auto, suffix: "" },
+      { label: "Manual Reviews", value: summary.counts.manual, suffix: "" },
+      { label: "Five Star Reviews", value: apiAnalytics?.fiveStarPct ?? 0, suffix: "%" },
     ],
-    monthLabels: monthMeta.map((item) => item.label),
-    impactData: monthMeta.map((item) => item.replied),
-    reviewsData: monthMeta.map((item) => item.total),
-    avgRating: data.summary.avgRating,
+    monthLabels: buildMonthLabels(language),
+    impactData: apiAnalytics?.monthly.map((m) => m.replied) ?? Array.from({ length: 12 }).map(() => 0),
+    reviewsData: apiAnalytics?.monthly.map((m) => m.total) ?? Array.from({ length: 12 }).map(() => 0),
+    avgRating: summary.avgRating,
     responseRate,
-    ratingDist,
+    ratingDist: apiAnalytics?.ratingDist ?? [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0, pct: 0 })),
   };
 }
 
@@ -351,7 +314,7 @@ export default function AnalyticsPage() {
         return;
       }
 
-      setAnalytics(buildAnalyticsData(json, language));
+      setAnalytics(buildAnalyticsData(json.summary, json.analytics, language));
       setLoading(false);
     }
 

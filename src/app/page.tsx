@@ -13,86 +13,22 @@ const NAV_LINKS = [
 
 const WHY_CARDS = [
   {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
+    image: "/assets/landing/why-ranking.png",
     title: "Boost Your SEO",
     desc: "Google rewards activity. Businesses that respond to reviews rank higher on Google Maps and search results. Our tool ensures you never miss an opportunity to signal to Google that your business is active and relevant.",
   },
   {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
+    image: "/assets/landing/why-trust.png",
     title: "Build Trust",
     desc: "A response shows you care. When potential customers see you engaging with feedback, it establishes immediate trust. It encourages others to leave reviews because they know there is someone listening.",
   },
   {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
+    image: "/assets/landing/why-reputation.png",
     title: "Damage Control",
     desc: "Unhappy customers need to feel heard. Our AI helps you turn negative situations into displays of excellent customer service. Your thoughtful reply shows the world you care.",
   },
   {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </svg>
-    ),
+    image: "/assets/landing/why-time.png",
     title: "The Ultimate CRM",
     desc: "Think of this as your automated Customer Relationship Management tool. Use responses to offer more information or mention current promotions - turning a simple review into an invitation for repeat business.",
   },
@@ -100,18 +36,38 @@ const WHY_CARDS = [
 
 const COST_CARDS = [
   {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    ),
     title: "Lost Revenue",
     desc: "You lose potential customers who think you are inactive or indifferent.",
   },
   {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" />
+      </svg>
+    ),
     title: "Lower Rankings",
     desc: "Google pushes your business down the list in favor of more active competitors.",
   },
   {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
     title: "Wasted Time",
     desc: "You stare at the screen, suffering from writer's block instead of running your business.",
   },
   {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><line x1="9" y1="12" x2="15" y2="12" />
+      </svg>
+    ),
     title: "Reputation Damage",
     desc: "Leaving negative reviews unanswered lets the angry customer control the narrative.",
   },
@@ -119,100 +75,14 @@ const COST_CARDS = [
 
 const SERVE_CARDS = [
   {
-    icon: "/assets/service/service-1.svg",
+    image: "/assets/landing/serve-agencies.png",
     title: "Marketing Agencies",
     desc: "Stop wasting hours writing manual replies for your clients. Whitelabel our AI automation tool and resell it to your clients at a healthy margin. It is the perfect add-on to generate recurring revenue while delivering tangible SEO results.",
   },
   {
-    icon: "/assets/service/service-2.svg",
+    image: "/assets/landing/serve-local.png",
     title: "Local Businesses",
     desc: 'This is for the restaurant owner, plumber, dentist, beauty salon, and more. You want to cut down the hours spent manually typing responses. You want to rank higher in Google Maps\' "recommended businesses" without hiring a dedicated marketing manager.',
-  },
-];
-
-const HOW_CARDS = [
-  {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
-      </svg>
-    ),
-    title: "Enable Auto-Post",
-    desc: "Enable Auto-Post and let AI reply instantly",
-  },
-  {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-        <path d="m9 12 2 2 4-4" />
-      </svg>
-    ),
-    title: "Manual Approval",
-    desc: "Switch to Approval Before Posting if you want to approve each response",
-  },
-  {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-      </svg>
-    ),
-    title: "Customize & Edit",
-    desc: "Edit or regenerate replies as many times as you want",
-  },
-  {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 8v4l3 3" />
-      </svg>
-    ),
-    title: "Customize the AI Prompt",
-    desc: "Set the AI tone style to: Professional, Friendly, Concise, Detailed, or Empathetic.",
   },
 ];
 
@@ -794,7 +664,7 @@ export default function Home() {
 
           {/* Headline */}
           <div className="space-y-2 w-full max-w-3xl">
-            <h1 className="text-lg md:text-2xl 2xl:text-[2.3rem] leading-tight">
+            <h1 className="text-2xl md:text-4xl 2xl:text-5xl leading-tight font-semibold">
               Let AI respond to hundreds of your Google Business Profile reviews
               in your unique brand voice.
             </h1>
@@ -849,7 +719,7 @@ export default function Home() {
                         setSearchError("");
                         void loadBusinessPreview(result);
                       }}
-                      className="w-full border-t border-[#5F30EB14] px-4 py-3 text-left transition-colors hover:bg-[#EEF2FF]"
+                      className="w-full border-t border-[#5F30EB14] px-4 py-3 text-start transition-colors hover:bg-[#EEF2FF]"
                     >
                       <p className="text-sm text-[#040404] font-medium">{result.name}</p>
                       {result.address && (
@@ -904,7 +774,7 @@ export default function Home() {
                     {previewItems.map((item) => (
                       <article
                         key={item.id}
-                        className="landing-card rounded-2xl p-4 text-left"
+                        className="landing-card rounded-2xl p-4 text-start"
                       >
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <p className="text-sm text-[#040404] font-medium truncate">
@@ -960,10 +830,13 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {WHY_CARDS.map((card) => (
-              <div key={card.title} className="landing-card rounded-3xl p-8 text-left">
-                <div className="mb-4 text-[#5F30EB]">{card.icon}</div>
-                <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
-                <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
+              <div key={card.title} className="landing-card rounded-3xl p-8 flex items-center gap-6 text-start">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
+                  <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={card.image} className="w-32 h-32 object-contain flex-shrink-0 drop-shadow-sm" alt="" />
               </div>
             ))}
           </div>
@@ -979,7 +852,7 @@ export default function Home() {
       </section>
 
       {/* The Cost of Silence */}
-      <section className="landing-section-divider py-14 md:py-24 text-[#040404]">
+      <section className="landing-section-divider landing-alt-section py-14 md:py-24 text-[#040404]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl md:text-5xl font-semibold mb-4">
@@ -991,23 +864,9 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {COST_CARDS.map((card) => (
-              <div key={card.title} className="landing-card rounded-3xl p-6 text-left">
-                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#ef4444"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+              <div key={card.title} className="landing-card rounded-3xl p-6 text-start">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-5">
+                  {card.icon}
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
                 <p className="text-[#6A6A82] text-sm leading-relaxed">
@@ -1027,40 +886,99 @@ export default function Home() {
               The Customers We Serve
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex flex-col gap-8">
             {SERVE_CARDS.map((card) => (
-              <div key={card.title} className="landing-card rounded-3xl p-8 text-left">
-                <div className="mb-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={card.icon} className="w-6 h-6" alt="" />
+              <div key={card.title} className="landing-card rounded-3xl p-10 flex items-center gap-12 text-start">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={card.image} className="w-56 h-56 object-contain flex-shrink-0 drop-shadow-md" alt="" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-2xl font-semibold mb-4">{card.title}</h3>
+                  <p className="text-[#6A6A82] text-lg leading-relaxed">{card.desc}</p>
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
-                <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="landing-section-divider py-14 md:py-24 text-[#040404]">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-5xl font-semibold mb-8 md:mb-16 mt-6">
-            How It Works
-          </h2>
-          <p className="text-[#4E4E5E] text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-16">
-            Our AI uses an expert-built prompt system to generate personalized,
-            thoughtful responses to every review posted on your Google Business
-            Profile.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {HOW_CARDS.map((card) => (
-              <div key={card.title} className="landing-card rounded-3xl p-8 text-left">
-                <div className="mb-6 inline-flex text-[#040404]">{card.icon}</div>
-                <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
-                <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
+      {/* Pricing */}
+      <section className="landing-section-divider relative overflow-hidden py-14 md:py-24 text-[#040404]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl md:text-5xl font-semibold mb-4">
+              Pricing
+            </h2>
+            <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
+              Ready to transform your business through AI? Understanding your
+              review content can be tough. Simplify the process with our pre-set
+              questions to uncover customer pain points conveniently.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {PRICING_PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className={`landing-card rounded-3xl p-8 flex flex-col ${
+                  plan.highlighted ? "ring-2 ring-[#5F30EB4D] md:-translate-y-3" : ""
+                }`}
+              >
+                <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
+                <p className="text-[#6A6A82] text-sm mb-5 leading-relaxed">
+                  {plan.tagline}
+                </p>
+                <div className="mb-6 pb-6 border-b border-[#5F30EB14]">
+                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="text-[#6A6A82] text-sm ml-1">
+                    {plan.period}
+                  </span>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {plan.features.map((f) => (
+                    <li
+                      key={f}
+                      className="flex items-center gap-3 text-sm text-[#4E4E5E]"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#5F30EB"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/GetStarted?mode=signup"
+                  className={`block text-center py-3 rounded-full font-semibold transition-colors ${
+                    plan.highlighted
+                      ? "bg-[#5F30EB] text-[#F6F4FF] hover:bg-[#040404]"
+                      : "bg-white text-black hover:bg-[#5F30EB] hover:text-[#F6F4FF]"
+                  }`}
+                >
+                  Get Started
+                </Link>
               </div>
             ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/GetStarted?mode=signup"
+              className="inline-block border border-[#5F30EB] text-[#5F30EB] px-10 py-4 rounded-full font-semibold text-lg hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
+            >
+              Start FREE Trial
+            </Link>
+            <p className="text-[#6A6A82] text-sm mt-3">
+              No credit card required.
+            </p>
           </div>
         </div>
       </section>
@@ -1092,88 +1010,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="landing-section-divider relative overflow-hidden py-14 md:py-24 text-[#040404]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-5xl font-semibold mb-4">
-              Pricing
-            </h2>
-            <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
-              Ready to transform your business through AI? Understanding your
-              review content can be tough. Simplify the process with our pre-set
-              questions to uncover customer pain points conveniently.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {PRICING_PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`landing-card rounded-3xl p-8 flex flex-col ${
-                  plan.highlighted ? "ring-2 ring-[#5F30EB4D] md:-translate-y-3" : ""
-                }`}
-              >
-                <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                <p className="text-[#6A6A82] text-sm mb-6 leading-relaxed">
-                  {plan.tagline}
-                </p>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-center gap-3 text-sm text-[#4E4E5E]"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#5F30EB"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-[#6A6A82] text-sm ml-1">
-                    {plan.period}
-                  </span>
-                </div>
-                <Link
-                  href="/GetStarted?mode=signup"
-                  className={`block text-center py-3 rounded-full font-semibold transition-colors ${
-                    plan.highlighted
-                      ? "bg-[#5F30EB] text-[#F6F4FF] hover:bg-[#040404]"
-                      : "bg-white text-black hover:bg-[#5F30EB] hover:text-[#F6F4FF]"
-                  }`}
-                >
-                  Get Started
-                </Link>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Link
-              href="/GetStarted?mode=signup"
-              className="inline-block border border-[#5F30EB] text-[#5F30EB] px-10 py-4 rounded-full font-semibold text-lg hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
-            >
-              Start FREE Trial
-            </Link>
-            <p className="text-[#6A6A82] text-sm mt-3">
-              No credit card required.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="landing-section-divider relative overflow-hidden py-12">
         <div className="landing-grid-bg pointer-events-none absolute inset-0 opacity-35" />
@@ -1186,7 +1022,7 @@ export default function Home() {
                 alt="Wakkelni Stars Logo"
                 className="h-10 w-auto object-contain"
               />
-              <p className="text-[#6A6A82] text-sm max-w-xs text-center md:text-left">
+              <p className="text-[#6A6A82] text-sm max-w-xs text-center md:text-start">
                 Transform customer feedback into meaningful connections. Our
                 AI-powered platform helps businesses respond to reviews with
                 personalized, professional replies.

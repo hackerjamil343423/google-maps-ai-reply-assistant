@@ -242,6 +242,37 @@ export async function GET(req: NextRequest) {
   const ratingSum = normalized.reduce((sum, item) => sum + item.rating, 0);
   const avgRating = totalReviews ? Number((ratingSum / totalReviews).toFixed(1)) : 0;
 
+  // ── Analytics computations (over ALL reviews, not paginated subset) ──
+  const fiveStarCount = normalized.filter((item) => item.rating === 5).length;
+  const fiveStarPct = totalReviews > 0 ? Math.round((fiveStarCount / totalReviews) * 100) : 0;
+
+  const monthMeta = Array.from({ length: 12 }).map((_, index) => {
+    const date = new Date();
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+    date.setMonth(date.getMonth() - (11 - index));
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    return { key, total: 0, replied: 0 };
+  });
+  const monthIndexByKey = new Map(monthMeta.map((item, index) => [item.key, index]));
+
+  for (const item of normalized) {
+    const reviewedDate = new Date(item.reviewedAt);
+    if (Number.isNaN(reviewedDate.getTime())) continue;
+    const key = `${reviewedDate.getFullYear()}-${String(reviewedDate.getMonth() + 1).padStart(2, "0")}`;
+    const monthIndex = monthIndexByKey.get(key);
+    if (monthIndex === undefined) continue;
+    monthMeta[monthIndex].total += 1;
+    if (item.status === "auto" || item.status === "manual") {
+      monthMeta[monthIndex].replied += 1;
+    }
+  }
+
+  const ratingCounts = new Map<number, number>();
+  for (const item of normalized) {
+    ratingCounts.set(item.rating, (ratingCounts.get(item.rating) || 0) + 1);
+  }
+
   return NextResponse.json({
     reviews: paginated.map((item) => ({
       id: item.id,
@@ -273,6 +304,15 @@ export async function GET(req: NextRequest) {
       perPage,
       total,
       totalPages,
+    },
+    analytics: {
+      fiveStarPct,
+      monthly: monthMeta.map((m) => ({ total: m.total, replied: m.replied })),
+      ratingDist: [5, 4, 3, 2, 1].map((stars) => {
+        const count = ratingCounts.get(stars) || 0;
+        const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
+        return { stars, count, pct };
+      }),
     },
     googleConnected,
   });

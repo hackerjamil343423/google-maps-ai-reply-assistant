@@ -19,9 +19,9 @@ export const AR_STATIC_MAP: Record<string, string> = {
   Terms: "الشروط",
   Privacy: "الخصوصية",
   "Toggle menu": "تبديل القائمة",
-  "Auto-Reply To Your Google Reviews Using AI": "رد تلقائي على مراجعات Google باستخدام الذكاء الاصطناعي",
+  "Auto-Reply To Your Google Reviews Using AI": "ارفع ترتيبك في خرائط غوغل لزيادة عدد الطلبات يوميًا",
   "Let AI respond to hundreds of your Google Business Profile reviews in your unique brand voice.":
-    "دع الذكاء الاصطناعي يرد على مئات مراجعات ملف نشاطك التجاري على Google بصوت علامتك الفريد.",
+    "نقدّم ذكاءً اصطناعيًا يرد تلقائيًا على مئات مراجعات نشاطك في خرائط غوغل بأسلوبك وباللهجة السعودية",
   "Type your business name and address here": "اكتب اسم نشاطك التجاري وعنوانه هنا",
   "Search business reviews": "ابحث في مراجعات النشاط التجاري",
   Loading: "جارٍ التحميل",
@@ -50,9 +50,9 @@ export const AR_STATIC_MAP: Record<string, string> = {
   "You might forget to respond to a customer for months, but our AI never sleeps. Responding to reviews is not just polite; it is a critical engine for growth.":
     "قد تنسى الرد على عميل لأشهر، لكن الذكاء الاصطناعي لدينا لا ينام. الرد على المراجعات ليس مجرد لباقة؛ بل محرك أساسي للنمو.",
   "Get Started for Free": "ابدأ مجانًا",
-  "The Cost of Silence": "تكلفة الصمت",
+  "The Cost of Silence": "تكلفة تجاهل المراجعات",
   "What happens when you ignore your reviews?": "ماذا يحدث عندما تتجاهل مراجعاتك؟",
-  "The Customers We Serve": "العملاء الذين نخدمهم",
+  "The Customers We Serve": "من نخدم",
   "How It Works": "كيف يعمل",
   "Our AI uses an expert-built prompt system to generate personalized, thoughtful responses to every review posted on your Google Business Profile.":
     "يستخدم الذكاء الاصطناعي لدينا نظام مطالبات صُمم بواسطة خبراء لإنشاء ردود مخصصة ومدروسة لكل مراجعة تُنشر على ملف نشاطك التجاري في Google.",
@@ -65,36 +65,36 @@ export const AR_STATIC_MAP: Record<string, string> = {
   "Start FREE Trial": "ابدأ التجربة المجانية",
   "No credit card required.": "لا حاجة لبطاقة ائتمان.",
   "Wakkelni Stars. All rights reserved.": "Wakkelni Stars. جميع الحقوق محفوظة.",
-  "Boost Your SEO": "عزّز ظهورك في محركات البحث",
+  "Boost Your SEO": "رفع الترتيب في خرائط غوغل",
   "Google rewards activity. Businesses that respond to reviews rank higher on Google Maps and search results. Our tool ensures you never miss an opportunity to signal to Google that your business is active and relevant.":
-    "Google يكافئ النشاط. الأنشطة التي ترد على المراجعات تحصل على ترتيب أعلى في خرائط Google ونتائج البحث. أداتنا تضمن ألا تفوّت فرصة لإظهار أن نشاطك التجاري فعّال وذو صلة.",
-  "Build Trust": "ابنِ الثقة",
+    "يرفع ترتيبك في خرائط غوغل ويزيد ظهورك أمام العملاء",
+  "Build Trust": "بناء الثقة الفورية",
   "A response shows you care. When potential customers see you engaging with feedback, it establishes immediate trust. It encourages others to leave reviews because they know there is someone listening.":
-    "الرد يُظهر اهتمامك. عندما يرى العملاء المحتملون تفاعلك مع الآراء، تتكوّن الثقة فورًا. وهذا يشجع الآخرين على ترك مراجعات لأنهم يعرفون أن هناك من يستمع.",
-  "Damage Control": "احتواء الضرر",
+    "يبني ثقة فورية عند أي عميل يرى نشاطك",
+  "Damage Control": "حماية السمعة",
   "Unhappy customers need to feel heard. Our AI helps you turn negative situations into displays of excellent customer service. Your thoughtful reply shows the world you care.":
-    "العملاء غير الراضين يحتاجون أن يشعروا بأنهم مسموعون. يساعدك الذكاء الاصطناعي لدينا على تحويل المواقف السلبية إلى أمثلة رائعة لخدمة العملاء. ردك المدروس يُظهر للجميع أنك تهتم.",
-  "The Ultimate CRM": "أفضل نظام لإدارة علاقات العملاء",
+    "يحمي سمعتك من تأثير المراجعات السلبية ويحوّل المراجعات إلى طلبات ومبيعات",
+  "The Ultimate CRM": "توفير الوقت والجهد",
   "Think of this as your automated Customer Relationship Management tool. Use responses to offer more information or mention current promotions - turning a simple review into an invitation for repeat business.":
-    "اعتبرها أداة مؤتمتة لإدارة علاقات العملاء. استخدم الردود لتقديم معلومات إضافية أو ذكر العروض الحالية، لتحوّل مراجعة بسيطة إلى دعوة لتكرار الشراء.",
-  "Lost Revenue": "إيرادات مفقودة",
+    "يوفّر وقتك بدل إهداره في الرد اليدوي ويغنيك عن توظيف فريق للرد على المراجعات",
+  "Lost Revenue": "تخسر إيرادات يوميًا",
   "You lose potential customers who think you are inactive or indifferent.":
-    "ستخسر عملاء محتملين يعتقدون أنك غير نشط أو غير مهتم.",
-  "Lower Rankings": "ترتيب أقل",
+    "العميل يرى نشاطك بدون تفاعل فيفترض أنك غير مهتم ويذهب مباشرة لمنافسك",
+  "Lower Rankings": "ينخفض ترتيبك في خرائط غوغل",
   "Google pushes your business down the list in favor of more active competitors.":
-    "يدفع Google نشاطك إلى أسفل القائمة لصالح المنافسين الأكثر نشاطًا.",
+    "Google يرفع النشاطات المتفاعلة ويُخفي غير النشطة",
   "Wasted Time": "وقت مهدور",
   "You stare at the screen, suffering from writer's block instead of running your business.":
     "ستحدق في الشاشة وتعاني من صعوبة الكتابة بدلًا من إدارة نشاطك التجاري.",
-  "Reputation Damage": "ضرر السمعة",
+  "Reputation Damage": "تترك سمعتك بيد الآخرين",
   "Leaving negative reviews unanswered lets the angry customer control the narrative.":
-    "ترك المراجعات السلبية دون رد يسمح للعميل الغاضب بالتحكم في الصورة العامة.",
+    "مراجعة سلبية بدون رد تصبح الحقيقة الوحيدة أمام الجميع. فعميل غاضب واحد يمكن أن يخسرك مئات العملاء المحتملين",
   "Marketing Agencies": "وكالات التسويق",
   "Stop wasting hours writing manual replies for your clients. Whitelabel our AI automation tool and resell it to your clients at a healthy margin. It is the perfect add-on to generate recurring revenue while delivering tangible SEO results.":
-    "توقف عن إهدار الساعات في كتابة ردود يدوية لعملائك. استخدم أداتنا المؤتمتة بالذكاء الاصطناعي بعلامتك الخاصة وأعد بيعها لعملائك بهامش ربح جيد. إنها الإضافة المثالية لتوليد دخل متكرر مع نتائج SEO ملموسة.",
+    "إذا كنت تدير عدة عملاء، الرد على المراجعات يتحول إلى عبء يومي يستهلك وقت الفريق بدون عائد واضح. كل عميل يحتاج متابعة، وكل تأخير ينعكس على صورته ونتائجه. هذا النظام يحوّل المهمة إلى خدمة جاهزة تعمل تلقائيًا باسمك. توفّر وقت فريقك، تقدّم قيمة إضافية لعملائك، وتفتح مصدر دخل متكرر بدون تعقيد في التشغيل.",
   "Local Businesses": "الأنشطة التجارية المحلية",
   "This is for the restaurant owner, plumber, dentist, beauty salon, and more. You want to cut down the hours spent manually typing responses. You want to rank higher in Google Maps' \"recommended businesses\" without hiring a dedicated marketing manager.":
-    "هذا مناسب لصاحب المطعم والسباك وطبيب الأسنان وصالون التجميل وغيرهم. تريد تقليل الساعات التي تقضيها في كتابة الردود يدويًا. وتريد ترتيبًا أعلى في \"الأنشطة التجارية الموصى بها\" في خرائط Google دون توظيف مدير تسويق مخصص.",
+    "مناسب لكل نشاط يعتمد على العملاء القريبين وقرارهم السريع: مطاعم، مقاهي، عيادات، صالونات، مراكز تجميل، ورش، خدمات منزلية، وغيرها. إذا كان عميلك يبحث في خرائط غوغل ويقارن بينك وبين غيرك، هذا النظام يجعلك الخيار الواضح أمامه من خلال ردود سريعة تبني الثقة وترفع ترتيبك وتجلب لك طلبات أكثر بدون جهد إضافي.",
   "Enable Auto-Post": "فعّل النشر التلقائي",
   "Enable Auto-Post and let AI reply instantly": "فعّل النشر التلقائي ودع الذكاء الاصطناعي يرد فورًا",
   "Manual Approval": "موافقة يدوية",

@@ -65,6 +65,10 @@ body {
   position: relative;
 }
 
+.landing-alt-section {
+  background: linear-gradient(180deg, rgba(95, 48, 235, 0.03) 0%, rgba(0, 224, 255, 0.03) 100%);
+}
+
 .landing-section-divider::before {
   content: "";
   position: absolute;
