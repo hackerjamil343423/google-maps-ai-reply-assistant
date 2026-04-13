@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { authClient } from "@/lib/auth-client";
 import { ChoiceGroup, Onboarding, TipsList } from "@/components/ui/onboarding";
 
 // ── Feature data for Step 1 ────────────────────────────────────────────────────
@@ -109,10 +108,41 @@ const TONES = [
 type GoogleStatus = {
   configured: boolean;
   linkedAccount: boolean;
+  hasRequiredScopes?: boolean;
   connected: boolean;
   business: { name: string } | null;
   requiredScopes: string[];
+  subscriptionAllowed?: boolean;
+  subscriptionReason?: "trial_expired" | "canceled" | "plan_limit";
+  plan?: "Local Business" | "Multi-Location" | "Agency Max" | "free";
+  subscriptionStatus?: string;
+  connectedAccounts?: number;
+  maxAccounts?: number;
 };
+
+function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
+  if (!status) return null;
+  if (status.linkedAccount && status.hasRequiredScopes === false) {
+    return "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.";
+  }
+  if (status.subscriptionAllowed === false) {
+    return status.subscriptionReason === "trial_expired"
+      ? "Your free trial has expired. Upgrade your plan before connecting Google Business."
+      : "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
+  }
+
+  if (
+    !status.connected &&
+    typeof status.connectedAccounts === "number" &&
+    typeof status.maxAccounts === "number" &&
+    status.connectedAccounts >= status.maxAccounts
+  ) {
+    const planName = status.plan === "free" ? "Free" : status.plan || "current";
+    return `Your ${planName} plan allows up to ${status.maxAccounts} connected account(s). Upgrade your plan to add more.`;
+  }
+
+  return null;
+}
 
 // ── Inner page (needs Suspense for useSearchParams) ────────────────────────────
 
@@ -233,6 +263,20 @@ function OnboardingContent() {
     if (!googleStatus) return;
     if (!googleStatus.configured) {
       setConnectError("Google OAuth is not configured on this server.");
+      return;
+    }
+    if (googleStatus.subscriptionAllowed === false) {
+      const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+      setConnectError(blockedMessage || "Google Business connection is not available for this workspace.");
+      return;
+    }
+    if (googleStatus.linkedAccount && googleStatus.hasRequiredScopes === false) {
+      await startGoogleLinkFlow();
+      return;
+    }
+    const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+    if (blockedMessage) {
+      setConnectError(blockedMessage);
       return;
     }
     if (!googleStatus.linkedAccount) {
@@ -458,39 +502,46 @@ function OnboardingContent() {
               </div>
 
               {!googleConnected && (
-                <button
-                  type="button"
-                  onClick={() => void handleConnectGoogle()}
-                  disabled={connecting}
-                  className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border border-[#E6E1FA] bg-white px-5 py-3.5 text-sm font-medium text-[#040404] transition-colors hover:bg-[#F8F7FF] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {/* Google icon */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 48 48"
-                    aria-hidden="true"
+                <>
+                  {getGoogleConnectBlockMessage(googleStatus) && (
+                    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-[#C05B2D]">
+                      {getGoogleConnectBlockMessage(googleStatus)}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleConnectGoogle()}
+                    disabled={connecting}
+                    className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border border-[#E6E1FA] bg-white px-5 py-3.5 text-sm font-medium text-[#040404] transition-colors hover:bg-[#F8F7FF] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <path
-                      fill="#EA4335"
-                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-                    />
-                    <path
-                      fill="#4285F4"
-                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                    />
-                  </svg>
-                  {connecting ? "Connecting…" : "Connect with Google"}
-                </button>
+                    {/* Google icon */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill="#EA4335"
+                        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                      />
+                      <path
+                        fill="#4285F4"
+                        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                      />
+                    </svg>
+                    {connecting ? "Connecting…" : "Connect with Google"}
+                  </button>
+                </>
               )}
 
               {connectError && (

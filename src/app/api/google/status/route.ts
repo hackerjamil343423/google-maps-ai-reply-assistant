@@ -5,7 +5,10 @@ import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { businesses } from "@/lib/db/schema";
 import { env } from "@/lib/env";
-import { GOOGLE_BUSINESS_SCOPES, hasLinkedGoogleAccount } from "@/lib/google/business-profile";
+import {
+  GOOGLE_BUSINESS_SCOPES,
+  getGoogleAccountLinkStatus,
+} from "@/lib/google/business-profile";
 import { getWorkspaceAccess } from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -41,7 +44,7 @@ export async function GET(req: NextRequest) {
 
   const access = await getWorkspaceAccess(workspaceId);
 
-  const linkedAccount = await hasLinkedGoogleAccount(session.user.id);
+  const googleAccount = await getGoogleAccountLinkStatus(session.user.id);
 
   const business = await db.query.businesses.findFirst({
     where: and(
@@ -60,7 +63,8 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     configured,
-    linkedAccount,
+    linkedAccount: googleAccount.linked,
+    hasRequiredScopes: googleAccount.hasRequiredScopes,
     connected: Boolean(business?.googleLocationId),
     business: business
       ? {
@@ -74,5 +78,9 @@ export async function GET(req: NextRequest) {
     requiredScopes: GOOGLE_BUSINESS_SCOPES,
     subscriptionAllowed: access.allowed,
     subscriptionReason: access.reason,
+    plan: access.plan,
+    subscriptionStatus: access.status,
+    connectedAccounts: business?.googleLocationId ? 1 : 0,
+    maxAccounts: access.planInfo.maxAccounts,
   });
 }

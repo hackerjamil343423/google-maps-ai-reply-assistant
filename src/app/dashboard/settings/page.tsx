@@ -24,9 +24,16 @@ type TeamMember = {
 type GoogleStatus = {
   configured: boolean;
   linkedAccount: boolean;
+  hasRequiredScopes?: boolean;
   connected: boolean;
   business: { name: string } | null;
   requiredScopes: string[];
+  subscriptionAllowed?: boolean;
+  subscriptionReason?: "trial_expired" | "canceled" | "plan_limit";
+  plan?: "Local Business" | "Multi-Location" | "Agency Max" | "free";
+  subscriptionStatus?: string;
+  connectedAccounts?: number;
+  maxAccounts?: number;
 };
 type SubscriptionState = {
   plan: "Local Business" | "Multi-Location" | "Agency Max" | "free";
@@ -79,6 +86,30 @@ function panelStyle() {
     background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,246,255,0.92))",
     boxShadow: "0 20px 50px rgba(95,48,235,0.06)",
   };
+}
+
+function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
+  if (!status) return null;
+  if (status.linkedAccount && status.hasRequiredScopes === false) {
+    return "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.";
+  }
+  if (status.subscriptionAllowed === false) {
+    return status.subscriptionReason === "trial_expired"
+      ? "Your free trial has expired. Upgrade your plan before connecting Google Business."
+      : "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
+  }
+
+  if (
+    !status.connected &&
+    typeof status.connectedAccounts === "number" &&
+    typeof status.maxAccounts === "number" &&
+    status.connectedAccounts >= status.maxAccounts
+  ) {
+    const planName = status.plan === "free" ? "Free" : status.plan || "current";
+    return `Your ${planName} plan allows up to ${status.maxAccounts} connected account(s). Upgrade your plan to add more.`;
+  }
+
+  return null;
 }
 
 export default function SettingsPage() {
@@ -248,6 +279,20 @@ export default function SettingsPage() {
   async function handleConnectGoogle() {
     if (!googleStatus) return;
     if (!googleStatus.configured) return setGoogleError("Google OAuth is not configured.");
+    if (googleStatus.subscriptionAllowed === false) {
+      const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+      setGoogleError(blockedMessage || "Google Business connection is not available for this workspace.");
+      return;
+    }
+    if (googleStatus.linkedAccount && googleStatus.hasRequiredScopes === false) {
+      setGoogleNotice("Reconnecting Google permissions...");
+      return startGoogleLinkFlow();
+    }
+    const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+    if (blockedMessage) {
+      setGoogleError(blockedMessage);
+      return;
+    }
     if (!googleStatus.linkedAccount) return startGoogleLinkFlow();
     await connectAndSync();
   }
@@ -425,6 +470,9 @@ export default function SettingsPage() {
               <div>
                 <p className={`text-lg font-semibold ${connected ? "text-[#5F30EB]" : "text-[#040404]"}`}>{connected ? `${googleStatus?.business?.name || "Business"} connected.` : "Business profile not connected yet."}</p>
                 <p className="mt-2 text-sm text-[#6A6A82]">Connect Google first, then sync reviews so AI replies can work with real data.</p>
+                {getGoogleConnectBlockMessage(googleStatus) && (
+                  <p className="mt-3 text-sm text-[#C05B2D]">{getGoogleConnectBlockMessage(googleStatus)}</p>
+                )}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button onClick={handleConnectGoogle} disabled={connectingGoogle || connected} className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer">{connectingGoogle ? "Connecting..." : connected ? "Connected" : "Connect Business Profile"}</button>
                   <Link href="/dashboard/overview" className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63]">Open Overview</Link>

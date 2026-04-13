@@ -12,6 +12,12 @@ export const GOOGLE_BUSINESS_SCOPES = [
   "https://www.googleapis.com/auth/business.manage",
 ];
 
+export type GoogleAccountLinkStatus = {
+  linked: boolean;
+  grantedScopes: string[];
+  hasRequiredScopes: boolean;
+};
+
 interface GoogleAccountsResponse {
   accounts?: Array<{
     name?: string;
@@ -169,15 +175,45 @@ async function getGoogleAccessTokenFromHeaders(headers: Headers): Promise<string
   }
 }
 
-export async function hasLinkedGoogleAccount(userId: string) {
-  if (!db) return false;
+function parseGrantedScopes(scopeValue: string | null | undefined) {
+  if (!scopeValue) return [];
+  return scopeValue
+    .split(/[\s,]+/)
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+}
+
+export async function getGoogleAccountLinkStatus(
+  userId: string
+): Promise<GoogleAccountLinkStatus> {
+  if (!db) {
+    return {
+      linked: false,
+      grantedScopes: [],
+      hasRequiredScopes: false,
+    };
+  }
 
   const linked = await db.query.account.findFirst({
     where: and(eq(account.userId, userId), eq(account.providerId, "google")),
-    columns: { id: true },
+    columns: { id: true, scope: true },
   });
 
-  return Boolean(linked);
+  const grantedScopes = parseGrantedScopes(linked?.scope);
+  const hasRequiredScopes = GOOGLE_BUSINESS_SCOPES.every((scope) =>
+    grantedScopes.includes(scope)
+  );
+
+  return {
+    linked: Boolean(linked),
+    grantedScopes,
+    hasRequiredScopes,
+  };
+}
+
+export async function hasLinkedGoogleAccount(userId: string) {
+  const status = await getGoogleAccountLinkStatus(userId);
+  return status.linked;
 }
 
 export async function connectWorkspaceGoogleBusiness(
