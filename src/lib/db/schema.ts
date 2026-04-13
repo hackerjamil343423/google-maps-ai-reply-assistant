@@ -211,7 +211,7 @@ export const businesses = pgTable(
   },
   (table) => [
     index("businesses_workspace_id_idx").on(table.workspaceId),
-    uniqueIndex("businesses_google_location_unique").on(table.googleLocationId),
+    uniqueIndex("businesses_google_location_unique").on(table.workspaceId, table.googleLocationId),
   ]
 );
 

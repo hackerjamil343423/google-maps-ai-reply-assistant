@@ -22,7 +22,11 @@ function classifyConnectError(message: string): {
 
   if (
     normalized.includes("access token is unavailable") ||
-    normalized.includes("not linked")
+    normalized.includes("not linked") ||
+    normalized.includes("expired") ||
+    normalized.includes("invalid_grant") ||
+    normalized.includes("token has been expired") ||
+    normalized.includes("unauthorized")
   ) {
     return {
       status: 401,
@@ -36,7 +40,9 @@ function classifyConnectError(message: string): {
   if (
     normalized.includes("insufficient authentication scopes") ||
     normalized.includes("insufficient permission") ||
-    normalized.includes("does not have permission")
+    normalized.includes("does not have permission") ||
+    normalized.includes("request had insufficient authentication") ||
+    normalized.includes("forbidden")
   ) {
     return {
       status: 403,
@@ -149,8 +155,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const body = await req.json().catch(() => ({})) as { locationName?: string };
+  const preferredLocationId = typeof body.locationName === "string" ? body.locationName : undefined;
+
   try {
-    const business = await connectWorkspaceGoogleBusiness(workspaceId, req.headers);
+    const business = await connectWorkspaceGoogleBusiness(workspaceId, req.headers, preferredLocationId);
     return NextResponse.json({ connected: true, business });
   } catch (error) {
     const message =

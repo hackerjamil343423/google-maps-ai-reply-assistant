@@ -9,7 +9,10 @@ import {
   GOOGLE_BUSINESS_SCOPES,
   getGoogleAccountLinkStatus,
 } from "@/lib/google/business-profile";
-import { getWorkspaceAccess } from "@/lib/subscription/server";
+import {
+  getConnectedAccountsCount,
+  getWorkspaceAccess,
+} from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 export async function GET(req: NextRequest) {
@@ -80,7 +83,7 @@ export async function GET(req: NextRequest) {
     subscriptionReason: access.reason,
     plan: access.plan,
     subscriptionStatus: access.status,
-    connectedAccounts: business?.googleLocationId ? 1 : 0,
+    connectedAccounts: await getConnectedAccountsCount(workspaceId),
     maxAccounts: access.planInfo.maxAccounts,
   });
 }

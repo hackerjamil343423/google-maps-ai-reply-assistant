@@ -135,6 +135,9 @@ export default function SettingsPage() {
   const [googleError, setGoogleError] = useState("");
   const [googleNotice, setGoogleNotice] = useState("");
   const [connectingGoogle, setConnectingGoogle] = useState(false);
+  const [disconnectingGoogle, setDisconnectingGoogle] = useState(false);
+  const [availableLocations, setAvailableLocations] = useState<Array<{ googleLocationId: string; title: string }> | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [businesses, setBusinesses] = useState<string[]>([]);
@@ -232,12 +235,17 @@ export default function SettingsPage() {
     }
   }, []);
 
-  const connectAndSync = useCallback(async () => {
+  const connectAndSync = useCallback(async (locationName?: string) => {
     setConnectingGoogle(true);
     setGoogleError("");
     setGoogleNotice("");
+    setAvailableLocations(null);
     try {
-      const connectRes = await fetch("/api/google/connect", { method: "POST" });
+      const connectRes = await fetch("/api/google/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(locationName ? { locationName } : {}),
+      });
       const connectJson = await parseJsonSafe<{ error?: string }>(connectRes);
       if (!connectRes.ok) throw new Error(connectJson?.error || "Failed to connect business profile.");
       const syncRes = await fetch("/api/google/sync-reviews", { method: "POST" });
@@ -253,6 +261,45 @@ export default function SettingsPage() {
     }
   }, [loadAll, router]);
 
+  const handleDisconnectGoogle = useCallback(async () => {
+    setDisconnectingGoogle(true);
+    setGoogleError("");
+    setGoogleNotice("");
+    try {
+      const res = await fetch("/api/google/disconnect", { method: "POST" });
+      const json = await parseJsonSafe<{ error?: string }>(res);
+      if (!res.ok) throw new Error(json?.error || "Failed to disconnect business.");
+      setGoogleNotice("Google Business disconnected.");
+      await loadAll();
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "Failed to disconnect Google Business.");
+    } finally {
+      setDisconnectingGoogle(false);
+    }
+  }, [loadAll]);
+
+  const handleConnectWithLocationPicker = useCallback(async () => {
+    setConnectingGoogle(true);
+    setGoogleError("");
+    setGoogleNotice("");
+    try {
+      const res = await fetch("/api/google/locations");
+      const json = await parseJsonSafe<{ locations?: Array<{ googleLocationId: string; title: string }>; error?: string }>(res);
+      if (!res.ok) throw new Error(json?.error || "Failed to fetch locations.");
+      const locs = json?.locations ?? [];
+      if (locs.length <= 1) {
+        await connectAndSync(locs[0]?.googleLocationId);
+      } else {
+        setAvailableLocations(locs);
+        setSelectedLocation(locs[0].googleLocationId);
+        setConnectingGoogle(false);
+      }
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "Failed to fetch Google locations.");
+      setConnectingGoogle(false);
+    }
+  }, [connectAndSync]);
+
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
@@ -260,8 +307,8 @@ export default function SettingsPage() {
   useEffect(() => {
     if (searchParams.get("google") !== "linked" || handledGoogleCallback.current) return;
     handledGoogleCallback.current = true;
-    void connectAndSync();
-  }, [searchParams, connectAndSync]);
+    void handleConnectWithLocationPicker();
+  }, [searchParams, handleConnectWithLocationPicker]);
 
   useEffect(() => {
     if (handledBillingParams.current) return;
@@ -335,7 +382,7 @@ export default function SettingsPage() {
       return;
     }
     if (!googleStatus.linkedAccount) return startGoogleLinkFlow();
-    await connectAndSync();
+    await handleConnectWithLocationPicker();
   }
 
   async function sendInvite(event: React.FormEvent) {
@@ -818,8 +865,48 @@ export default function SettingsPage() {
                 {getGoogleConnectBlockMessage(googleStatus) && (
                   <p className="mt-3 text-sm text-[#C05B2D]">{getGoogleConnectBlockMessage(googleStatus)}</p>
                 )}
+                {availableLocations && availableLocations.length > 1 && (
+                  <div className="mt-4 rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 space-y-3">
+                    <p className="text-sm font-medium text-[#040404]">Select a location to connect:</p>
+                    <select
+                      value={selectedLocation}
+                      onChange={(e) => setSelectedLocation(e.target.value)}
+                      className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4F63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
+                    >
+                      {availableLocations.map((loc) => (
+                        <option key={loc.googleLocationId} value={loc.googleLocationId}>{loc.title}</option>
+                      ))}
+                    </select>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => void connectAndSync(selectedLocation)}
+                        disabled={connectingGoogle}
+                        className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
+                      >
+                        {connectingGoogle ? "Connecting..." : "Connect Selected Location"}
+                      </button>
+                      <button
+                        onClick={() => setAvailableLocations(null)}
+                        className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63] cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <button onClick={handleConnectGoogle} disabled={connectingGoogle || connected} className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer">{connectingGoogle ? "Connecting..." : connected ? "Connected" : "Connect Business Profile"}</button>
+                  {!connected && !availableLocations && (
+                    <button onClick={handleConnectGoogle} disabled={connectingGoogle} className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer">{connectingGoogle ? "Connecting..." : "Connect Business Profile"}</button>
+                  )}
+                  {connected && (
+                    <button
+                      onClick={() => void handleDisconnectGoogle()}
+                      disabled={disconnectingGoogle}
+                      className="rounded-2xl border border-red-500/20 px-5 py-3 text-sm font-semibold text-red-500 disabled:opacity-60 cursor-pointer"
+                    >
+                      {disconnectingGoogle ? "Disconnecting..." : "Disconnect"}
+                    </button>
+                  )}
                   <Link href="/dashboard/analytics" className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63]">Open Dashboard</Link>
                 </div>
               </div>

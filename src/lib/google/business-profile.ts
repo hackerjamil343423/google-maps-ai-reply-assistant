@@ -70,6 +70,11 @@ export interface GoogleBusinessConnection {
   googleLocationId: string;
 }
 
+export interface GoogleLocationOption {
+  googleLocationId: string;
+  title: string;
+}
+
 export interface SyncWorkspaceReviewsResult {
   business: GoogleBusinessConnection;
   synced: number;
@@ -236,9 +241,46 @@ export async function hasLinkedGoogleAccount(userId: string) {
   return status.linked;
 }
 
+export async function listWorkspaceGoogleLocations(
+  headers: Headers
+): Promise<GoogleLocationOption[]> {
+  const accessToken = await getGoogleAccessTokenFromHeaders(headers);
+  if (!accessToken) {
+    throw new Error("Google account is not linked or access token is unavailable.");
+  }
+
+  const accountsRes = await googleApiFetch<GoogleAccountsResponse>(
+    `${GOOGLE_ACCOUNTS_BASE}/accounts`,
+    accessToken
+  );
+
+  const googleAccount = accountsRes.accounts?.find((item) => item.name);
+  if (!googleAccount?.name) {
+    throw new Error("No Google Business account found for this user.");
+  }
+
+  const locationQuery = new URLSearchParams({
+    readMask: "name,title",
+    pageSize: "20",
+  });
+
+  const locationsRes = await googleApiFetch<GoogleLocationsResponse>(
+    `${GOOGLE_BUSINESS_INFO_BASE}/${googleAccount.name}/locations?${locationQuery.toString()}`,
+    accessToken
+  );
+
+  return (locationsRes.locations ?? [])
+    .filter((item) => item.name)
+    .map((item) => ({
+      googleLocationId: normalizeGoogleLocationName(googleAccount.name!, item.name!),
+      title: item.title?.trim() || "Google Business Profile",
+    }));
+}
+
 export async function connectWorkspaceGoogleBusiness(
   workspaceId: string,
-  headers: Headers
+  headers: Headers,
+  preferredLocationId?: string
 ): Promise<GoogleBusinessConnection> {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -269,12 +311,20 @@ export async function connectWorkspaceGoogleBusiness(
     accessToken
   );
 
-  const location = locationsRes.locations?.find((item) => item.name);
-  if (!location?.name) {
+  const rawLocations = locationsRes.locations?.filter((item) => item.name) ?? [];
+  if (rawLocations.length === 0) {
     throw new Error("No Google Business locations found.");
   }
 
-  const locationName = normalizeGoogleLocationName(googleAccount.name, location.name);
+  const location = preferredLocationId
+    ? (rawLocations.find(
+        (item) =>
+          normalizeGoogleLocationName(googleAccount.name!, item.name!) ===
+          preferredLocationId
+      ) ?? rawLocations[0])
+    : rawLocations[0];
+
+  const locationName = normalizeGoogleLocationName(googleAccount.name, location.name!);
   const businessName = location.title?.trim() || "Google Business Profile";
 
   const existing = await db.query.businesses.findFirst({
