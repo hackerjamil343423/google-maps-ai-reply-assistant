@@ -1,5 +1,6 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 
 import AppProviders from "@/components/AppProviders";
 
@@ -27,7 +28,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr" suppressHydrationWarning>
+      <head>
+        <Script id="set-initial-language-direction" strategy="beforeInteractive">
+          {`try {
+            var stored = window.localStorage.getItem("app_language");
+            var language = stored && stored.toLowerCase().indexOf("ar") === 0 ? "ar" : "en";
+            document.documentElement.lang = language;
+            document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+          } catch (e) {}`}
+        </Script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -36,4 +47,3 @@ export default function RootLayout({
     </html>
   );
 }
-

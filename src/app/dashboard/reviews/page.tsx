@@ -372,7 +372,6 @@ export default function ReviewsPage() {
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Reviews</p>
           <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Reply Workflow</h2>
-          <p className="mt-2 text-sm text-[#6A6A82]">Review pending items, generated drafts, and posted replies in one wider workspace.</p>
         </div>
 
         <div

@@ -88,6 +88,20 @@ function normalizeGoogleLocationName(accountName: string, locationName: string) 
   return `${accountName}/${locationName}`;
 }
 
+function toBusinessInfoLocationName(locationName: string) {
+  if (locationName.startsWith("locations/")) {
+    return locationName;
+  }
+
+  const marker = "/locations/";
+  const markerIndex = locationName.indexOf(marker);
+  if (markerIndex >= 0) {
+    return `locations/${locationName.slice(markerIndex + marker.length)}`;
+  }
+
+  return locationName;
+}
+
 function normalizeGoogleReviewName(locationName: string, review: { name?: string; reviewId?: string }) {
   if (review.name?.startsWith("accounts/")) {
     return review.name;
@@ -491,9 +505,12 @@ export async function getWorkspaceGoogleReviewLink(
   const readMask = new URLSearchParams({
     readMask: "title,metadata.placeId,metadata.newReviewUri",
   });
+  const businessInfoLocationName = toBusinessInfoLocationName(
+    business.googleLocationId
+  );
 
   const location = await googleApiFetch<GoogleLocationDetailsResponse>(
-    `${GOOGLE_BUSINESS_INFO_BASE}/${business.googleLocationId}?${readMask.toString()}`,
+    `${GOOGLE_BUSINESS_INFO_BASE}/${businessInfoLocationName}?${readMask.toString()}`,
     accessToken
   );
 

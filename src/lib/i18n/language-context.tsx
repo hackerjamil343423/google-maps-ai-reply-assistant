@@ -36,6 +36,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       return "en";
     }
 
+    const fromDom = document.documentElement.lang;
+    if (fromDom) {
+      return normalizeLanguage(fromDom);
+    }
+
     const stored = window.localStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
     return stored ? normalizeLanguage(stored) : detectBrowserLanguage();
   });
