@@ -4,12 +4,39 @@ import { useEffect, useMemo, useState } from "react";
 
 import DashboardShell from "@/components/DashboardShell";
 
+type GoogleStatus = {
+  linkedAccount: boolean;
+  hasRequiredScopes?: boolean;
+  connected: boolean;
+  subscriptionAllowed?: boolean;
+  subscriptionReason?: "trial_expired" | "canceled" | "plan_limit";
+};
+
 type ReviewLinkResponse = {
   businessName: string;
   reviewLink: string;
   placeId: string | null;
   error?: string;
 };
+
+function getReviewLinkBlockMessage(status: GoogleStatus | null) {
+  if (!status) return null;
+  if (status.subscriptionAllowed === false) {
+    return status.subscriptionReason === "trial_expired"
+      ? "Your free trial has expired. Upgrade your plan before using the review link."
+      : "Your subscription is not active. Renew or upgrade your plan before using the review link.";
+  }
+  if (!status.linkedAccount) {
+    return "Link your Google account first.";
+  }
+  if (status.hasRequiredScopes === false) {
+    return "Reconnect Google and approve Business Profile access before using the review link.";
+  }
+  if (!status.connected) {
+    return "Connect your Google Business Profile first.";
+  }
+  return null;
+}
 
 export default function ReviewLinkPage() {
   const [businessName, setBusinessName] = useState("Your Business");
@@ -21,8 +48,21 @@ export default function ReviewLinkPage() {
 
   useEffect(() => {
     let mounted = true;
-    void fetch("/api/google/review-link", { cache: "no-store" })
+    void fetch("/api/google/status", { cache: "no-store" })
       .then(async (res) => {
+        const json = (await res.json().catch(() => null)) as GoogleStatus | null;
+        if (!res.ok || !json) {
+          throw new Error("Could not load Google connection status.");
+        }
+        const blockedMessage = getReviewLinkBlockMessage(json);
+        if (blockedMessage) {
+          throw new Error(blockedMessage);
+        }
+
+        return fetch("/api/google/review-link", { cache: "no-store" });
+      })
+      .then(async (res) => {
+        if (!res) return null;
         const json = (await res.json().catch(() => null)) as ReviewLinkResponse | null;
         if (!res.ok || !json) {
           throw new Error(

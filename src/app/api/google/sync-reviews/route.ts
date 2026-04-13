@@ -7,6 +7,66 @@ import { syncWorkspaceReviewsFromGoogle } from "@/lib/google/business-profile";
 import { getWorkspaceAccess } from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
+function classifySyncError(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("access token is unavailable") ||
+    normalized.includes("not linked")
+  ) {
+    return {
+      status: 401,
+      error:
+        "Google account access expired or is missing. Please reconnect Google and grant permissions again.",
+    };
+  }
+
+  if (
+    normalized.includes("insufficient authentication scopes") ||
+    normalized.includes("insufficient permission") ||
+    normalized.includes("does not have permission")
+  ) {
+    return {
+      status: 403,
+      error:
+        "Google Business permission is missing. Please reconnect Google and approve Business Profile access.",
+    };
+  }
+
+  if (
+    normalized.includes("has not been used in project") ||
+    normalized.includes("api has not been used") ||
+    normalized.includes("is disabled")
+  ) {
+    return {
+      status: 424,
+      error:
+        "Google Business APIs are not fully enabled for this Google Cloud project. Enable required APIs and try again.",
+    };
+  }
+
+  if (normalized.includes("no google business account found")) {
+    return {
+      status: 404,
+      error:
+        "No Google Business account was found for this Google user. Sign in with the account that owns/manages the Business Profile.",
+    };
+  }
+
+  if (normalized.includes("no google business locations found")) {
+    return {
+      status: 404,
+      error:
+        "No Google Business locations were found. Confirm this account has at least one accessible Business Profile location.",
+    };
+  }
+
+  return {
+    status: 400,
+    error: message || "Failed to sync Google reviews.",
+  };
+}
+
 export async function POST(req: NextRequest) {
   const session = await getRequestSession(req);
   if (!session) {
@@ -62,6 +122,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to sync Google reviews.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const classified = classifySyncError(message);
+    return NextResponse.json({ error: classified.error }, { status: classified.status });
   }
 }

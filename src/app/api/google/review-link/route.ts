@@ -29,6 +29,30 @@ function classifyReviewLinkError(message: string) {
     };
   }
 
+  if (
+    normalized.includes("insufficient authentication scopes") ||
+    normalized.includes("insufficient permission") ||
+    normalized.includes("does not have permission")
+  ) {
+    return {
+      status: 403,
+      error:
+        "Google Business permission is missing. Please reconnect Google and approve Business Profile access.",
+    };
+  }
+
+  if (
+    normalized.includes("has not been used in project") ||
+    normalized.includes("api has not been used") ||
+    normalized.includes("is disabled")
+  ) {
+    return {
+      status: 424,
+      error:
+        "Google Business APIs are not fully enabled for this Google Cloud project. Enable required APIs and try again.",
+    };
+  }
+
   if (normalized.includes("review link is not available")) {
     return {
       status: 424,
@@ -102,4 +126,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

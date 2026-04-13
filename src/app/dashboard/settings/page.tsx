@@ -376,7 +376,6 @@ export default function SettingsPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Settings</p>
             <h1 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Workspace Settings</h1>
-            <p className="mt-2 max-w-2xl text-sm text-[#6A6A82]">Each area now lives in its own tab so the page stays focused and easy to use.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

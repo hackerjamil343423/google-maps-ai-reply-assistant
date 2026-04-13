@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
-import { businesses } from "@/lib/db/schema";
+import { businesses, reviews } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const session = await getRequestSession(req);
@@ -20,19 +20,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Workspace not found" }, { status: 500 });
   }
 
-  const businessList = await db.query.businesses.findMany({
-    where: and(
-      eq(businesses.workspaceId, workspaceId),
-      eq(businesses.status, "active")
-    ),
-    columns: {
-      id: true,
-      name: true,
-      googleLocationId: true,
-      connectedAt: true,
-    },
-    orderBy: [desc(businesses.connectedAt)],
-  });
+  const businessList = await db
+    .select({
+      id: businesses.id,
+      name: businesses.name,
+      googleLocationId: businesses.googleLocationId,
+      connectedAt: businesses.connectedAt,
+      syncedReviewCount: sql<number>`count(${reviews.id})::int`,
+    })
+    .from(businesses)
+    .leftJoin(reviews, eq(reviews.businessId, businesses.id))
+    .where(
+      and(
+        eq(businesses.workspaceId, workspaceId),
+        eq(businesses.status, "active")
+      )
+    )
+    .groupBy(
+      businesses.id,
+      businesses.name,
+      businesses.googleLocationId,
+      businesses.connectedAt
+    )
+    .orderBy(desc(businesses.connectedAt));
 
   return NextResponse.json({
     businesses: businessList,

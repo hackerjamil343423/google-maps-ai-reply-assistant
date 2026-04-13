@@ -12,6 +12,7 @@ type ConnectedBusiness = {
   name: string;
   googleLocationId: string | null;
   connectedAt: string;
+  syncedReviewCount: number;
 };
 
 type ReportSummary = {
@@ -33,15 +34,14 @@ export default function ReportsPageClient() {
   const [loadingReports, setLoadingReports] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
   const [generateError, setGenerateError] = useState("");
+  const [generateInfo, setGenerateInfo] = useState("");
   const [success, setSuccess] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState<"this_week" | "last_week" | "this_month" | "last_month" | "last_3_months" | "specific">("this_month");
-  const [specificYear, setSpecificYear] = useState(new Date().getFullYear());
-  const [specificMonth, setSpecificMonth] = useState(new Date().getMonth() + 1);
+  const [selectedPeriod, setSelectedPeriod] = useState<"all_time" | "this_month">("this_month");
   const [reportLanguage, setReportLanguage] = useState<"en" | "ar">("en");
 
   const router = useRouter();
+  const selectedBusinessReviewCount = selectedBusiness?.syncedReviewCount ?? 0;
 
-  // Load connected businesses on mount
   useEffect(() => {
     let mounted = true;
     setLoadingBusinesses(true);
@@ -49,13 +49,12 @@ export default function ReportsPageClient() {
     void fetch("/api/analytics/businesses", { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return [];
-        const data = await res.json() as { businesses: ConnectedBusiness[] };
+        const data = (await res.json()) as { businesses: ConnectedBusiness[] };
         return data.businesses ?? [];
       })
       .then((list) => {
         if (!mounted) return;
         setBusinesses(list);
-        // Auto-select if only one business
         if (list.length === 1) setSelectedBusiness(list[0]);
       })
       .catch(() => {})
@@ -63,10 +62,11 @@ export default function ReportsPageClient() {
         if (mounted) setLoadingBusinesses(false);
       });
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Load report history on mount
   useEffect(() => {
     let mounted = true;
     setLoadingReports(true);
@@ -85,14 +85,24 @@ export default function ReportsPageClient() {
         if (mounted) setLoadingReports(false);
       });
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleGenerateReport = useCallback(async () => {
     if (!selectedBusiness) return;
 
+    if (selectedBusiness.syncedReviewCount < 1) {
+      setGenerateInfo(`You do not have any reviews for "${selectedBusiness.name}" yet.`);
+      setGenerateError("");
+      setSuccess("");
+      return;
+    }
+
     setGenerating(true);
     setGenerateError("");
+    setGenerateInfo("");
     setSuccess("");
     setSelectedReport(null);
 
@@ -103,8 +113,6 @@ export default function ReportsPageClient() {
         body: JSON.stringify({
           businessId: selectedBusiness.id,
           period: selectedPeriod,
-          year: selectedPeriod === "specific" ? specificYear : undefined,
-          month: selectedPeriod === "specific" ? specificMonth : undefined,
           language: reportLanguage,
         }),
       });
@@ -112,6 +120,14 @@ export default function ReportsPageClient() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 422) {
+          setGenerateInfo(
+            data.message ||
+              `You do not have any reviews for "${selectedBusiness.name}" in this period yet.`
+          );
+          return;
+        }
+
         setGenerateError(data.error || "Failed to generate report");
         return;
       }
@@ -134,7 +150,7 @@ export default function ReportsPageClient() {
     } finally {
       setGenerating(false);
     }
-  }, [selectedBusiness, selectedPeriod, specificYear, specificMonth, reportLanguage]);
+  }, [selectedBusiness, selectedPeriod, reportLanguage]);
 
   async function handleViewReport(report: ReportSummary) {
     router.push(`/dashboard/reports/${report.id}`);
@@ -151,7 +167,6 @@ export default function ReportsPageClient() {
           </p>
         </div>
 
-        {/* Business Selection Card */}
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5 mb-6">
           {loadingBusinesses ? (
             <div className="flex items-center gap-2 py-4">
@@ -186,7 +201,9 @@ export default function ReportsPageClient() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-[#040404]">{selectedBusiness?.name || businesses[0].name}</p>
-                    <p className="text-xs text-[#6A6A82]">Connected</p>
+                    <p className="text-xs text-[#6A6A82]">
+                      {selectedBusiness?.syncedReviewCount ?? businesses[0].syncedReviewCount} synced reviews
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -198,6 +215,7 @@ export default function ReportsPageClient() {
                       onClick={() => {
                         setSelectedBusiness(biz);
                         setGenerateError("");
+                        setGenerateInfo("");
                       }}
                       className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-all text-left ${
                         selectedBusiness?.id === biz.id
@@ -215,7 +233,7 @@ export default function ReportsPageClient() {
                       <div>
                         <p className="text-sm font-medium text-[#040404]">{biz.name}</p>
                         <p className="text-xs text-[#6A6A82]">
-                          Connected {biz.connectedAt ? new Date(biz.connectedAt).toLocaleDateString() : ""}
+                          {biz.syncedReviewCount} synced reviews
                         </p>
                       </div>
                     </button>
@@ -225,7 +243,6 @@ export default function ReportsPageClient() {
             </>
           )}
 
-          {/* Period & Language Controls */}
           {businesses.length > 0 && (
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -235,38 +252,9 @@ export default function ReportsPageClient() {
                   onChange={(e) => setSelectedPeriod(e.target.value as typeof selectedPeriod)}
                   className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2.5 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
                 >
-                  <option value="this_week">This Week (Mon–Today)</option>
-                  <option value="last_week">Last Week (Mon–Sun)</option>
+                  <option value="all_time">All Time</option>
                   <option value="this_month">This Month</option>
-                  <option value="last_month">Last Month</option>
-                  <option value="last_3_months">Last 3 Months</option>
-                  <option value="specific">Specific Month</option>
                 </select>
-
-                {selectedPeriod === "specific" && (
-                  <div className="flex gap-2 mt-2">
-                    <select
-                      value={specificMonth}
-                      onChange={(e) => setSpecificMonth(Number(e.target.value))}
-                      className="flex-1 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
-                    >
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                        <option key={m} value={m}>
-                          {new Date(2000, m - 1, 1).toLocaleString("en", { month: "long" })}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={specificYear}
-                      onChange={(e) => setSpecificYear(Number(e.target.value))}
-                      className="w-24 rounded-2xl border border-[#E6E9F8] bg-white px-3 py-2 text-sm text-[#4F4A63] outline-none focus:border-[#5F30EB]/35"
-                    >
-                      {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
               </div>
 
               <div>
@@ -299,15 +287,14 @@ export default function ReportsPageClient() {
             </div>
           )}
 
-          {/* Generate Button */}
           {businesses.length > 0 && (
             <div className="mt-4 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => void handleGenerateReport()}
-                disabled={!selectedBusiness || generating}
+                disabled={!selectedBusiness || generating || selectedBusinessReviewCount < 1}
                 className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition-all ${
-                  !selectedBusiness || generating
+                  !selectedBusiness || generating || selectedBusinessReviewCount < 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-[#5F30EB] text-white hover:bg-[#4a27c9] shadow-[0_4px_16px_rgba(95,48,235,0.24)]"
                 }`}
@@ -331,18 +318,23 @@ export default function ReportsPageClient() {
                   </>
                 )}
               </button>
+              {selectedBusiness && selectedBusinessReviewCount < 1 && (
+                <p className="text-sm text-[#6A6A82]">
+                  You do not have any reviews for this business yet.
+                </p>
+              )}
             </div>
           )}
           {generateError && <p className="text-sm text-red-500 mt-3">{generateError}</p>}
+          {generateInfo && <p className="text-sm text-[#6A6A82] mt-3">{generateInfo}</p>}
           {success && <p className="text-sm text-green-500 mt-3">{success}</p>}
         </div>
 
-        {/* Most Recent Report (quick view) */}
         {selectedReport?.reportData && !generating && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-[#040404]">
-                Latest Report{selectedReport.businessName ? ` — ${selectedReport.businessName}` : ""}
+                Latest Report{selectedReport.businessName ? ` - ${selectedReport.businessName}` : ""}
               </h3>
               <button
                 type="button"
@@ -356,7 +348,6 @@ export default function ReportsPageClient() {
           </div>
         )}
 
-        {/* Report History */}
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5">
           <h3 className="text-sm font-semibold text-[#040404] mb-4">Report History</h3>
 

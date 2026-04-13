@@ -7,43 +7,19 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { generateAnalysisReportFromUrl } from "@/lib/ai/generate-analysis-report";
 
-type Period = "this_week" | "last_week" | "this_month" | "last_month" | "last_3_months" | "specific";
+type Period = "all_time" | "this_month";
 
-function computePeriodBounds(period: Period, specificYear?: number, specificMonth?: number): { start: Date; end: Date } {
+function computePeriodBounds(period: Period): { start: Date; end: Date } {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  const dayOfWeek = today.getDay();
-  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const thisMonday = new Date(today);
-  thisMonday.setDate(today.getDate() - daysToMonday);
-
-  const lastMonday = new Date(thisMonday);
-  lastMonday.setDate(thisMonday.getDate() - 7);
-  const lastSunday = new Date(lastMonday);
-  lastSunday.setDate(lastMonday.getDate() + 6);
-
   const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-  const threeMonthsStart = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+  const allTimeStart = new Date(2000, 0, 1);
 
   switch (period) {
-    case "this_week":
-      return { start: thisMonday, end: today };
-    case "last_week":
-      return { start: lastMonday, end: lastSunday };
+    case "all_time":
+      return { start: allTimeStart, end: today };
     case "this_month":
       return { start: thisMonthStart, end: today };
-    case "last_month":
-      return { start: lastMonthStart, end: lastMonthEnd };
-    case "last_3_months":
-      return { start: threeMonthsStart, end: today };
-    case "specific": {
-      const year = specificYear ?? today.getFullYear();
-      const month = (specificMonth ?? today.getMonth() + 1) - 1;
-      return { start: new Date(year, month, 1), end: new Date(year, month + 1, 0) };
-    }
   }
 }
 
@@ -67,11 +43,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { businessId, period, year, month, language } = body as {
+  const { businessId, period, language } = body as {
     businessId?: string;
     period?: Period;
-    year?: number;
-    month?: number;
     language?: "en" | "ar";
   };
 
@@ -81,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   const selectedPeriod: Period = period ?? "this_month";
   const selectedLanguage: "en" | "ar" = language ?? "en";
-  const periodBounds = computePeriodBounds(selectedPeriod, year, month);
+  const periodBounds = computePeriodBounds(selectedPeriod);
 
   // Verify business belongs to this workspace and is active
   const business = await db.query.businesses.findFirst({
@@ -137,7 +111,10 @@ export async function POST(req: NextRequest) {
   if (reviewsData.length === 0) {
     return NextResponse.json(
       {
-        error: `No synced reviews found for "${business.name}" in the selected period. Sync reviews first from the Reviews page.`,
+        message:
+          selectedPeriod === "all_time"
+            ? `No reviews found for "${business.name}" yet.`
+            : `No reviews found for "${business.name}" this month yet.`,
       },
       { status: 422 }
     );
@@ -161,8 +138,6 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
-
-  const now = new Date();
 
   const [newReport] = await db
     .insert(reviewAnalysisReports)
