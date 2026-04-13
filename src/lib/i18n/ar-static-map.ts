@@ -608,4 +608,138 @@ export const AR_STATIC_MAP: Record<string, string> = {
     "تتبع معدلات الرد والتقييمات المتوسطة والاتجاهات الشهرية في لوحة واضحة.",
   "Share a direct link that makes it effortless for happy customers to leave 5-star reviews.":
     "شارك رابطًا مباشرًا يسهّل على العملاء السعداء ترك تقييمات 5 نجوم.",
+
+  // ── Dashboard sidebar nav ──────────────────────────────────────────────────
+  "AI Reports": "تقارير الذكاء الاصطناعي",
+  "Collapse sidebar": "طي الشريط الجانبي",
+  "Expand sidebar": "توسيع الشريط الجانبي",
+
+  // ── Settings page tabs & labels ────────────────────────────────────────────
+  "Google Business": "نشاط Google",
+  Billing: "الفوترة",
+  Prompt: "الموجه",
+  Tone: "النبرة",
+  "Auto post replies": "نشر الردود تلقائيًا",
+  Posting: "النشر",
+  "Auto-post": "نشر تلقائي",
+  Approval: "موافقة",
+  Total: "الإجمالي",
+  Free: "مجاني",
+  Status: "الحالة",
+  "/mo": "/شهر",
+  total: "إجمالي",
+  members: "أعضاء",
+
+  // ── Reviews page ───────────────────────────────────────────────────────────
+  "Reply Workflow": "سير عمل الردود",
+  Search: "بحث",
+  "Dismissing...": "جارٍ الرفض...",
+  Showing: "عرض",
+
+  // ── Analytics page ─────────────────────────────────────────────────────────
+  "Review Performance": "أداء المراجعات",
+
+  // ── Overview page ──────────────────────────────────────────────────────────
+  "Clear the current search and filters to see synced reviews again.":
+    "امسح البحث الحالي وعوامل التصفية لرؤية المراجعات المتزامنة مرة أخرى.",
+
+  // ── Reports page ───────────────────────────────────────────────────────────
+  "AI Reviews Analysis": "تحليل مراجعات الذكاء الاصطناعي",
+  "Generate an AI-powered analysis report from your connected business reviews.":
+    "أنشئ تقرير تحليل مدعوم بالذكاء الاصطناعي من مراجعات نشاطك المتصل.",
+  "Loading businesses...": "جارٍ تحميل الأنشطة التجارية...",
+  "No connected businesses found.": "لم يتم العثور على أنشطة تجارية متصلة.",
+  "Connect your Google Business in Settings":
+    "اربط نشاطك التجاري على Google من الإعدادات",
+  "Select Business": "اختر النشاط التجاري",
+  "synced reviews": "مراجعات متزامنة",
+  Period: "الفترة",
+  "All Time": "كل الأوقات",
+  "This Month": "هذا الشهر",
+  "Report Language": "لغة التقرير",
+  "Analyzing...": "جارٍ التحليل...",
+  "Generate Report": "إنشاء تقرير",
+  "You do not have any reviews for this business yet.":
+    "ليس لديك أي مراجعات لهذا النشاط التجاري بعد.",
+  "Latest Report": "أحدث تقرير",
+  Close: "إغلاق",
+  "Report History": "سجل التقارير",
+  "Loading reports...": "جارٍ تحميل التقارير...",
+  "No reports yet. Select a business above to get started.":
+    "لا توجد تقارير بعد. اختر نشاطًا تجاريًا أعلاه للبدء.",
+  reviews: "مراجعات",
+
+  // ── Review Link page ───────────────────────────────────────────────────────
+  Share: "مشاركة",
+  "Use it in messages": "استخدمها في الرسائل",
+  "Send it after a completed visit or delivery when response intent is highest.":
+    "أرسلها بعد زيارة أو تسليم مكتمل عندما يكون intent الاستجابة في أعلى مستوى.",
+  "Keep it simple": "اجعلها بسيطة",
+  "Ask for feedback directly and use one clear link instead of multiple steps.":
+    "اطلب التعليقات مباشرة واستخدم رابطًا واضحًا واحدًا بدلاً من خطوات متعددة.",
+  "Display this QR code in-store or include it in printed material so customers can leave a review quickly.":
+    "اعرض رمز QR هذا في متجرك أو ضمّنه في المواد المطبوعة ليتمكن العملاء من ترك مراجعة بسرعة.",
+  "Connect Google Business to generate a QR code.":
+    "اربط نشاطك التجاري على Google لإنشاء رمز QR.",
+  "Print it, share it, or place it near checkout and service desks.":
+    "اطبعه، شاركه، أو ضعه بالقرب من نقاط الدفع وخدمة العملاء.",
+  "Copy Link": "نسخ الرابط",
+
+  // ── GetStarted / Auth page ─────────────────────────────────────────────────
+  "Redirecting...": "جارٍ التحويل...",
+
+  // ── Onboarding component defaults ──────────────────────────────────────────
+  Back: "السابق",
+
+  // ── Assistant Chat Widget ──────────────────────────────────────────────────
+  "New chat": "محادثة جديدة",
+  Hello: "مرحبًا",
+
+  // ── Profile page fields ────────────────────────────────────────────────────
+  Language: "اللغة",
+  Company: "الشركة",
+  Website: "الموقع الإلكتروني",
+  Bio: "نبذة",
+
+  // ── Pricing page ───────────────────────────────────────────────────────────
+  "Subscribe Now": "اشترك الآن",
+  "Manage Subscription": "إدارة الاشتراك",
+
+  // ── Onboarding / settings error messages ───────────────────────────────────
+  "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.":
+    "حساب Google مرتبط، لكن إذن ملف النشاط التجاري مفقود. أعد ربط Google ووافق على الوصول إلى ملف النشاط التجاري.",
+  "Your free trial has expired. Upgrade your plan before connecting Google Business.":
+    "انتهت فترتك التجريبية المجانية. رقِّ خطتك قبل ربط نشاط Google.",
+  "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.":
+    "اشتراكك غير نشط. جدد أو رقِّ خطتك قبل ربط نشاط Google.",
+  "Failed to connect business profile.":
+    "فشل ربط ملف النشاط التجاري.",
+  "Failed to connect. Please try again.":
+    "فشل الاتصال. يرجى المحاولة مرة أخرى.",
+  "Google OAuth is not configured on this server.":
+    "Google OAuth غير مُعد على هذا الخادم.",
+  "Google Business connection is not available for this workspace.":
+    "اتصال نشاط Google غير متاح لمساحة العمل هذه.",
+
+  // ── Review Link error messages ─────────────────────────────────────────────
+  "Your free trial has expired. Upgrade your plan before using the review link.":
+    "انتهت فترتك التجريبية المجانية. رقِّ خطتك قبل استخدام رابط المراجعة.",
+  "Your subscription is not active. Renew or upgrade your plan before using the review link.":
+    "اشتراكك غير نشط. جدد أو رقِّ خطتك قبل استخدام رابط المراجعة.",
+  "Link your Google account first.":
+    "اربط حساب Google أولًا.",
+  "Reconnect Google and approve Business Profile access before using the review link.":
+    "أعد ربط Google ووافق على الوصول إلى ملف النشاط التجاري قبل استخدام رابط المراجعة.",
+  "Connect your Google Business Profile first.":
+    "اربط ملف نشاطك التجاري على Google أولًا.",
+
+  // ── Dynamic string fragments ───────────────────────────────────────────────
+  connected: "متصل",
+  "connected.": "متصل.",
+  "No checkout URL returned.": "لم يتم إرجاع رابط الدفع.",
+  "Failed to start checkout.": "فشل بدء الدفع.",
+  "An error occurred. Please try again.":
+    "حدث خطأ. يرجى المحاولة مرة أخرى.",
+  "Google connected successfully.": "تم ربط Google بنجاح.",
+  "Invitation sent to": "تم إرسال دعوة إلى",
 };
