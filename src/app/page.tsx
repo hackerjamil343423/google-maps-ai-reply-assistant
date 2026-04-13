@@ -648,7 +648,7 @@ export default function Home() {
             </div>
             {isAuthenticated ? (
               <Link
-                href="/dashboard/overview"
+                href="/dashboard/analytics"
                 className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
               >
                 Dashboard
@@ -739,7 +739,7 @@ export default function Home() {
               ))}
               {isAuthenticated ? (
                 <Link
-                  href="/dashboard/overview"
+                  href="/dashboard/analytics"
                   className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
                 >
                   Dashboard

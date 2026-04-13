@@ -25,7 +25,7 @@ export default async function OnboardingLayout({
     });
 
     if (profile?.onboardingCompleted === true) {
-      redirect("/dashboard/overview");
+      redirect("/dashboard/analytics");
     }
   }
 

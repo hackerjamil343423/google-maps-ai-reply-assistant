@@ -28,5 +28,5 @@ export default async function GetStartedLayout({
     }
   }
 
-  redirect("/dashboard/overview");
+  redirect("/dashboard/analytics");
 }

@@ -120,7 +120,7 @@ export default function DemoPage() {
           <div className="hidden md:flex items-center space-x-2">
             {isAuthenticated ? (
               <Link
-                href="/dashboard/overview"
+                href="/dashboard/analytics"
                 className="bg-white text-black px-6 py-2 z-10 cursor-pointer rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
               >
                 Dashboard
@@ -182,7 +182,7 @@ export default function DemoPage() {
               ))}
               {isAuthenticated ? (
                 <Link
-                  href="/dashboard/overview"
+                  href="/dashboard/analytics"
                   className="bg-white text-black px-6 py-2 rounded-full font-normal hover:bg-[#5F30EB] hover:text-[#F6F4FF] transition-colors"
                 >
                   Dashboard

@@ -313,7 +313,7 @@ function OnboardingContent() {
     } catch {
       // Continue anyway — worst case they re-do onboarding
     }
-    router.push("/dashboard/overview");
+    router.push("/dashboard/analytics");
     router.refresh();
   }
 
@@ -324,7 +324,7 @@ function OnboardingContent() {
     } catch {
       // Continue anyway
     }
-    router.push("/dashboard/overview");
+    router.push("/dashboard/analytics");
     router.refresh();
   }
 

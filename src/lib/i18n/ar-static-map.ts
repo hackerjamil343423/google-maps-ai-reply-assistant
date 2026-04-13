@@ -550,7 +550,7 @@ export const AR_STATIC_MAP: Record<string, string> = {
   "Connection, sync status, and review activity.":
     "الاتصال وحالة المزامنة ونشاط المراجعات.",
   "Open Review Link": "فتح رابط المراجعة",
-  "Open Overview": "فتح الملخص",
+  "Open Overview": "فتح لوحة التحكم",
   "Business profile not connected yet.": "لم يتم ربط ملف النشاط التجاري بعد.",
   "Connect Google first, then sync reviews so AI replies can work with real data.":
     "اربط Google أولًا، ثم زامن المراجعات حتى تعمل ردود الذكاء الاصطناعي مع بيانات حقيقية.",

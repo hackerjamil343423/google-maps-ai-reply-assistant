@@ -15,8 +15,8 @@ type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    title: "Overview",
-    href: "/dashboard/overview",
+    title: "Dashboard",
+    href: "/dashboard/analytics",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
@@ -30,17 +30,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
-      </svg>
-    ),
-  },
-  {
-    title: "Analytics",
-    href: "/dashboard/analytics",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M5 21v-6" />
-        <path d="M12 21V3" />
-        <path d="M19 21V9" />
       </svg>
     ),
   },
@@ -184,33 +173,7 @@ function SidebarContent({
         <SidebarSection activeHref={activeHref} collapsed={collapsed} onNavigate={onNavigate} />
       </div>
 
-      <div className={`${collapsed ? "px-3 pb-3" : "px-4 pb-4"} mt-auto flex flex-col gap-2`}>
-        {!collapsed && (
-          <Link
-            href="/profile"
-            onClick={onNavigate}
-            className="flex items-center gap-3 rounded-2xl border border-[#E6E1FA] bg-white px-3 py-2.5 text-sm font-medium text-[#4F4A67] transition-colors hover:border-[#5F30EB]/25 hover:bg-[#F0EBFF] hover:text-[#5F30EB]"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-            </svg>
-            Profile
-          </Link>
-        )}
-        {collapsed && (
-          <Link
-            href="/profile"
-            onClick={onNavigate}
-            title="Profile"
-            className="flex h-10 w-10 mx-auto items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF]"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-            </svg>
-          </Link>
-        )}
+      <div className={`${collapsed ? "px-3 pb-3" : "px-4 pb-4"} mt-auto`}>
         <div className={`rounded-2xl border border-[#E6E1FA] bg-[#F8F7FF] ${collapsed ? "px-0 py-3" : "px-3 py-3"}`}>
           <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0EBFF] text-xs font-semibold text-[#5F30EB]">
