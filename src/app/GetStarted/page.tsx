@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 function EyeIcon({ open }: { open: boolean }) {
   if (open) {
@@ -26,6 +27,7 @@ function EyeIcon({ open }: { open: boolean }) {
       </svg>
     );
   }
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -76,11 +78,124 @@ function GoogleIcon() {
   );
 }
 
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-2" htmlFor={htmlFor}>
+      <span className="block text-sm font-medium text-[#2E3150]">{label}</span>
+      {children}
+    </label>
+  );
+}
+
 function GetStartedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { language } = useLanguage();
+  const isArabic = language === "ar";
   const mode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const isLogin = mode === "login";
+
+  const copy = isArabic
+    ? {
+        badge: "إدارة مراجعاتك بالذكاء الاصطناعي",
+        sideTitleLogin: "أدر كل مراجعاتك من مساحة عمل واحدة وهادئة.",
+        sideTitleSignup: "ابدأ بتحويل المراجعات الجديدة إلى ثقة ونمو.",
+        sideBodyLogin:
+          "سجّل الدخول لإنشاء ردود ذكية، ومتابعة الانطباع العام، والحفاظ على نشاط ملف نشاطك التجاري على Google دون إدارة كل شيء يدويًا.",
+        sideBodySignup:
+          "أنشئ حسابك لربط نشاطك التجاري، وأتمتة الردود، والحفاظ على جودة موحّدة في الرد على المراجعات عبر جميع الفروع.",
+        benefitOne: "رد بسرعة أكبر باستخدام ذكاء اصطناعي مخصص لمراجعات الأنشطة التجارية",
+        benefitTwo: "حافظ على نبرة موحّدة ومتسقة في جميع الردود",
+        benefitThree: "تابع الأداء من لوحة تحكم واحدة",
+        builtForTitle: "مصمم خصيصًا لإدارة مراجعات Google",
+        builtForBody: "جهد يدوي أقل، وردود أسرع، وإدارة أوضح لسمعة نشاطك التجاري.",
+        formTitleLogin: "مرحبًا بعودتك",
+        formTitleSignup: "أنشئ حسابك",
+        formBodyLogin: "استخدم بريدك الإلكتروني وكلمة المرور للوصول إلى لوحة التحكم.",
+        formBodySignup: "أكمل إعداد مساحة العمل ثم تابع إلى خطوة التهيئة.",
+        fullName: "الاسم الكامل",
+        fullNamePlaceholder: "أدخل اسمك الكامل",
+        email: "البريد الإلكتروني",
+        emailPlaceholder: "أدخل بريدك الإلكتروني",
+        password: "كلمة المرور",
+        passwordPlaceholder: "أدخل كلمة المرور",
+        confirmPassword: "تأكيد كلمة المرور",
+        confirmPasswordPlaceholder: "أعد إدخال كلمة المرور",
+        hidePassword: "إخفاء كلمة المرور",
+        showPassword: "إظهار كلمة المرور",
+        forgotPassword: "هل نسيت كلمة المرور؟",
+        submitLogin: "تسجيل الدخول",
+        submitSignup: "إنشاء الحساب",
+        loadingLogin: "جارٍ تسجيل الدخول...",
+        loadingSignup: "جارٍ إنشاء الحساب...",
+        continueWith: "أو المتابعة عبر",
+        continueWithGoogle: "المتابعة عبر Gmail",
+        signupWithGoogle: "إنشاء حساب عبر Gmail",
+        redirecting: "جارٍ التحويل...",
+        noAccount: "ليس لديك حساب؟",
+        haveAccount: "لديك حساب بالفعل؟",
+        signUp: "إنشاء حساب.",
+        logIn: "تسجيل الدخول.",
+        passwordMismatch: "كلمتا المرور غير متطابقتين.",
+        invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+        signupFailed: "فشل إنشاء حسابك.",
+        authFailed: "فشلت عملية تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+        googleFailed: "فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.",
+      }
+    : {
+        badge: "AI review workflow",
+        sideTitleLogin: "Manage every review from one calm workspace.",
+        sideTitleSignup: "Start turning new reviews into trust and growth.",
+        sideBodyLogin:
+          "Sign in to generate replies, monitor sentiment, and keep your Google Business profile active without handling everything manually.",
+        sideBodySignup:
+          "Create your account to connect your business, automate replies, and keep review response quality consistent across every location.",
+        benefitOne: "Reply faster with AI tuned for business reviews",
+        benefitTwo: "Keep your tone consistent across all responses",
+        benefitThree: "Track performance from one dashboard",
+        builtForTitle: "Built for Google review operations",
+        builtForBody: "Less manual work. Faster replies. Cleaner reputation management.",
+        formTitleLogin: "Welcome back",
+        formTitleSignup: "Create your account",
+        formBodyLogin: "Use your email and password to access your dashboard.",
+        formBodySignup: "Set up your workspace and continue to onboarding.",
+        fullName: "Full name",
+        fullNamePlaceholder: "Enter your full name",
+        email: "Email address",
+        emailPlaceholder: "Enter your email",
+        password: "Password",
+        passwordPlaceholder: "Enter your password",
+        confirmPassword: "Confirm password",
+        confirmPasswordPlaceholder: "Confirm your password",
+        hidePassword: "Hide password",
+        showPassword: "Show password",
+        forgotPassword: "Forgot Password?",
+        submitLogin: "Log In",
+        submitSignup: "Create Account",
+        loadingLogin: "Logging in...",
+        loadingSignup: "Creating account...",
+        continueWith: "Or continue with",
+        continueWithGoogle: "Continue with Gmail",
+        signupWithGoogle: "Sign up with Gmail",
+        redirecting: "Redirecting...",
+        noAccount: "Don't have an account?",
+        haveAccount: "Already have an account?",
+        signUp: "Sign up.",
+        logIn: "Log in.",
+        passwordMismatch: "Passwords do not match.",
+        invalidCredentials: "Invalid email or password.",
+        signupFailed: "Failed to create your account.",
+        authFailed: "Authentication failed. Please try again.",
+        googleFailed: "Google sign-in failed. Please try again.",
+      };
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -91,6 +206,11 @@ function GetStartedContent() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const inputClassName =
+    "w-full rounded-2xl border border-[#D9DBF4] bg-white px-4 py-3.5 text-[15px] text-[#111425] placeholder:text-[#9AA0B5] shadow-[0_1px_2px_rgba(17,20,37,0.04)] outline-none transition focus:border-[#5F30EB] focus:ring-4 focus:ring-[#5F30EB]/10";
+  const toggleButtonPosition = isArabic ? "left-4" : "right-4";
+  const inputPadding = isArabic ? "pl-12 pr-4" : "pr-12 pl-4";
 
   function switchMode() {
     const nextMode = isLogin ? "signup" : "login";
@@ -107,7 +227,7 @@ function GetStartedContent() {
     setError("");
 
     if (!isLogin && password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(copy.passwordMismatch);
       return;
     }
 
@@ -119,7 +239,7 @@ function GetStartedContent() {
           password,
         });
         if (res.error) {
-          setError(res.error.message ?? "Invalid email or password.");
+          setError(res.error.message ?? copy.invalidCredentials);
           return;
         }
       } else {
@@ -129,10 +249,9 @@ function GetStartedContent() {
           password,
         });
         if (res.error) {
-          setError(res.error.message ?? "Failed to create your account.");
+          setError(res.error.message ?? copy.signupFailed);
           return;
         }
-        // New users go through onboarding
         router.push("/onboarding");
         return;
       }
@@ -140,7 +259,7 @@ function GetStartedContent() {
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Authentication failed. Please try again.");
+      setError(copy.authFailed);
     } finally {
       setLoading(false);
     }
@@ -160,7 +279,7 @@ function GetStartedContent() {
       };
 
       if (res.error) {
-        setError(res.error.message ?? "Google sign-in failed. Please try again.");
+        setError(res.error.message ?? copy.googleFailed);
         return;
       }
 
@@ -169,266 +288,296 @@ function GetStartedContent() {
         window.location.href = redirectUrl;
       }
     } catch {
-      setError("Google sign-in failed. Please try again.");
+      setError(copy.googleFailed);
     } finally {
       setGoogleLoading(false);
     }
   }
 
   return (
-    <div
-      className="min-h-screen h-screen overflow-y-auto flex items-center justify-center text-[#040404] px-4 pt-24 pb-12"
-      style={{
-        background: "#F6F4FF",
-        boxShadow: "inset 0px -4.65px 116.24px 24.41px #EFEFEF14",
-        backdropFilter: "blur(89px)",
-      }}
+    <main
+      className="relative min-h-screen overflow-hidden bg-[#F6F4FF] px-4 pb-10 pt-28 text-[#040404] sm:px-6 lg:px-8"
+      data-no-auto-translate="true"
+      translate="no"
     >
-      <div className="w-full max-w-5xl">
-        <div
-          className="backdrop-blur-[60px] border border-[#5F30EB33] rounded-2xl shadow-lg overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.82)" }}
-        >
-          <div className="flex flex-col md:flex-row">
-            {/* Left Panel */}
-            <div className="w-full md:w-1/2 p-10 flex flex-col items-center justify-center text-center gap-6">
-              <div className="w-40">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt="Wakkelni Stars Logo"
-                  className="h-10 w-auto object-contain"
-                  src="/assets/brand/wakkelni-logo.png"
-                />
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-[-12rem] h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-[#00E0FF]/20 blur-3xl" />
+        <div className="absolute right-[-8rem] top-24 h-[24rem] w-[24rem] rounded-full bg-[#5F30EB]/12 blur-3xl" />
+        <div className="absolute bottom-[-8rem] left-[-6rem] h-[20rem] w-[20rem] rounded-full bg-white/80 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto w-full max-w-6xl">
+        <section className="overflow-hidden rounded-[32px] border border-[#D8DAF3] bg-white/82 shadow-[0_28px_80px_rgba(69,47,146,0.16)] backdrop-blur-xl">
+          <div className={`grid min-h-[720px] lg:grid-cols-[1.02fr_0.98fr] ${isArabic ? "lg:[direction:rtl]" : ""}`}>
+            <aside className="relative flex flex-col justify-between overflow-hidden border-b border-[#ECEEFB] bg-[linear-gradient(180deg,#F8F7FF_0%,#EEF8FF_100%)] p-8 sm:p-10 lg:min-h-[720px] lg:border-b-0 lg:border-r">
+              <div className="absolute inset-0 opacity-70">
+                <div className="absolute left-8 top-8 h-24 w-24 rounded-full bg-[#5F30EB]/10 blur-2xl" />
+                <div className="absolute bottom-12 right-10 h-28 w-28 rounded-full bg-[#00E0FF]/20 blur-2xl" />
               </div>
-              <p className="text-[#5F30EB] text-lg">Connect With AI</p>
-              <p className="text-[#6A6A82] text-sm max-w-xs leading-relaxed">
-                {isLogin
-                  ? "Welcome back. Log in to manage your AI-powered review replies."
-                  : "Join thousands of businesses using AI to respond to reviews faster and smarter."}
-              </p>
-            </div>
 
-            {/* Right Panel — Form */}
-            <div className="w-full md:w-1/2 p-10">
-              <h2 className="text-2xl font-semibold mb-6 text-center text-[#040404]">
-                {isLogin ? "Welcome Back" : "Create Account"}
-              </h2>
-
-              <form id="auth-form" className="space-y-5" onSubmit={handleSubmit}>
-                {/* Name — signup only */}
-                {!isLogin && (
-                  <input
-                    placeholder="Enter your full name"
-                    required
-                    className="w-full px-5 py-4 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
-                    style={{
-                      background: "rgba(255,255,255,0.9)",
-                      border: "1px solid rgba(255,255,255,0.13)",
-                    }}
-                    type="text"
-                    name="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    autoComplete="name"
-                  />
-                )}
-
-                {/* Email */}
-                <input
-                  placeholder="Enter your email"
-                  required
-                  className="w-full px-5 py-4 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
-                  style={{
-                    background: "rgba(255,255,255,0.9)",
-                    border: "1px solid rgba(255,255,255,0.13)",
-                  }}
-                  type="email"
-                  name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                />
-
-                {/* Password */}
-                <div className="relative">
-                  <input
-                    placeholder="Enter your password"
-                    required
-                    className="w-full px-5 py-4 pr-12 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
-                    style={{
-                      background: "rgba(255,255,255,0.9)",
-                      border: "1px solid rgba(255,255,255,0.13)",
-                    }}
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete={isLogin ? "current-password" : "new-password"}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#4F4F63] cursor-pointer"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    <EyeIcon open={showPassword} />
-                  </button>
+              <div className="relative space-y-8">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#D7DBF8] bg-white/80 px-4 py-2 text-sm font-medium text-[#4C35A3] shadow-sm">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#00CFE8]" />
+                  {copy.badge}
                 </div>
 
-                {/* Confirm Password — signup only */}
-                {!isLogin && (
-                  <div className="relative">
-                    <input
-                      placeholder="Confirm your password"
-                      required
-                      className="w-full px-5 py-4 pr-12 rounded-lg text-[#4F4F63] focus:outline-none focus:ring-2 focus:ring-[#5F30EB]/50 transition-all"
-                      style={{
-                        background: "rgba(255,255,255,0.9)",
-                        border: "1px solid rgba(255,255,255,0.13)",
-                      }}
-                      type={showConfirm ? "text" : "password"}
-                      name="confirmPassword"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      autoComplete="new-password"
+                <div className="space-y-4">
+                  <h1 className="max-w-md text-3xl font-semibold leading-tight text-[#12152A] sm:text-4xl">
+                    {isLogin ? copy.sideTitleLogin : copy.sideTitleSignup}
+                  </h1>
+                  <p className="max-w-lg text-[15px] leading-7 text-[#5B607C] sm:text-base">
+                    {isLogin ? copy.sideBodyLogin : copy.sideBodySignup}
+                  </p>
+                </div>
+
+                <div className="grid gap-3">
+                  {[copy.benefitOne, copy.benefitTwo, copy.benefitThree].map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-3 rounded-2xl border border-white/80 bg-white/72 px-4 py-3 shadow-[0_10px_24px_rgba(95,48,235,0.08)]"
+                    >
+                      <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5F30EB] text-xs text-white">
+                        ✓
+                      </span>
+                      <p className="text-sm leading-6 text-[#303550]">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative mt-8 rounded-[28px] border border-[#D9DDF6] bg-white/85 p-5 shadow-[0_14px_32px_rgba(17,20,37,0.08)]">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#5F30EB_0%,#00D7F2_100%)] text-lg font-semibold text-white">
+                    AI
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#12152A]">{copy.builtForTitle}</p>
+                    <p className="mt-1 text-sm text-[#626782]">{copy.builtForBody}</p>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <div className="flex items-center justify-center bg-white/70 p-6 sm:p-10 lg:p-12">
+              <div className="w-full max-w-md">
+                <div className="mb-8 space-y-3">
+                  <div className={`flex ${isArabic ? "justify-center lg:justify-end" : "justify-center lg:justify-start"}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      alt="Wakkelni Stars Logo"
+                      className="h-12 w-auto object-contain"
+                      src="/assets/brand/wakkelni-logo.png"
                     />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#4F4F63] cursor-pointer"
-                      onClick={() => setShowConfirm((v) => !v)}
-                      aria-label={showConfirm ? "Hide password" : "Show password"}
-                    >
-                      <EyeIcon open={showConfirm} />
-                    </button>
                   </div>
-                )}
-
-                {/* Forgot Password — login only */}
-                {isLogin && (
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      className="text-sm text-[#6A6A82] hover:text-[#5F30EB] transition-colors cursor-pointer"
-                    >
-                      Forgot Password?
-                    </button>
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-semibold tracking-tight text-[#12152A]">
+                      {isLogin ? copy.formTitleLogin : copy.formTitleSignup}
+                    </h2>
+                    <p className="text-sm leading-6 text-[#66708A]">
+                      {isLogin ? copy.formBodyLogin : copy.formBodySignup}
+                    </p>
                   </div>
-                )}
-              </form>
-
-              {/* Error message */}
-              {error && (
-                <div className="mt-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-                  {error}
                 </div>
-              )}
 
-              {/* Google OAuth */}
-              <button
-                type="button"
-                onClick={handleGoogleAuth}
-                disabled={googleLoading}
-                className="flex items-center justify-center gap-3 py-4 w-full mt-4 rounded-lg border text-[#4F4F63] hover:opacity-90 transition-opacity"
-                style={{
-                  background: "rgba(255,255,255,0.85)",
-                  border: "1px solid rgba(255,255,255,0.13)",
-                }}
-              >
-                <GoogleIcon />
-                <span>
-                  {googleLoading
-                    ? "Redirecting..."
-                    : isLogin
-                      ? "or Continue with Gmail"
-                      : "Sign up with Gmail"}
-                </span>
-              </button>
+                <form id="auth-form" className="space-y-4" onSubmit={handleSubmit}>
+                  {!isLogin && (
+                    <Field htmlFor="name" label={copy.fullName}>
+                      <input
+                        id="name"
+                        placeholder={copy.fullNamePlaceholder}
+                        required
+                        className={inputClassName}
+                        type="text"
+                        name="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        autoComplete="name"
+                      />
+                    </Field>
+                  )}
 
-              {/* Submit */}
-              <button
-                type="submit"
-                form="auth-form"
-                disabled={loading}
-                className="w-full mt-4 py-4 rounded-full font-semibold text-black transition-all hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, rgba(0,255,233,0.67), rgba(0,255,233,0.13))",
-                }}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="animate-spin"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                    </svg>
-                    {isLogin ? "Logging in..." : "Creating account..."}
+                  <Field htmlFor="email" label={copy.email}>
+                    <input
+                      id="email"
+                      placeholder={copy.emailPlaceholder}
+                      required
+                      className={inputClassName}
+                      type="email"
+                      name="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                    />
+                  </Field>
+
+                  <Field htmlFor="password" label={copy.password}>
+                    <div className="relative">
+                      <input
+                        id="password"
+                        placeholder={copy.passwordPlaceholder}
+                        required
+                        className={`${inputClassName} ${inputPadding}`}
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete={isLogin ? "current-password" : "new-password"}
+                      />
+                      <button
+                        type="button"
+                        className={`absolute ${toggleButtonPosition} top-1/2 -translate-y-1/2 text-[#7A8098] transition hover:text-[#303550]`}
+                        onClick={() => setShowPassword((v) => !v)}
+                        aria-label={showPassword ? copy.hidePassword : copy.showPassword}
+                      >
+                        <EyeIcon open={showPassword} />
+                      </button>
+                    </div>
+                  </Field>
+
+                  {!isLogin && (
+                    <Field htmlFor="confirmPassword" label={copy.confirmPassword}>
+                      <div className="relative">
+                        <input
+                          id="confirmPassword"
+                          placeholder={copy.confirmPasswordPlaceholder}
+                          required
+                          className={`${inputClassName} ${inputPadding}`}
+                          type={showConfirm ? "text" : "password"}
+                          name="confirmPassword"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          autoComplete="new-password"
+                        />
+                        <button
+                          type="button"
+                          className={`absolute ${toggleButtonPosition} top-1/2 -translate-y-1/2 text-[#7A8098] transition hover:text-[#303550]`}
+                          onClick={() => setShowConfirm((v) => !v)}
+                          aria-label={showConfirm ? copy.hidePassword : copy.showPassword}
+                        >
+                          <EyeIcon open={showConfirm} />
+                        </button>
+                      </div>
+                    </Field>
+                  )}
+
+                  {isLogin && (
+                    <div className={isArabic ? "text-left" : "text-right"}>
+                      <button
+                        type="button"
+                        className="text-sm font-medium text-[#5F30EB] transition hover:text-[#4723B4]"
+                      >
+                        {copy.forgotPassword}
+                      </button>
+                    </div>
+                  )}
+                </form>
+
+                {error && (
+                  <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  form="auth-form"
+                  disabled={loading}
+                  className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#00E4F0_0%,#76F0D5_100%)] px-5 py-4 text-base font-semibold text-[#0D1320] shadow-[0_16px_34px_rgba(0,224,255,0.28)] transition hover:translate-y-[-1px] hover:shadow-[0_18px_40px_rgba(0,224,255,0.34)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg
+                        className="animate-spin"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                      {isLogin ? copy.loadingLogin : copy.loadingSignup}
+                    </span>
+                  ) : isLogin ? (
+                    copy.submitLogin
+                  ) : (
+                    copy.submitSignup
+                  )}
+                </button>
+
+                <div className="my-6 flex items-center gap-4">
+                  <div className="h-px flex-1 bg-[#E3E6F4]" />
+                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#8A90A8]">{copy.continueWith}</span>
+                  <div className="h-px flex-1 bg-[#E3E6F4]" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleAuth}
+                  disabled={googleLoading}
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#D9DBF4] bg-white px-5 py-4 text-[15px] font-medium text-[#252941] shadow-[0_6px_18px_rgba(17,20,37,0.06)] transition hover:border-[#C9CCEC] hover:bg-[#FAFBFF] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <GoogleIcon />
+                  <span>
+                    {googleLoading
+                      ? copy.redirecting
+                      : isLogin
+                        ? copy.continueWithGoogle
+                        : copy.signupWithGoogle}
                   </span>
-                ) : isLogin ? (
-                  "Log In"
-                ) : (
-                  "Create Account"
-                )}
-              </button>
+                </button>
 
-              {/* Switch mode */}
-              <div className="mt-8 text-center">
-                {isLogin ? (
-                  <p className="text-[#6A6A82]">
-                    Don&apos;t have an account?{" "}
-                    <button
-                      type="button"
-                      onClick={switchMode}
-                      className="text-[#5F30EB] hover:underline font-medium cursor-pointer"
-                    >
-                      Sign up.
-                    </button>
-                  </p>
-                ) : (
-                  <p className="text-[#6A6A82]">
-                    Already have an account?{" "}
-                    <button
-                      type="button"
-                      onClick={switchMode}
-                      className="text-[#5F30EB] hover:underline font-medium cursor-pointer"
-                    >
-                      Log in.
-                    </button>
-                  </p>
-                )}
+                <div className="mt-8 text-center text-sm text-[#66708A]">
+                  {isLogin ? (
+                    <p>
+                      {copy.noAccount}{" "}
+                      <button
+                        type="button"
+                        onClick={switchMode}
+                        className="font-semibold text-[#5F30EB] transition hover:text-[#4723B4]"
+                      >
+                        {copy.signUp}
+                      </button>
+                    </p>
+                  ) : (
+                    <p>
+                      {copy.haveAccount}{" "}
+                      <button
+                        type="button"
+                        onClick={switchMode}
+                        className="font-semibold text-[#5F30EB] transition hover:text-[#4723B4]"
+                      >
+                        {copy.logIn}
+                      </button>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 
 export default function GetStartedPage() {
   return (
     <>
-      {/* Fixed Header — logo only, no nav */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#5F30EB20]"
-        style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)" }}
+      <header
+        className="fixed left-0 right-0 top-0 z-50 border-b border-[#5F30EB14] bg-white/88"
+        style={{ backdropFilter: "blur(18px)" }}
       >
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt="Wakkelni Stars Logo"
-                className="h-10 w-auto object-contain"
-                src="/assets/brand/wakkelni-logo.png"
-              />
-            </div>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt="Wakkelni Stars Logo"
+              className="h-10 w-auto object-contain"
+              src="/assets/brand/wakkelni-logo.png"
+            />
           </Link>
         </div>
       </header>
@@ -439,5 +588,3 @@ export default function GetStartedPage() {
     </>
   );
 }
-
-

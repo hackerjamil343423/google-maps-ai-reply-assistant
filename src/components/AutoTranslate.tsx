@@ -32,11 +32,20 @@ function getNodesInScope(root: Node) {
   while (node) {
     if (node.nodeType === Node.TEXT_NODE) {
       const parentName = node.parentElement?.tagName.toLowerCase() || "";
-      if (!["script", "style", "noscript", "textarea", "code", "pre"].includes(parentName)) {
+      const inExcludedSubtree = Boolean(
+        node.parentElement?.closest("[data-no-auto-translate='true']")
+      );
+      if (
+        !inExcludedSubtree &&
+        !["script", "style", "noscript", "textarea", "code", "pre"].includes(parentName)
+      ) {
         textNodes.push(node as Text);
       }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      elements.push(node as Element);
+      const element = node as Element;
+      if (!element.closest("[data-no-auto-translate='true']")) {
+        elements.push(element);
+      }
     }
 
     node = walker.nextNode();
