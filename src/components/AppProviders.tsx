@@ -4,14 +4,17 @@ import type { ReactNode } from "react";
 
 import AutoTranslate from "@/components/AutoTranslate";
 import AssistantChatWidget from "@/components/AssistantChatWidget";
+import { BusinessProvider } from "@/lib/business-context";
 import { LanguageProvider } from "@/lib/i18n/language-context";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
   return (
     <LanguageProvider>
-      <AutoTranslate />
-      {children}
-      <AssistantChatWidget />
+      <BusinessProvider>
+        <AutoTranslate />
+        {children}
+        <AssistantChatWidget />
+      </BusinessProvider>
     </LanguageProvider>
   );
 }

@@ -2,7 +2,6 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 import { getServerSession } from "@/lib/auth-session";
-import { BusinessProvider } from "@/lib/business-context";
 import { db } from "@/lib/db";
 import { userProfiles } from "@/lib/db/schema";
 
@@ -33,5 +32,5 @@ export default async function DashboardLayout({
     }
   }
 
-  return <BusinessProvider>{children}</BusinessProvider>;
+  return children;
 }
