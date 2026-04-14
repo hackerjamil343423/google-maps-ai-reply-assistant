@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import DashboardShell from "@/components/DashboardShell";
+import { useBusinessContext } from "@/lib/business-context";
 
 type Status = "pending" | "auto" | "manual";
 
@@ -304,6 +305,7 @@ function ReviewCard({
 }
 
 export default function ReviewsPage() {
+  const { activeBusiness } = useBusinessContext();
   const [activeTab, setActiveTab] = useState<Status>("pending");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -320,8 +322,12 @@ export default function ReviewsPage() {
       params.set("search", search.trim());
     }
 
+    if (activeBusiness) {
+      params.set("businessId", activeBusiness.id);
+    }
+
     return params.toString();
-  }, [activeTab, search]);
+  }, [activeTab, search, activeBusiness]);
 
   const loadReviews = useCallback(async () => {
     setLoading(true);

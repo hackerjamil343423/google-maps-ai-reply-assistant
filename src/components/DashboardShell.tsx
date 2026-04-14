@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
+import { BusinessProvider, useBusinessContext } from "@/lib/business-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 type NavItem = {
@@ -131,7 +132,7 @@ function SidebarContent({
       {/* Expanded header */}
       {!collapsed && (
         <div className="flex items-center justify-between px-4 pt-4">
-          <Link href="/" className="flex items-center gap-3" onClick={onNavigate}>
+          <Link href="/dashboard/analytics" className="flex items-center gap-3" onClick={onNavigate}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni" width={34} height={34} className="h-8 w-8 object-contain" />
             <p className="text-sm font-semibold text-[#040404]">Wakkelni</p>
@@ -162,7 +163,7 @@ function SidebarContent({
               <path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" />
             </svg>
           </button>
-          <Link href="/" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F0EBFF]" onClick={onNavigate}>
+          <Link href="/dashboard/analytics" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F0EBFF]" onClick={onNavigate}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni" width={26} height={26} className="h-6 w-6 object-contain" />
           </Link>
@@ -216,7 +217,70 @@ function SidebarContent({
   );
 }
 
-export default function DashboardShell({
+function BusinessSelector() {
+  const { businesses, activeBusiness, setActiveBusiness } = useBusinessContext();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  if (businesses.length <= 1) return null;
+
+  const label = activeBusiness ? activeBusiness.name : "All Profiles";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-2xl border border-[#E6E1FA] bg-white px-3 py-2 text-sm font-medium text-[#040404] shadow-sm hover:bg-[#F0EBFF] hover:text-[#5F30EB] transition-colors cursor-pointer max-w-[200px]"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-[#5F30EB]">
+          <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <span className="truncate">{label}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-2 start-0 z-50 min-w-[200px] rounded-2xl border border-[#E6E1FA] bg-white shadow-[0_8px_24px_rgba(95,48,235,0.12)] overflow-hidden">
+          <button
+            type="button"
+            onClick={() => { setActiveBusiness(null); setOpen(false); }}
+            className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm text-start transition-colors hover:bg-[#F0EBFF] cursor-pointer ${activeBusiness === null ? "bg-[#F0EBFF] font-semibold text-[#5F30EB]" : "text-[#040404]"}`}
+          >
+            <span className="h-2 w-2 rounded-full bg-[#5F30EB] shrink-0" />
+            All Profiles
+          </button>
+          {businesses.map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => { setActiveBusiness(b); setOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm text-start transition-colors hover:bg-[#F0EBFF] cursor-pointer border-t border-[#F0EBFF] ${activeBusiness?.id === b.id ? "bg-[#F0EBFF] font-semibold text-[#5F30EB]" : "text-[#040404]"}`}
+            >
+              <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
+              <span className="truncate">{b.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DashboardShellInner({
   activeHref,
   children,
 }: {
@@ -321,11 +385,11 @@ export default function DashboardShell({
 
       {/* ps-* = padding-inline-start — also follows dir automatically */}
       <main className={`min-h-screen px-4 pb-8 pt-4 md:px-8 md:pb-10 md:pt-6 ${desktopOffset}`}>
-        <div className="md:hidden mb-4">
+        <div className="mb-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white/70 text-[#5F30EB] shadow-sm cursor-pointer"
+            className="md:hidden flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white/70 text-[#5F30EB] shadow-sm cursor-pointer shrink-0"
             aria-label="Open menu"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -334,10 +398,25 @@ export default function DashboardShell({
               <path d="M4 18h16" />
             </svg>
           </button>
+          <BusinessSelector />
         </div>
 
         {children}
       </main>
     </div>
+  );
+}
+
+export default function DashboardShell({
+  activeHref,
+  children,
+}: {
+  activeHref: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <BusinessProvider>
+      <DashboardShellInner activeHref={activeHref}>{children}</DashboardShellInner>
+    </BusinessProvider>
   );
 }

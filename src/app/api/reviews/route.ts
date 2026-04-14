@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
   }
 
   const searchParams = req.nextUrl.searchParams;
+  const businessIdFilter = searchParams.get("businessId") || null;
   const statusParam = (searchParams.get("status") || "all").toLowerCase();
   const sortParam = (searchParams.get("sort") || "relevant").toLowerCase();
 
@@ -113,7 +114,10 @@ export async function GET(req: NextRequest) {
     columns: { id: true, status: true, googleLocationId: true },
   });
 
-  const businessIds = workspaceBusinesses.map((item) => item.id);
+  const allBusinessIds = workspaceBusinesses.map((item) => item.id);
+  const businessIds = businessIdFilter
+    ? allBusinessIds.filter((id) => id === businessIdFilter)
+    : allBusinessIds;
   const googleConnected = workspaceBusinesses.some(
     (item) => item.status === "active" && Boolean(item.googleLocationId)
   );

@@ -113,8 +113,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const body = await req.json().catch(() => ({})) as { businessId?: string };
+  const businessId = typeof body.businessId === "string" ? body.businessId : undefined;
+
   try {
-    const result = await syncWorkspaceReviewsFromGoogle(workspaceId, req.headers);
+    const result = await syncWorkspaceReviewsFromGoogle(workspaceId, req.headers, businessId);
     return NextResponse.json({
       connected: true,
       synced: result.synced,

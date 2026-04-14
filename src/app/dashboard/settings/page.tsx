@@ -36,6 +36,14 @@ type GoogleStatus = {
   connectedAccounts?: number;
   maxAccounts?: number;
 };
+
+type ConnectedProfile = {
+  id: string;
+  name: string;
+  googleLocationId: string | null;
+  connectedAt: string | null;
+  syncedReviewCount: number;
+};
 type SubscriptionState = {
   plan: "Local Business" | "Multi-Location" | "Agency Max" | "free";
   status: "trialing" | "active" | "past_due" | "canceled";
@@ -138,9 +146,10 @@ export default function SettingsPage() {
   const [disconnectingGoogle, setDisconnectingGoogle] = useState(false);
   const [availableLocations, setAvailableLocations] = useState<Array<{ googleLocationId: string; title: string }> | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
-  const [syncingReviews, setSyncingReviews] = useState(false);
-  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [syncingReviews, setSyncingReviews] = useState<string | null>(null); // businessId being synced, or null
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState<string | null>(null); // businessId to disconnect, or null
   const [connectMode, setConnectMode] = useState<"update" | "add">("update");
+  const [connectedProfiles, setConnectedProfiles] = useState<ConnectedProfile[]>([]);
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [businesses, setBusinesses] = useState<string[]>([]);
@@ -214,6 +223,12 @@ export default function SettingsPage() {
       setGoogleError(googleJson?.error || "Failed to load Google connection.");
     }
 
+    const profilesRes = await fetch("/api/analytics/businesses", { cache: "no-store" });
+    const profilesJson = await parseJsonSafe<{ businesses: ConnectedProfile[] }>(profilesRes);
+    if (profilesRes.ok && profilesJson?.businesses) {
+      setConnectedProfiles(profilesJson.businesses);
+    }
+
     const reviewsRes = await fetch("/api/reviews?status=all&page=1&per_page=1", { cache: "no-store" });
     const reviewsJson = await parseJsonSafe<{ summary?: typeof summary }>(reviewsRes);
     if (reviewsRes.ok && reviewsJson?.summary) setSummary(reviewsJson.summary);
@@ -264,12 +279,16 @@ export default function SettingsPage() {
     }
   }, [loadAll, router]);
 
-  const handleSyncReviews = useCallback(async () => {
-    setSyncingReviews(true);
+  const handleSyncReviews = useCallback(async (businessId?: string) => {
+    setSyncingReviews(businessId ?? "all");
     setGoogleError("");
     setGoogleNotice("");
     try {
-      const res = await fetch("/api/google/sync-reviews", { method: "POST" });
+      const res = await fetch("/api/google/sync-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(businessId ? { businessId } : {}),
+      });
       const json = await parseJsonSafe<{ error?: string; synced?: number }>(res);
       if (!res.ok) throw new Error(json?.error || "Sync failed.");
       setGoogleNotice(`Synced ${json?.synced ?? 0} reviews.`);
@@ -277,16 +296,20 @@ export default function SettingsPage() {
     } catch (err) {
       setGoogleError(err instanceof Error ? err.message : "Failed to sync reviews.");
     } finally {
-      setSyncingReviews(false);
+      setSyncingReviews(null);
     }
   }, [loadAll]);
 
-  const handleDisconnectGoogle = useCallback(async () => {
+  const handleDisconnectGoogle = useCallback(async (businessId?: string) => {
     setDisconnectingGoogle(true);
     setGoogleError("");
     setGoogleNotice("");
     try {
-      const res = await fetch("/api/google/disconnect", { method: "POST" });
+      const res = await fetch("/api/google/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(businessId ? { businessId } : {}),
+      });
       const json = await parseJsonSafe<{ error?: string }>(res);
       if (!res.ok) throw new Error(json?.error || "Failed to disconnect business.");
       setGoogleNotice("Google Business disconnected.");
@@ -540,20 +563,6 @@ export default function SettingsPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Settings</p>
             <h1 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Workspace Settings</h1>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: "Google", value: connected ? "Connected" : "Not connected" },
-              { label: "Team", value: `${members.length} members` },
-              { label: "Plan", value: subscription.plan === "free" ? "Free" : subscription.plan },
-              { label: "Posting", value: postType === "auto" ? "Auto-post" : "Approval" },
-            ].map((item) => (
-              <div key={item.label} className="rounded-2xl border border-[#E6E9F8] bg-white/80 px-4 py-3 shadow-sm">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-[#8A8AA0]">{item.label}</p>
-                <p className="mt-1 text-sm font-semibold text-[#040404]">{item.value}</p>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -876,15 +885,7 @@ export default function SettingsPage() {
           <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
             {/* Header */}
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-semibold text-[#040404]">Google Business</h2>
-                {connected && (
-                  <span className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                    Connected
-                  </span>
-                )}
-              </div>
+              <h2 className="text-xl font-semibold text-[#040404]">Google Business</h2>
               <Link href="/dashboard/review-link" className="text-sm font-medium text-[#5F30EB] hover:underline self-start md:self-auto">Open Review Link</Link>
             </div>
 
@@ -895,76 +896,104 @@ export default function SettingsPage() {
               <p className="mt-4 rounded-2xl bg-orange-500/8 px-4 py-3 text-sm text-orange-600">{getGoogleConnectBlockMessage(googleStatus)}</p>
             )}
 
-            <div className="mt-6">
-              <div className="space-y-5">
-                {/* Business name / empty state */}
-                {connected ? (
-                  <div>
-                    <p className="text-base font-semibold text-[#040404]">{googleStatus?.business?.name || "Business Profile"}</p>
-                    <p className="mt-0.5 text-sm text-[#8A8AA0]">Reviews are syncing automatically every hour.</p>
-                  </div>
-                ) : (
+            {/* Location picker (shown while picking a new location to connect) */}
+            {availableLocations && availableLocations.length > 1 && (
+              <div className="mt-6 rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 space-y-3">
+                <p className="text-sm font-medium text-[#040404]">Select a location to connect:</p>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4F63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
+                >
+                  {availableLocations.map((loc) => (
+                    <option key={loc.googleLocationId} value={loc.googleLocationId}>{loc.title}</option>
+                  ))}
+                </select>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => void connectAndSync(selectedLocation, connectMode)}
+                    disabled={connectingGoogle}
+                    className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
+                  >
+                    {connectingGoogle ? "Connecting..." : "Connect Selected Location"}
+                  </button>
+                  <button
+                    onClick={() => setAvailableLocations(null)}
+                    className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Connected profiles list */}
+            {!availableLocations && (
+              <div className="mt-6 space-y-3">
+                {connectedProfiles.length === 0 && !connected && (
                   <p className="text-sm text-[#6A6A82]">Connect your Google Business Profile to start syncing reviews and generating AI replies.</p>
                 )}
 
-                {/* Location picker */}
-                {availableLocations && availableLocations.length > 1 && (
-                  <div className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 space-y-3">
-                    <p className="text-sm font-medium text-[#040404]">Select a location to connect:</p>
-                    <select
-                      value={selectedLocation}
-                      onChange={(e) => setSelectedLocation(e.target.value)}
-                      className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 text-sm text-[#4F4F63] outline-none focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12"
-                    >
-                      {availableLocations.map((loc) => (
-                        <option key={loc.googleLocationId} value={loc.googleLocationId}>{loc.title}</option>
-                      ))}
-                    </select>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => void connectAndSync(selectedLocation, connectMode)}
-                        disabled={connectingGoogle}
-                        className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
-                      >
-                        {connectingGoogle ? "Connecting..." : "Connect Selected Location"}
-                      </button>
-                      <button
-                        onClick={() => setAvailableLocations(null)}
-                        className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63] cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {connectedProfiles.map((profile) => {
+                  const isConfirmingDisconnect = showDisconnectConfirm === profile.id;
+                  const isSyncing = syncingReviews === profile.id;
 
-                {/* Disconnect confirmation */}
-                {showDisconnectConfirm && (
-                  <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 space-y-3">
-                    <p className="text-sm text-[#040404]">
-                      Disconnect <strong>{googleStatus?.business?.name}</strong>? Review syncing will stop until you reconnect.
-                    </p>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={async () => { setShowDisconnectConfirm(false); await handleDisconnectGoogle(); }}
-                        disabled={disconnectingGoogle}
-                        className="rounded-2xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
-                      >
-                        {disconnectingGoogle ? "Disconnecting..." : "Yes, Disconnect"}
-                      </button>
-                      <button
-                        onClick={() => setShowDisconnectConfirm(false)}
-                        className="rounded-2xl border border-[#E6E9F8] px-5 py-2.5 text-sm font-medium text-[#4F4F63] cursor-pointer"
-                      >
-                        Cancel
-                      </button>
+                  return (
+                    <div key={profile.id} className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4">
+                      {isConfirmingDisconnect ? (
+                        <div className="space-y-3">
+                          <p className="text-sm text-[#040404]">
+                            Disconnect <strong>{profile.name}</strong>? Review syncing will stop until you reconnect.
+                          </p>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={async () => { setShowDisconnectConfirm(null); await handleDisconnectGoogle(profile.id); }}
+                              disabled={disconnectingGoogle}
+                              className="rounded-2xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
+                            >
+                              {disconnectingGoogle ? "Disconnecting..." : "Yes, Disconnect"}
+                            </button>
+                            <button
+                              onClick={() => setShowDisconnectConfirm(null)}
+                              className="rounded-2xl border border-[#E6E9F8] px-5 py-2.5 text-sm font-medium text-[#4F4F63] cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="flex h-2 w-2 rounded-full bg-green-500 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-[#040404] truncate">{profile.name}</p>
+                              <p className="text-xs text-[#8A8AA0]">{profile.syncedReviewCount} reviews synced</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={() => void handleSyncReviews(profile.id)}
+                              disabled={!!syncingReviews}
+                              className="rounded-2xl bg-[#5F30EB] px-4 py-2 text-xs font-semibold text-white disabled:opacity-60 cursor-pointer"
+                            >
+                              {isSyncing ? "Syncing..." : "Sync"}
+                            </button>
+                            <button
+                              onClick={() => setShowDisconnectConfirm(profile.id)}
+                              className="rounded-2xl border border-red-500/20 px-4 py-2 text-xs font-medium text-red-500 cursor-pointer"
+                            >
+                              Disconnect
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })}
 
-                {/* Action buttons */}
-                {!availableLocations && !showDisconnectConfirm && (
-                  <div className="flex flex-wrap gap-3">
+                {/* Add / Connect button */}
+                {!availableLocations && (
+                  <div className="flex flex-wrap gap-3 pt-1">
                     {!connected ? (
                       <button
                         onClick={() => void handleConnectGoogle("update")}
@@ -974,44 +1003,25 @@ export default function SettingsPage() {
                         {connectingGoogle ? "Connecting..." : "Connect Business Profile"}
                       </button>
                     ) : (
-                      <>
+                      typeof googleStatus?.connectedAccounts === "number" &&
+                      typeof googleStatus?.maxAccounts === "number" &&
+                      googleStatus.connectedAccounts < googleStatus.maxAccounts && (
                         <button
-                          onClick={() => void handleSyncReviews()}
-                          disabled={syncingReviews}
-                          className="rounded-2xl bg-[#5F30EB] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
-                        >
-                          {syncingReviews ? "Syncing..." : "Sync Reviews"}
-                        </button>
-                        <button
-                          onClick={() => void handleConnectGoogle("update")}
+                          onClick={() => void handleConnectGoogle("add")}
                           disabled={connectingGoogle}
-                          className="rounded-2xl border border-[#E6E9F8] px-5 py-2.5 text-sm font-medium text-[#4F4F63] disabled:opacity-60 cursor-pointer"
+                          className="flex items-center gap-2 rounded-2xl border border-[#5F30EB]/30 px-5 py-2.5 text-sm font-medium text-[#5F30EB] disabled:opacity-60 cursor-pointer hover:bg-[#5F30EB]/5 transition-colors"
                         >
-                          {connectingGoogle ? "Loading..." : "Change Business"}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M5 12h14" /><path d="M12 5v14" />
+                          </svg>
+                          {connectingGoogle ? "Loading..." : "Add Business Profile"}
                         </button>
-                        {typeof googleStatus?.connectedAccounts === "number" &&
-                          typeof googleStatus?.maxAccounts === "number" &&
-                          googleStatus.connectedAccounts < googleStatus.maxAccounts && (
-                          <button
-                            onClick={() => void handleConnectGoogle("add")}
-                            disabled={connectingGoogle}
-                            className="rounded-2xl border border-[#5F30EB]/30 px-5 py-2.5 text-sm font-medium text-[#5F30EB] disabled:opacity-60 cursor-pointer"
-                          >
-                            {connectingGoogle ? "Loading..." : "Add Profile"}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setShowDisconnectConfirm(true)}
-                          className="rounded-2xl border border-red-500/20 px-5 py-2.5 text-sm font-medium text-red-500 cursor-pointer"
-                        >
-                          Disconnect
-                        </button>
-                      </>
+                      )
                     )}
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </section>
         )}
 

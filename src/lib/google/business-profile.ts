@@ -399,7 +399,8 @@ export async function connectWorkspaceGoogleBusiness(
 
 export async function syncWorkspaceReviewsFromAccessToken(
   workspaceId: string,
-  accessToken: string
+  accessToken: string,
+  businessId?: string
 ): Promise<SyncWorkspaceReviewsResult> {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -409,7 +410,8 @@ export async function syncWorkspaceReviewsFromAccessToken(
     (await db.query.businesses.findFirst({
       where: and(
         eq(businesses.workspaceId, workspaceId),
-        eq(businesses.status, "active")
+        eq(businesses.status, "active"),
+        ...(businessId ? [eq(businesses.id, businessId)] : [])
       ),
       orderBy: [desc(businesses.updatedAt)],
     })) ?? null;
@@ -535,7 +537,8 @@ export async function syncWorkspaceReviewsFromAccessToken(
 
 export async function syncWorkspaceReviewsFromGoogle(
   workspaceId: string,
-  headers: Headers
+  headers: Headers,
+  businessId?: string
 ): Promise<SyncWorkspaceReviewsResult> {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -559,7 +562,7 @@ export async function syncWorkspaceReviewsFromGoogle(
     throw new Error("Google account is not linked or access token is unavailable.");
   }
 
-  return syncWorkspaceReviewsFromAccessToken(workspaceId, accessToken);
+  return syncWorkspaceReviewsFromAccessToken(workspaceId, accessToken, businessId);
 }
 
 export async function postGoogleReviewReplyWithToken(

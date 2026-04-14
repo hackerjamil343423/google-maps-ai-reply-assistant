@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import DashboardShell from "@/components/DashboardShell";
+import { useBusinessContext } from "@/lib/business-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import type { AppLanguage } from "@/lib/i18n/types";
 
@@ -282,6 +283,7 @@ function RadialProgress({ value, size = 110 }: { value: number; size?: number })
 
 export default function AnalyticsPage() {
   const { language } = useLanguage();
+  const { activeBusiness } = useBusinessContext();
   const [analytics, setAnalytics] = useState<AnalyticsData>(() =>
     buildEmptyAnalytics(language)
   );
@@ -300,7 +302,9 @@ export default function AnalyticsPage() {
       setError("");
       setAnalytics(buildEmptyAnalytics(language));
 
-      const res = await fetch("/api/reviews?status=all&page=1&per_page=500&sort=newest", {
+      const params = new URLSearchParams({ status: "all", page: "1", per_page: "500", sort: "newest" });
+      if (activeBusiness) params.set("businessId", activeBusiness.id);
+      const res = await fetch(`/api/reviews?${params.toString()}`, {
         cache: "no-store",
       });
 
@@ -323,7 +327,7 @@ export default function AnalyticsPage() {
     return () => {
       active = false;
     };
-  }, [language]);
+  }, [language, activeBusiness]);
 
   return (
     <DashboardShell activeHref="/dashboard/analytics">

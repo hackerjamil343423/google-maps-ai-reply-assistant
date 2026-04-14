@@ -31,6 +31,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const body = await req.json().catch(() => ({})) as { businessId?: string };
+  const businessId = typeof body.businessId === "string" ? body.businessId : null;
+
+  const condition = businessId
+    ? and(
+        eq(businesses.workspaceId, workspaceId),
+        eq(businesses.id, businessId),
+        eq(businesses.status, "active")
+      )
+    : and(
+        eq(businesses.workspaceId, workspaceId),
+        eq(businesses.status, "active")
+      );
+
   await db
     .update(businesses)
     .set({
@@ -39,12 +53,7 @@ export async function POST(req: NextRequest) {
       connectedAt: null,
       updatedAt: new Date(),
     })
-    .where(
-      and(
-        eq(businesses.workspaceId, workspaceId),
-        eq(businesses.status, "active")
-      )
-    );
+    .where(condition);
 
   return NextResponse.json({ disconnected: true });
 }
