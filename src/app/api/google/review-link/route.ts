@@ -113,8 +113,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const businessId = req.nextUrl.searchParams.get("businessId") || undefined;
+
   try {
-    const data = await getWorkspaceGoogleReviewLink(workspaceId, req.headers);
+    const data = await getWorkspaceGoogleReviewLink(workspaceId, req.headers, businessId);
     return NextResponse.json(data);
   } catch (error) {
     const message =

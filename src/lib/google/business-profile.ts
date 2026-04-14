@@ -679,7 +679,8 @@ export async function getGoogleAccessTokenForWorkspace(
 
 export async function getWorkspaceGoogleReviewLink(
   workspaceId: string,
-  headers: Headers
+  headers: Headers,
+  businessId?: string
 ): Promise<WorkspaceReviewLinkResult> {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -688,7 +689,8 @@ export async function getWorkspaceGoogleReviewLink(
   const business = await db.query.businesses.findFirst({
     where: and(
       eq(businesses.workspaceId, workspaceId),
-      eq(businesses.status, "active")
+      eq(businesses.status, "active"),
+      ...(businessId ? [eq(businesses.id, businessId)] : [])
     ),
     orderBy: [desc(businesses.updatedAt)],
     columns: {

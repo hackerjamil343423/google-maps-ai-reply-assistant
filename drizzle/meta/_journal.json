@@ -15,6 +15,20 @@
       "when": 1772277600000,
       "tag": "0001_rename_stripe_to_stream",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776110353061,
+      "tag": "0002_business_location_unique_per_workspace",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776120821266,
+      "tag": "0003_background_jobs_and_analytics",
+      "breakpoints": true
     }
   ]
 }

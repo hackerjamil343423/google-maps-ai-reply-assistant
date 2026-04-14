@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import ReportCard from "@/components/dashboard/analytics/reports/ReportCard";
 import type { ReportDetail } from "@/components/dashboard/analytics/reports/ReportCard";
+import { useBusinessContext } from "@/lib/business-context";
 
 type ConnectedBusiness = {
   id: string;
@@ -26,6 +27,7 @@ type ReportSummary = {
 };
 
 export default function ReportsPageClient() {
+  const { activeBusiness } = useBusinessContext();
   const [businesses, setBusinesses] = useState<ConnectedBusiness[]>([]);
   const [loadingBusinesses, setLoadingBusinesses] = useState(true);
   const [selectedBusiness, setSelectedBusiness] = useState<ConnectedBusiness | null>(null);
@@ -41,6 +43,9 @@ export default function ReportsPageClient() {
 
   const router = useRouter();
   const selectedBusinessReviewCount = selectedBusiness?.syncedReviewCount ?? 0;
+  const visibleBusinesses = activeBusiness
+    ? businesses.filter((business) => business.id === activeBusiness.id)
+    : businesses;
 
   useEffect(() => {
     let mounted = true;
@@ -68,6 +73,20 @@ export default function ReportsPageClient() {
   }, []);
 
   useEffect(() => {
+    if (activeBusiness) {
+      setSelectedBusiness(activeBusiness);
+      return;
+    }
+
+    setSelectedBusiness((current) => {
+      if (current && businesses.some((business) => business.id === current.id)) {
+        return current;
+      }
+      return visibleBusinesses.length === 1 ? visibleBusinesses[0] : null;
+    });
+  }, [activeBusiness, businesses, visibleBusinesses]);
+
+  useEffect(() => {
     let mounted = true;
     setLoadingReports(true);
 
@@ -89,6 +108,10 @@ export default function ReportsPageClient() {
       mounted = false;
     };
   }, []);
+
+  const visibleReports = activeBusiness
+    ? reports.filter((report) => report.businessId === activeBusiness.id)
+    : reports;
 
   const handleGenerateReport = useCallback(async () => {
     if (!selectedBusiness) return;
@@ -175,7 +198,7 @@ export default function ReportsPageClient() {
               </svg>
               <span className="text-sm text-[#6A6A82]">Loading businesses...</span>
             </div>
-          ) : businesses.length === 0 ? (
+          ) : visibleBusinesses.length === 0 ? (
             <div className="text-center py-6">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E6E9F8" strokeWidth="2" className="mx-auto mb-3" aria-hidden="true">
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
@@ -194,21 +217,21 @@ export default function ReportsPageClient() {
               <label className="block text-sm font-medium text-[#040404] mb-2">
                 Select Business
               </label>
-              {businesses.length === 1 ? (
+              {visibleBusinesses.length === 1 ? (
                 <div className="flex items-center gap-3 p-3 rounded-2xl border border-[#5F30EB] bg-[#F0EBFF]">
                   <div className="w-8 h-8 rounded-lg bg-[#5F30EB] text-white flex items-center justify-center text-xs font-bold">
                     {selectedBusiness?.name?.charAt(0) || "B"}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#040404]">{selectedBusiness?.name || businesses[0].name}</p>
+                    <p className="text-sm font-medium text-[#040404]">{selectedBusiness?.name || visibleBusinesses[0].name}</p>
                     <p className="text-xs text-[#6A6A82]">
-                      {selectedBusiness?.syncedReviewCount ?? businesses[0].syncedReviewCount} synced reviews
+                      {selectedBusiness?.syncedReviewCount ?? visibleBusinesses[0].syncedReviewCount} synced reviews
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {businesses.map((biz) => (
+                  {visibleBusinesses.map((biz) => (
                     <button
                       key={biz.id}
                       type="button"
@@ -353,17 +376,17 @@ export default function ReportsPageClient() {
 
           {loadingReports ? (
             <p className="text-sm text-[#6A6A82]">Loading reports...</p>
-          ) : reports.length === 0 ? (
+          ) : visibleReports.length === 0 ? (
             <div className="text-center py-8">
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E6E9F8" strokeWidth="2" className="mx-auto mb-3" aria-hidden="true">
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              <p className="text-sm text-[#6A6A82]">No reports yet. Select a business above to get started.</p>
+              <p className="text-sm text-[#6A6A82]">No reports yet for the current business selection.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {reports.map((report) => (
+              {visibleReports.map((report) => (
                 <button
                   key={report.id}
                   type="button"

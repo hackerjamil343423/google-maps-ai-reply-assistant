@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import DashboardShell from "@/components/DashboardShell";
+import { useBusinessContext } from "@/lib/business-context";
 
 type GoogleStatus = {
   linkedAccount: boolean;
@@ -39,6 +40,7 @@ function getReviewLinkBlockMessage(status: GoogleStatus | null) {
 }
 
 export default function ReviewLinkPage() {
+  const { activeBusiness } = useBusinessContext();
   const [businessName, setBusinessName] = useState("Your Business");
   const [reviewLink, setReviewLink] = useState("");
   const [loadingLink, setLoadingLink] = useState(true);
@@ -48,6 +50,11 @@ export default function ReviewLinkPage() {
 
   useEffect(() => {
     let mounted = true;
+    const params = new URLSearchParams();
+    if (activeBusiness) {
+      params.set("businessId", activeBusiness.id);
+    }
+
     void fetch("/api/google/status", { cache: "no-store" })
       .then(async (res) => {
         const json = (await res.json().catch(() => null)) as GoogleStatus | null;
@@ -59,7 +66,10 @@ export default function ReviewLinkPage() {
           throw new Error(blockedMessage);
         }
 
-        return fetch("/api/google/review-link", { cache: "no-store" });
+        const query = params.toString();
+        return fetch(`/api/google/review-link${query ? `?${query}` : ""}`, {
+          cache: "no-store",
+        });
       })
       .then(async (res) => {
         if (!res) return null;
@@ -93,7 +103,7 @@ export default function ReviewLinkPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [activeBusiness]);
 
   const normalizedReviewLink = useMemo(() => reviewLink.trim(), [reviewLink]);
   const hasReviewLink = normalizedReviewLink.length > 0;

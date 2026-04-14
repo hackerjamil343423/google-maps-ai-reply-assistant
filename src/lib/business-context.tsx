@@ -25,7 +25,7 @@ type BusinessContextValue = {
   activeBusiness: BusinessItem | null; // null = All Profiles
   setActiveBusiness: (b: BusinessItem | null) => void;
   loading: boolean;
-  refresh: () => void;
+  refresh: () => Promise<void>;
 };
 
 const BusinessContext = createContext<BusinessContextValue | null>(null);
@@ -35,44 +35,62 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [activeBusiness, setActiveBusinessState] = useState<BusinessItem | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(() => {
-    let mounted = true;
+  const applyBusinessList = useCallback((list: BusinessItem[]) => {
+    setBusinesses(list);
+
+    const storedId =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem(STORAGE_KEY)
+        : null;
+
+    setActiveBusinessState((current) => {
+      if (current) {
+        return list.find((b) => b.id === current.id) ?? null;
+      }
+      if (storedId) {
+        return list.find((b) => b.id === storedId) ?? null;
+      }
+      return null;
+    });
+  }, []);
+
+  const refresh = useCallback(async () => {
     setLoading(true);
+    try {
+      const res = await fetch("/api/analytics/businesses", { cache: "no-store" });
+      if (!res.ok) {
+        return;
+      }
+
+      const data = (await res.json()) as { businesses: BusinessItem[] };
+      applyBusinessList(data.businesses ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [applyBusinessList]);
+
+  useEffect(() => {
+    let active = true;
+
     void fetch("/api/analytics/businesses", { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return null;
         return res.json() as Promise<{ businesses: BusinessItem[] }>;
       })
       .then((data) => {
-        if (!mounted) return;
-        const list = data?.businesses ?? [];
-        setBusinesses(list);
-
-        // Restore persisted selection
-        const storedId =
-          typeof window !== "undefined"
-            ? window.localStorage.getItem(STORAGE_KEY)
-            : null;
-        if (storedId) {
-          const match = list.find((b) => b.id === storedId) ?? null;
-          setActiveBusinessState(match);
-        } else {
-          setActiveBusinessState(null);
-        }
-        setLoading(false);
+        if (!active) return;
+        applyBusinessList(data?.businesses ?? []);
       })
-      .catch(() => {
-        if (!mounted) return;
-        setLoading(false);
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
       });
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+    return () => {
+      active = false;
+    };
+  }, [applyBusinessList]);
 
   const setActiveBusiness = useCallback((b: BusinessItem | null) => {
     setActiveBusinessState(b);

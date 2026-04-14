@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { reviewAnalysisReports } from "@/lib/db/schema";
+import { getResponseStatsForBusiness } from "@/lib/reviews/analysis";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 import { and, eq } from "drizzle-orm";
 import DashboardShell from "@/components/DashboardShell";
@@ -65,6 +66,33 @@ export default async function ReportDetailPage(
     reportData = JSON.parse(report.reportData) as ReportData;
   } catch {
     reportData = null;
+  }
+
+  if (reportData) {
+    const responseStats = await getResponseStatsForBusiness(
+      report.businessId,
+      report.periodStart,
+      new Date(report.periodEnd.getTime() + 86400000)
+    );
+
+    const needsRepair =
+      reportData.responseStats?.totalReplied !== responseStats.repliedCount ||
+      reportData.responseStats?.replyRatePercent !== responseStats.replyRatePercent;
+
+    if (needsRepair) {
+      reportData = {
+        ...reportData,
+        responseStats: {
+          totalReplied: responseStats.repliedCount,
+          replyRatePercent: responseStats.replyRatePercent,
+        },
+      };
+
+      await db
+        .update(reviewAnalysisReports)
+        .set({ reportData: JSON.stringify(reportData) })
+        .where(eq(reviewAnalysisReports.id, report.id));
+    }
   }
 
   return (

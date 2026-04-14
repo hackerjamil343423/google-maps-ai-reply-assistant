@@ -6,6 +6,7 @@ import { ensureWorkspaceForUser } from "@/lib/workspace";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { generateAnalysisReportFromUrl } from "@/lib/ai/generate-analysis-report";
+import { getResponseStatsForBusiness } from "@/lib/reviews/analysis";
 
 type Period = "all_time" | "this_month";
 
@@ -120,6 +121,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const responseStatsResult = await getResponseStatsForBusiness(
+    businessId,
+    periodBounds.start,
+    new Date(periodBounds.end.getTime() + 86400000)
+  );
+  const responseStats = {
+    totalReplied: responseStatsResult.repliedCount,
+    replyRatePercent: responseStatsResult.replyRatePercent,
+  };
+
   // Generate report via MiniMax
   let reportData;
   try {
@@ -128,7 +139,8 @@ export async function POST(req: NextRequest) {
       business.name,
       selectedLanguage,
       periodBounds.start,
-      periodBounds.end
+      periodBounds.end,
+      responseStats
     );
     reportData = result.reportData;
   } catch (error) {

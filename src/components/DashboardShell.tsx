@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
-import { BusinessProvider, useBusinessContext } from "@/lib/business-context";
+import { useBusinessContext } from "@/lib/business-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 type NavItem = {
@@ -414,9 +414,5 @@ export default function DashboardShell({
   activeHref: string;
   children: React.ReactNode;
 }) {
-  return (
-    <BusinessProvider>
-      <DashboardShellInner activeHref={activeHref}>{children}</DashboardShellInner>
-    </BusinessProvider>
-  );
+  return <DashboardShellInner activeHref={activeHref}>{children}</DashboardShellInner>;
 }

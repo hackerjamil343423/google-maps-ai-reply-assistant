@@ -29,6 +29,18 @@ export interface ReportData {
   };
 }
 
+type ResponseStats = {
+  totalReplied: number;
+  replyRatePercent: number;
+};
+
+function buildResponseStats(totalReviews: number, totalReplied: number): ResponseStats {
+  return {
+    totalReplied,
+    replyRatePercent: totalReviews > 0 ? Math.round((totalReplied / totalReviews) * 100) : 0,
+  };
+}
+
 function buildAnalysisPrompt(data: AggregatedReviewData): string {
   const sentimentBreakdown = {
     positive: data.ratingDistribution[5] + data.ratingDistribution[4],
@@ -98,6 +110,10 @@ export async function generateAnalysisReport(
   businessId: string
 ): Promise<{ reportData: ReportData; reviewCount: number }> {
   const aggregatedData = await aggregateReviewsForBusiness(businessId);
+  const responseStats = buildResponseStats(
+    aggregatedData.totalCount,
+    aggregatedData.repliedCount
+  );
 
   if (aggregatedData.totalCount === 0) {
     return {
@@ -112,7 +128,7 @@ export async function generateAnalysisReport(
         keyPhrases: [],
         trends: { periodOverPeriod: "stable", changePercent: 0 },
         insights: ["No reviews available to analyze."],
-        responseStats: { totalReplied: 0, replyRatePercent: 0 },
+        responseStats,
       },
       reviewCount: 0,
     };
@@ -171,7 +187,10 @@ export async function generateAnalysisReport(
     }
 
     return {
-      reportData: parsed,
+      reportData: {
+        ...parsed,
+        responseStats,
+      },
       reviewCount: aggregatedData.totalCount,
     };
   } catch (error) {
@@ -186,7 +205,9 @@ export async function generateAnalysisReportFromUrl(
   language: "en" | "ar" = "en",
   periodStart?: Date,
   periodEnd?: Date,
+  responseStats?: ResponseStats,
 ): Promise<{ reportData: ReportData; reviewCount: number }> {
+  const resolvedResponseStats = responseStats ?? buildResponseStats(0, 0);
   if (reviews.length === 0) {
     return {
       reportData: {
@@ -200,7 +221,7 @@ export async function generateAnalysisReportFromUrl(
         keyPhrases: [],
         trends: { periodOverPeriod: "stable", changePercent: 0 },
         insights: ["No reviews available to analyze."],
-        responseStats: { totalReplied: 0, replyRatePercent: 0 },
+        responseStats: resolvedResponseStats,
       },
       reviewCount: 0,
     };
@@ -276,7 +297,7 @@ Analyze all reviews and return a structured JSON report with:
 
 5. **insights**: Array of 3-5 actionable business recommendations based on patterns found in the reviews
 
-6. **responseStats**: For responseStats, since these reviews are fetched from Google Maps (not from our system), set totalReplied to 0 and replyRatePercent to 0.
+6. **responseStats**: Include totalReplied and replyRatePercent using the provided review/reply counts.
 
 IMPORTANT: Return ONLY valid JSON. No markdown, no explanation, just the raw JSON object.
 
@@ -338,7 +359,10 @@ Return format:
     }
 
     return {
-      reportData: parsed,
+      reportData: {
+        ...parsed,
+        responseStats: resolvedResponseStats,
+      },
       reviewCount: reviews.length,
     };
   } catch (error) {

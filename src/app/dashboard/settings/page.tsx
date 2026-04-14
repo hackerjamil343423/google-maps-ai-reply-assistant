@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import DashboardShell from "@/components/DashboardShell";
+import { useBusinessContext } from "@/lib/business-context";
 import { DEFAULT_AI_PROMPT, TONE_OPTIONS } from "@/lib/ai/default-settings";
 import { useLanguage } from "@/lib/i18n/language-context";
 
@@ -124,6 +125,7 @@ function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
 export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refresh: refreshBusinesses } = useBusinessContext();
   const handledGoogleCallback = useRef(false);
   const handledBillingParams = useRef(false);
 
@@ -264,20 +266,29 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...(locationName ? { locationName } : {}), mode }),
       });
-      const connectJson = await parseJsonSafe<{ error?: string }>(connectRes);
+      const connectJson = await parseJsonSafe<{ error?: string; business?: { businessId?: string } }>(connectRes);
       if (!connectRes.ok) throw new Error(connectJson?.error || "Failed to connect business profile.");
-      const syncRes = await fetch("/api/google/sync-reviews", { method: "POST" });
+      const syncRes = await fetch("/api/google/sync-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          connectJson?.business?.businessId
+            ? { businessId: connectJson.business.businessId }
+            : {}
+        ),
+      });
       const syncJson = await parseJsonSafe<{ error?: string; synced?: number }>(syncRes);
       if (!syncRes.ok) throw new Error(syncJson?.error || "Connected, but review sync failed.");
       setGoogleNotice(`Connected successfully. Synced ${syncJson?.synced ?? 0} reviews.`);
       await loadAll();
+      await refreshBusinesses();
       router.replace("/dashboard/settings?section=google");
     } catch (err) {
       setGoogleError(err instanceof Error ? err.message : "Failed to connect Google Business.");
     } finally {
       setConnectingGoogle(false);
     }
-  }, [loadAll, router]);
+  }, [loadAll, refreshBusinesses, router]);
 
   const handleSyncReviews = useCallback(async (businessId?: string) => {
     setSyncingReviews(businessId ?? "all");
@@ -293,12 +304,13 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error(json?.error || "Sync failed.");
       setGoogleNotice(`Synced ${json?.synced ?? 0} reviews.`);
       await loadAll();
+      await refreshBusinesses();
     } catch (err) {
       setGoogleError(err instanceof Error ? err.message : "Failed to sync reviews.");
     } finally {
       setSyncingReviews(null);
     }
-  }, [loadAll]);
+  }, [loadAll, refreshBusinesses]);
 
   const handleDisconnectGoogle = useCallback(async (businessId?: string) => {
     setDisconnectingGoogle(true);
@@ -314,12 +326,13 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error(json?.error || "Failed to disconnect business.");
       setGoogleNotice("Google Business disconnected.");
       await loadAll();
+      await refreshBusinesses();
     } catch (err) {
       setGoogleError(err instanceof Error ? err.message : "Failed to disconnect Google Business.");
     } finally {
       setDisconnectingGoogle(false);
     }
-  }, [loadAll]);
+  }, [loadAll, refreshBusinesses]);
 
   const handleConnectWithLocationPicker = useCallback(async (mode: "update" | "add" = "update") => {
     setConnectingGoogle(true);

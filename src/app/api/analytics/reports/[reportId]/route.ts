@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { reviewAnalysisReports } from "@/lib/db/schema";
+import { getResponseStatsForBusiness } from "@/lib/reviews/analysis";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 import { and, eq } from "drizzle-orm";
 
@@ -41,6 +42,33 @@ export async function GET(
     reportData = JSON.parse(report.reportData);
   } catch {
     reportData = null;
+  }
+
+  if (reportData) {
+    const responseStats = await getResponseStatsForBusiness(
+      report.businessId,
+      report.periodStart,
+      new Date(report.periodEnd.getTime() + 86400000)
+    );
+
+    const needsRepair =
+      reportData.responseStats?.totalReplied !== responseStats.repliedCount ||
+      reportData.responseStats?.replyRatePercent !== responseStats.replyRatePercent;
+
+    if (needsRepair) {
+      reportData = {
+        ...reportData,
+        responseStats: {
+          totalReplied: responseStats.repliedCount,
+          replyRatePercent: responseStats.replyRatePercent,
+        },
+      };
+
+      await db
+        .update(reviewAnalysisReports)
+        .set({ reportData: JSON.stringify(reportData) })
+        .where(eq(reviewAnalysisReports.id, report.id));
+    }
   }
 
   return NextResponse.json({

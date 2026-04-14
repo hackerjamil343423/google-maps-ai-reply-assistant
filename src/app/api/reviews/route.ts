@@ -114,13 +114,14 @@ export async function GET(req: NextRequest) {
     columns: { id: true, status: true, googleLocationId: true },
   });
 
-  const allBusinessIds = workspaceBusinesses.map((item) => item.id);
+  const activeWorkspaceBusinesses = workspaceBusinesses.filter(
+    (item) => item.status === "active" && Boolean(item.googleLocationId)
+  );
+  const allBusinessIds = activeWorkspaceBusinesses.map((item) => item.id);
   const businessIds = businessIdFilter
     ? allBusinessIds.filter((id) => id === businessIdFilter)
     : allBusinessIds;
-  const googleConnected = workspaceBusinesses.some(
-    (item) => item.status === "active" && Boolean(item.googleLocationId)
-  );
+  const googleConnected = activeWorkspaceBusinesses.length > 0;
 
   if (businessIds.length === 0) {
     return NextResponse.json({
