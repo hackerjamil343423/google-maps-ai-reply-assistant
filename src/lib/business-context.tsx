@@ -28,7 +28,15 @@ type BusinessContextValue = {
   refresh: () => Promise<void>;
 };
 
-const BusinessContext = createContext<BusinessContextValue | null>(null);
+const DEFAULT_CONTEXT: BusinessContextValue = {
+  businesses: [],
+  activeBusiness: null,
+  setActiveBusiness: () => {},
+  loading: false,
+  refresh: async () => {},
+};
+
+const BusinessContext = createContext<BusinessContextValue>(DEFAULT_CONTEXT);
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
   const [businesses, setBusinesses] = useState<BusinessItem[]>([]);
@@ -114,7 +122,5 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 }
 
 export function useBusinessContext() {
-  const ctx = useContext(BusinessContext);
-  if (!ctx) throw new Error("useBusinessContext must be used within BusinessProvider");
-  return ctx;
+  return useContext(BusinessContext);
 }
