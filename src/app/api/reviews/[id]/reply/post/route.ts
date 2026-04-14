@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { recordReplyEvent } from "@/lib/analytics/reply-events";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { postGoogleReviewReply } from "@/lib/google/business-profile";
 import {
   getLatestReplyForReview,
   getWorkspaceReviewById,
+  markReplyFailed,
   markReplyPosted,
 } from "@/lib/reviews/server";
 import { getWorkspaceAccess, incrementUsageCounter } from "@/lib/subscription/server";
+import { computeBackoff, enqueueJob } from "@/lib/jobs/queue";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const postReplySchema = z.object({
@@ -103,8 +106,29 @@ export async function POST(
         ? error.message
         : "Failed to post reply to Google Business Profile.";
 
-    return NextResponse.json({ error: message }, { status: 502 });
+    // Mark reply as failed then enqueue a retry job
+    if (latestReply?.id) {
+      await markReplyFailed(latestReply.id);
+      await enqueueJob({
+        workspaceId,
+        type: "post_reply",
+        payload: { reviewId, replyId: latestReply.id },
+        runAt: computeBackoff(1),
+        maxAttempts: 3,
+      });
+    }
+
+    return NextResponse.json({ error: message, retrying: true }, { status: 502 });
   }
+
+  const wasEdited =
+    latestReply?.content != null &&
+    latestReply.content.trim() !== content.trim();
+
+  const timeToPostMs =
+    latestReply?.createdAt != null
+      ? Date.now() - new Date(latestReply.createdAt).getTime()
+      : undefined;
 
   const postedReply = await markReplyPosted({
     reviewId,
@@ -114,6 +138,16 @@ export async function POST(
   });
 
   void incrementUsageCounter(workspaceId, "reviewsManaged");
+
+  void recordReplyEvent({
+    workspaceId,
+    reviewId,
+    replyId: postedReply?.id,
+    eventType: wasEdited ? "posted_edited" : "posted_direct",
+    wasEdited,
+    timeToPostMs,
+    rating: review.rating,
+  });
 
   return NextResponse.json({
     success: true,

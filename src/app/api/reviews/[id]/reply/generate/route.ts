@@ -2,10 +2,19 @@ import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { generateReviewReply } from "@/lib/ai/generate-review-reply";
+import { recordReplyEvent } from "@/lib/analytics/reply-events";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { aiSettings } from "@/lib/db/schema";
-import { getWorkspaceReviewById, saveDraftReplyForReview } from "@/lib/reviews/server";
+import {
+  getGoogleAccessTokenForWorkspace,
+  postGoogleReviewReplyWithToken,
+} from "@/lib/google/business-profile";
+import {
+  getWorkspaceReviewById,
+  markReplyPosted,
+  saveDraftReplyForReview,
+} from "@/lib/reviews/server";
 import { getWorkspaceAccess, incrementUsageCounter } from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -71,7 +80,7 @@ export async function POST(
 
   const savedSettings = await db.query.aiSettings.findFirst({
     where: eq(aiSettings.workspaceId, workspaceId),
-    columns: { prompt: true, tone: true },
+    columns: { prompt: true, tone: true, approvalMode: true },
   });
 
   const generated = await generateReviewReply({
@@ -100,11 +109,63 @@ export async function POST(
   // Increment usage counter (fire-and-forget — don't block response)
   void incrementUsageCounter(workspaceId, "aiRepliesGenerated");
 
+  // Record analytics event
+  void recordReplyEvent({
+    workspaceId,
+    reviewId,
+    replyId: draft.id,
+    eventType: "generated",
+    tone: savedSettings?.tone,
+    rating: review.rating,
+  });
+
+  // Auto-post if the workspace has auto approval mode enabled
+  const approvalMode = savedSettings?.approvalMode ?? "review";
+  if (approvalMode === "auto" && review.googleReviewId) {
+    try {
+      const accessToken = await getGoogleAccessTokenForWorkspace(workspaceId);
+      if (accessToken) {
+        await postGoogleReviewReplyWithToken(
+          accessToken,
+          review.googleReviewId,
+          draft.content
+        );
+        await markReplyPosted({
+          reviewId,
+          content: draft.content,
+          source: "ai",
+          userId: session.user.id,
+        });
+        void incrementUsageCounter(workspaceId, "reviewsManaged");
+        void recordReplyEvent({
+          workspaceId,
+          reviewId,
+          replyId: draft.id,
+          eventType: "posted_direct",
+          tone: savedSettings?.tone,
+          wasEdited: false,
+          rating: review.rating,
+        });
+        return NextResponse.json({
+          reply: draft.content,
+          source: generated.source,
+          replySource: draft.source,
+          status: "posted",
+          replyId: draft.id,
+          autoPosted: true,
+        });
+      }
+    } catch {
+      // Auto-post failed — reply stays as draft, user can post manually
+    }
+  }
+
   return NextResponse.json({
     reply: draft.content,
     source: generated.source,
     replySource: draft.source,
     status: draft.status,
     replyId: draft.id,
+    autoPosted: false,
   });
 }

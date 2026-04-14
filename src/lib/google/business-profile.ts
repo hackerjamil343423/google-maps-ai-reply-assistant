@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { account, businesses, reviewReplies, reviews } from "@/lib/db/schema";
+import { account, businesses, reviewReplies, reviews, workspaces } from "@/lib/db/schema";
 
 const GOOGLE_ACCOUNTS_BASE = "https://mybusinessaccountmanagement.googleapis.com/v1";
 const GOOGLE_BUSINESS_INFO_BASE = "https://mybusinessbusinessinformation.googleapis.com/v1";
@@ -370,9 +370,9 @@ export async function connectWorkspaceGoogleBusiness(
   };
 }
 
-export async function syncWorkspaceReviewsFromGoogle(
+export async function syncWorkspaceReviewsFromAccessToken(
   workspaceId: string,
-  headers: Headers
+  accessToken: string
 ): Promise<SyncWorkspaceReviewsResult> {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -387,18 +387,15 @@ export async function syncWorkspaceReviewsFromGoogle(
       orderBy: [desc(businesses.updatedAt)],
     })) ?? null;
 
-  const connectedBusiness = business?.googleLocationId
-    ? {
-        businessId: business.id,
-        businessName: business.name,
-        googleLocationId: business.googleLocationId,
-      }
-    : await connectWorkspaceGoogleBusiness(workspaceId, headers);
-
-  const accessToken = await getGoogleAccessTokenFromHeaders(headers);
-  if (!accessToken) {
-    throw new Error("Google account is not linked or access token is unavailable.");
+  if (!business?.googleLocationId) {
+    throw new Error("No active Google Business connection found for this workspace.");
   }
+
+  const connectedBusiness = {
+    businessId: business.id,
+    businessName: business.name,
+    googleLocationId: business.googleLocationId,
+  };
 
   const reviewQuery = new URLSearchParams({
     pageSize: "50",
@@ -509,6 +506,50 @@ export async function syncWorkspaceReviewsFromGoogle(
   };
 }
 
+export async function syncWorkspaceReviewsFromGoogle(
+  workspaceId: string,
+  headers: Headers
+): Promise<SyncWorkspaceReviewsResult> {
+  if (!db) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+
+  // Ensure business connection exists (connects if missing)
+  const business = await db.query.businesses.findFirst({
+    where: and(
+      eq(businesses.workspaceId, workspaceId),
+      eq(businesses.status, "active")
+    ),
+    orderBy: [desc(businesses.updatedAt)],
+  });
+
+  if (!business?.googleLocationId) {
+    await connectWorkspaceGoogleBusiness(workspaceId, headers);
+  }
+
+  const accessToken = await getGoogleAccessTokenFromHeaders(headers);
+  if (!accessToken) {
+    throw new Error("Google account is not linked or access token is unavailable.");
+  }
+
+  return syncWorkspaceReviewsFromAccessToken(workspaceId, accessToken);
+}
+
+export async function postGoogleReviewReplyWithToken(
+  accessToken: string,
+  reviewResourceName: string,
+  content: string
+) {
+  await googleApiFetch(
+    `${GOOGLE_MY_BUSINESS_V4_BASE}/${reviewResourceName}/reply`,
+    accessToken,
+    {
+      method: "PUT",
+      body: JSON.stringify({ comment: content }),
+    }
+  );
+}
+
 export async function postGoogleReviewReply(
   headers: Headers,
   reviewResourceName: string,
@@ -519,13 +560,90 @@ export async function postGoogleReviewReply(
     throw new Error("Google account is not linked or access token is unavailable.");
   }
 
-  await googleApiFetch(
-    `${GOOGLE_MY_BUSINESS_V4_BASE}/${reviewResourceName}/reply`,
-    accessToken,
-    {
-      method: "PUT",
-      body: JSON.stringify({ comment: content }),
-    }
+  await postGoogleReviewReplyWithToken(accessToken, reviewResourceName, content);
+}
+
+async function refreshGoogleAccessToken(
+  userId: string,
+  refreshToken: string
+): Promise<string | null> {
+  const { env } = await import("@/lib/env");
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return null;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as {
+    access_token?: string;
+    expires_in?: number;
+  };
+  if (!data.access_token) return null;
+
+  const expiresAt = new Date(Date.now() + (data.expires_in ?? 3600) * 1000);
+
+  if (db) {
+    await db
+      .update(account)
+      .set({
+        accessToken: data.access_token,
+        accessTokenExpiresAt: expiresAt,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(account.userId, userId), eq(account.providerId, "google"))
+      );
+  }
+
+  return data.access_token;
+}
+
+export async function getGoogleAccessTokenForWorkspace(
+  workspaceId: string
+): Promise<string | null> {
+  if (!db) return null;
+
+  const workspace = await db.query.workspaces.findFirst({
+    where: eq(workspaces.id, workspaceId),
+    columns: { ownerUserId: true },
+  });
+  if (!workspace) return null;
+
+  const googleAccount = await db.query.account.findFirst({
+    where: and(
+      eq(account.userId, workspace.ownerUserId),
+      eq(account.providerId, "google")
+    ),
+    columns: {
+      accessToken: true,
+      accessTokenExpiresAt: true,
+      refreshToken: true,
+      userId: true,
+    },
+  });
+
+  if (!googleAccount?.accessToken) return null;
+
+  const isExpired =
+    googleAccount.accessTokenExpiresAt != null &&
+    googleAccount.accessTokenExpiresAt < new Date();
+
+  if (!isExpired) return googleAccount.accessToken;
+
+  if (!googleAccount.refreshToken) return null;
+
+  return refreshGoogleAccessToken(
+    googleAccount.userId,
+    googleAccount.refreshToken
   );
 }
 

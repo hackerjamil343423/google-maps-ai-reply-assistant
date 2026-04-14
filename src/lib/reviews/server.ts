@@ -110,7 +110,7 @@ export async function markReplyPosted(args: {
   reviewId: string;
   content: string;
   source: "ai" | "manual";
-  userId: string;
+  userId: string | null;
 }) {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -164,4 +164,12 @@ export async function markReplyPosted(args: {
     });
 
   return inserted ?? null;
+}
+
+export async function markReplyFailed(replyId: string): Promise<void> {
+  if (!db) return;
+  await db
+    .update(reviewReplies)
+    .set({ status: "failed", updatedAt: new Date() })
+    .where(eq(reviewReplies.id, replyId));
 }

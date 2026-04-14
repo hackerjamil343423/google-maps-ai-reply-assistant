@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+import { recordReplyEvent } from "@/lib/analytics/reply-events";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { reviews } from "@/lib/db/schema";
@@ -46,6 +47,13 @@ export async function POST(
   if (!review) {
     return NextResponse.json({ error: "Review not found." }, { status: 404 });
   }
+
+  void recordReplyEvent({
+    workspaceId,
+    reviewId,
+    eventType: "rejected",
+    rating: review.rating,
+  });
 
   await db.delete(reviews).where(eq(reviews.id, reviewId));
 

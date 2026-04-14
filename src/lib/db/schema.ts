@@ -447,4 +447,77 @@ export const reviewAnalysisReports = pgTable(
   ]
 );
 
+export const jobTypeEnum = pgEnum("job_type", ["sync_reviews", "post_reply"]);
+export const jobStatusEnum = pgEnum("job_status", [
+  "pending",
+  "running",
+  "done",
+  "failed",
+]);
+
+export const backgroundJobs = pgTable(
+  "background_jobs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    type: jobTypeEnum("type").notNull(),
+    status: jobStatusEnum("status").notNull().default("pending"),
+    payload: text("payload").notNull().default("{}"),
+    attempts: integer("attempts").notNull().default(0),
+    maxAttempts: integer("max_attempts").notNull().default(3),
+    runAt: timestamp("run_at", { withTimezone: true }).notNull().defaultNow(),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("background_jobs_status_run_at_idx").on(table.status, table.runAt),
+    index("background_jobs_workspace_id_idx").on(table.workspaceId),
+  ]
+);
+
+export const replyEventTypeEnum = pgEnum("reply_event_type", [
+  "generated",
+  "edited",
+  "rejected",
+  "posted_direct",
+  "posted_edited",
+]);
+
+export const replyAnalyticsEvents = pgTable(
+  "reply_analytics_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    reviewId: uuid("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    replyId: uuid("reply_id").references(() => reviewReplies.id, {
+      onDelete: "set null",
+    }),
+    eventType: replyEventTypeEnum("event_type").notNull(),
+    tone: text("tone"),
+    wasEdited: boolean("was_edited"),
+    timeToPostMs: integer("time_to_post_ms"),
+    rating: integer("rating"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("reply_analytics_workspace_created_idx").on(
+      table.workspaceId,
+      table.createdAt
+    ),
+    index("reply_analytics_event_type_idx").on(table.eventType),
+  ]
+);
+
 export type WorkspaceRole = (typeof memberRoleEnum.enumValues)[number];
