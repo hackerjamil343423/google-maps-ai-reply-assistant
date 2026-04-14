@@ -895,7 +895,7 @@ export default function SettingsPage() {
               <p className="mt-4 rounded-2xl bg-orange-500/8 px-4 py-3 text-sm text-orange-600">{getGoogleConnectBlockMessage(googleStatus)}</p>
             )}
 
-            <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_auto]">
+            <div className="mt-6">
               <div className="space-y-5">
                 {/* Business name / empty state */}
                 {connected ? (
@@ -1010,20 +1010,6 @@ export default function SettingsPage() {
                     )}
                   </div>
                 )}
-              </div>
-
-              {/* Review stats */}
-              <div className="grid grid-cols-3 gap-3 xl:grid-cols-1 xl:w-28">
-                {[
-                  { label: "Total", value: summary.total },
-                  { label: "Replied", value: summary.replied },
-                  { label: "Pending", value: summary.pending },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 text-center">
-                    <p className="text-2xl font-semibold text-[#040404]">{item.value}</p>
-                    <p className="mt-1 text-xs text-[#8A8AA0]">{item.label}</p>
-                  </div>
-                ))}
               </div>
             </div>
           </section>

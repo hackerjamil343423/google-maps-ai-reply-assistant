@@ -37,12 +37,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
 
     const fromDom = document.documentElement.lang;
+    let resolved: AppLanguage;
     if (fromDom) {
-      return normalizeLanguage(fromDom);
+      resolved = normalizeLanguage(fromDom);
+    } else {
+      const stored = window.localStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
+      resolved = stored ? normalizeLanguage(stored) : detectBrowserLanguage();
     }
 
-    const stored = window.localStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
-    return stored ? normalizeLanguage(stored) : detectBrowserLanguage();
+    // Apply dir immediately (before first paint) so CSS logical properties
+    // are in the correct position without waiting for useEffect.
+    document.documentElement.dir = resolved === "ar" ? "rtl" : "ltr";
+
+    return resolved;
   });
 
   useEffect(() => {

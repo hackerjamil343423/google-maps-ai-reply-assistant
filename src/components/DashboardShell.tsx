@@ -97,7 +97,7 @@ function SidebarSection({
             <span className={`${isActive ? "text-white" : "text-current"}`}>{item.icon}</span>
             {!collapsed && <span className="truncate font-medium">{item.title}</span>}
             {collapsed && (
-              <span className="pointer-events-none absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 whitespace-nowrap rounded-xl bg-[#5F30EB] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute start-full top-1/2 z-20 ms-3 -translate-y-1/2 whitespace-nowrap rounded-xl bg-[#5F30EB] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                 {item.title}
               </span>
             )}
@@ -224,8 +224,7 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { language } = useLanguage();
-  const isRtl = language === "ar";
+  useLanguage(); // ensures LanguageProvider sets dir on <html> before first paint
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -286,14 +285,13 @@ export default function DashboardShell({
     router.refresh();
   }
 
-  const desktopOffset = collapsed ? "md:pl-[120px]" : "md:pl-[304px]";
-  const desktopOffsetRtl = collapsed ? "md:pr-[120px]" : "md:pr-[304px]";
+  const desktopOffset = collapsed ? "md:ps-[120px]" : "md:ps-[304px]";
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(95,48,235,0.10),_transparent_28%),linear-gradient(180deg,_#F8F7FF_0%,_#F2EEFF_100%)] text-[#040404]">
-      <aside
-        className={`fixed inset-y-0 z-30 hidden px-4 py-5 md:flex ${isRtl ? "right-0" : "left-0"}`}
-      >
+      {/* start-0 = inset-inline-start:0 — resolves to left-0 in LTR, right-0 in RTL
+          via the dir attribute set synchronously in LanguageProvider */}
+      <aside className="fixed inset-y-0 start-0 z-30 hidden px-4 py-5 md:flex">
         <SidebarContent
           activeHref={activeHref}
           collapsed={collapsed}
@@ -305,7 +303,7 @@ export default function DashboardShell({
       </aside>
 
       {mobileOpen && (
-        <div className={`fixed inset-0 z-40 flex md:hidden ${isRtl ? "justify-end" : "justify-start"}`}>
+        <div className="fixed inset-0 z-40 flex justify-start md:hidden rtl:justify-end">
           <div className="absolute inset-0 bg-[#130F1D]/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative z-50 p-4">
             <SidebarContent
@@ -321,7 +319,8 @@ export default function DashboardShell({
         </div>
       )}
 
-      <main className={`min-h-screen px-4 pb-8 pt-4 md:px-8 md:pb-10 md:pt-6 ${isRtl ? desktopOffsetRtl : desktopOffset}`}>
+      {/* ps-* = padding-inline-start — also follows dir automatically */}
+      <main className={`min-h-screen px-4 pb-8 pt-4 md:px-8 md:pb-10 md:pt-6 ${desktopOffset}`}>
         <div className="md:hidden mb-4">
           <button
             type="button"
