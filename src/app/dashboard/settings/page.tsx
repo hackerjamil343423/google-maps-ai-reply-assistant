@@ -138,6 +138,9 @@ export default function SettingsPage() {
   const [disconnectingGoogle, setDisconnectingGoogle] = useState(false);
   const [availableLocations, setAvailableLocations] = useState<Array<{ googleLocationId: string; title: string }> | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [syncingReviews, setSyncingReviews] = useState(false);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [connectMode, setConnectMode] = useState<"update" | "add">("update");
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [businesses, setBusinesses] = useState<string[]>([]);
@@ -235,7 +238,7 @@ export default function SettingsPage() {
     }
   }, []);
 
-  const connectAndSync = useCallback(async (locationName?: string) => {
+  const connectAndSync = useCallback(async (locationName?: string, mode: "update" | "add" = "update") => {
     setConnectingGoogle(true);
     setGoogleError("");
     setGoogleNotice("");
@@ -244,14 +247,14 @@ export default function SettingsPage() {
       const connectRes = await fetch("/api/google/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(locationName ? { locationName } : {}),
+        body: JSON.stringify({ ...(locationName ? { locationName } : {}), mode }),
       });
       const connectJson = await parseJsonSafe<{ error?: string }>(connectRes);
       if (!connectRes.ok) throw new Error(connectJson?.error || "Failed to connect business profile.");
       const syncRes = await fetch("/api/google/sync-reviews", { method: "POST" });
       const syncJson = await parseJsonSafe<{ error?: string; synced?: number }>(syncRes);
       if (!syncRes.ok) throw new Error(syncJson?.error || "Connected, but review sync failed.");
-      setGoogleNotice(`Google connected successfully. Synced ${syncJson?.synced ?? 0} reviews.`);
+      setGoogleNotice(`Connected successfully. Synced ${syncJson?.synced ?? 0} reviews.`);
       await loadAll();
       router.replace("/dashboard/settings?section=google");
     } catch (err) {
@@ -260,6 +263,23 @@ export default function SettingsPage() {
       setConnectingGoogle(false);
     }
   }, [loadAll, router]);
+
+  const handleSyncReviews = useCallback(async () => {
+    setSyncingReviews(true);
+    setGoogleError("");
+    setGoogleNotice("");
+    try {
+      const res = await fetch("/api/google/sync-reviews", { method: "POST" });
+      const json = await parseJsonSafe<{ error?: string; synced?: number }>(res);
+      if (!res.ok) throw new Error(json?.error || "Sync failed.");
+      setGoogleNotice(`Synced ${json?.synced ?? 0} reviews.`);
+      await loadAll();
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "Failed to sync reviews.");
+    } finally {
+      setSyncingReviews(false);
+    }
+  }, [loadAll]);
 
   const handleDisconnectGoogle = useCallback(async () => {
     setDisconnectingGoogle(true);
@@ -278,17 +298,18 @@ export default function SettingsPage() {
     }
   }, [loadAll]);
 
-  const handleConnectWithLocationPicker = useCallback(async () => {
+  const handleConnectWithLocationPicker = useCallback(async (mode: "update" | "add" = "update") => {
     setConnectingGoogle(true);
     setGoogleError("");
     setGoogleNotice("");
+    setConnectMode(mode);
     try {
       const res = await fetch("/api/google/locations");
       const json = await parseJsonSafe<{ locations?: Array<{ googleLocationId: string; title: string }>; error?: string }>(res);
       if (!res.ok) throw new Error(json?.error || "Failed to fetch locations.");
       const locs = json?.locations ?? [];
       if (locs.length <= 1) {
-        await connectAndSync(locs[0]?.googleLocationId);
+        await connectAndSync(locs[0]?.googleLocationId, mode);
       } else {
         setAvailableLocations(locs);
         setSelectedLocation(locs[0].googleLocationId);
@@ -307,7 +328,8 @@ export default function SettingsPage() {
   useEffect(() => {
     if (searchParams.get("google") !== "linked" || handledGoogleCallback.current) return;
     handledGoogleCallback.current = true;
-    void handleConnectWithLocationPicker();
+    const mode = (searchParams.get("mode") === "add" ? "add" : "update") as "update" | "add";
+    void handleConnectWithLocationPicker(mode);
   }, [searchParams, handleConnectWithLocationPicker]);
 
   useEffect(() => {
@@ -346,12 +368,13 @@ export default function SettingsPage() {
 
   async function startGoogleLinkFlow() {
     setConnectingGoogle(true);
+    const modeParam = connectMode === "add" ? "&mode=add" : "";
     const res = await fetch("/api/auth/link-social", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         provider: "google",
-        callbackURL: "/dashboard/settings?section=google&google=linked",
+        callbackURL: `/dashboard/settings?section=google&google=linked${modeParam}`,
         scopes: googleStatus?.requiredScopes,
       }),
     });
@@ -364,10 +387,10 @@ export default function SettingsPage() {
     window.location.href = json.url;
   }
 
-  async function handleConnectGoogle() {
+  async function handleConnectGoogle(mode: "update" | "add" = "update") {
     if (!googleStatus) return;
     if (!googleStatus.configured) return setGoogleError("Google OAuth is not configured.");
-    if (googleStatus.subscriptionAllowed === false) {
+    if (mode === "add" && googleStatus.subscriptionAllowed === false) {
       const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
       setGoogleError(blockedMessage || "Google Business connection is not available for this workspace.");
       return;
@@ -376,13 +399,15 @@ export default function SettingsPage() {
       setGoogleNotice("Reconnecting Google permissions...");
       return startGoogleLinkFlow();
     }
-    const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
-    if (blockedMessage) {
-      setGoogleError(blockedMessage);
-      return;
+    if (mode === "add") {
+      const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+      if (blockedMessage) {
+        setGoogleError(blockedMessage);
+        return;
+      }
     }
     if (!googleStatus.linkedAccount) return startGoogleLinkFlow();
-    await handleConnectWithLocationPicker();
+    await handleConnectWithLocationPicker(mode);
   }
 
   async function sendInvite(event: React.FormEvent) {
@@ -849,24 +874,42 @@ export default function SettingsPage() {
 
         {currentTab === "google" && (
           <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
+            {/* Header */}
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold text-[#040404]">Google Business</h2>
-                <p className="text-sm text-[#6A6A82] mt-1">Connection, sync status, and review activity.</p>
-              </div>
-              <Link href="/dashboard/review-link" className="text-sm font-medium text-[#5F30EB] hover:underline">Open Review Link</Link>
-            </div>
-            {googleError && <p className="mt-4 text-sm text-red-500">{googleError}</p>}
-            {googleNotice && <p className="mt-4 text-sm text-[#5F30EB]">{googleNotice}</p>}
-            <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_auto]">
-              <div>
-                <p className={`text-lg font-semibold ${connected ? "text-[#5F30EB]" : "text-[#040404]"}`}>{connected ? `${googleStatus?.business?.name || "Business"} connected.` : "Business profile not connected yet."}</p>
-                <p className="mt-2 text-sm text-[#6A6A82]">Connect Google first, then sync reviews so AI replies can work with real data.</p>
-                {getGoogleConnectBlockMessage(googleStatus) && (
-                  <p className="mt-3 text-sm text-[#C05B2D]">{getGoogleConnectBlockMessage(googleStatus)}</p>
+                {connected && (
+                  <span className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    Connected
+                  </span>
                 )}
+              </div>
+              <Link href="/dashboard/review-link" className="text-sm font-medium text-[#5F30EB] hover:underline self-start md:self-auto">Open Review Link</Link>
+            </div>
+
+            {/* Messages */}
+            {googleError && <p className="mt-4 rounded-2xl bg-red-500/8 px-4 py-3 text-sm text-red-500">{googleError}</p>}
+            {googleNotice && <p className="mt-4 rounded-2xl bg-[#5F30EB]/8 px-4 py-3 text-sm text-[#5F30EB]">{googleNotice}</p>}
+            {!googleError && getGoogleConnectBlockMessage(googleStatus) && (
+              <p className="mt-4 rounded-2xl bg-orange-500/8 px-4 py-3 text-sm text-orange-600">{getGoogleConnectBlockMessage(googleStatus)}</p>
+            )}
+
+            <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_auto]">
+              <div className="space-y-5">
+                {/* Business name / empty state */}
+                {connected ? (
+                  <div>
+                    <p className="text-base font-semibold text-[#040404]">{googleStatus?.business?.name || "Business Profile"}</p>
+                    <p className="mt-0.5 text-sm text-[#8A8AA0]">Reviews are syncing automatically every hour.</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-[#6A6A82]">Connect your Google Business Profile to start syncing reviews and generating AI replies.</p>
+                )}
+
+                {/* Location picker */}
                 {availableLocations && availableLocations.length > 1 && (
-                  <div className="mt-4 rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 space-y-3">
+                  <div className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 space-y-3">
                     <p className="text-sm font-medium text-[#040404]">Select a location to connect:</p>
                     <select
                       value={selectedLocation}
@@ -879,7 +922,7 @@ export default function SettingsPage() {
                     </select>
                     <div className="flex gap-3">
                       <button
-                        onClick={() => void connectAndSync(selectedLocation)}
+                        onClick={() => void connectAndSync(selectedLocation, connectMode)}
                         disabled={connectingGoogle}
                         className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
                       >
@@ -894,23 +937,83 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 )}
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {!connected && !availableLocations && (
-                    <button onClick={handleConnectGoogle} disabled={connectingGoogle} className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer">{connectingGoogle ? "Connecting..." : "Connect Business Profile"}</button>
-                  )}
-                  {connected && (
-                    <button
-                      onClick={() => void handleDisconnectGoogle()}
-                      disabled={disconnectingGoogle}
-                      className="rounded-2xl border border-red-500/20 px-5 py-3 text-sm font-semibold text-red-500 disabled:opacity-60 cursor-pointer"
-                    >
-                      {disconnectingGoogle ? "Disconnecting..." : "Disconnect"}
-                    </button>
-                  )}
-                  <Link href="/dashboard/analytics" className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63]">Open Dashboard</Link>
-                </div>
+
+                {/* Disconnect confirmation */}
+                {showDisconnectConfirm && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 space-y-3">
+                    <p className="text-sm text-[#040404]">
+                      Disconnect <strong>{googleStatus?.business?.name}</strong>? Review syncing will stop until you reconnect.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={async () => { setShowDisconnectConfirm(false); await handleDisconnectGoogle(); }}
+                        disabled={disconnectingGoogle}
+                        className="rounded-2xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
+                      >
+                        {disconnectingGoogle ? "Disconnecting..." : "Yes, Disconnect"}
+                      </button>
+                      <button
+                        onClick={() => setShowDisconnectConfirm(false)}
+                        className="rounded-2xl border border-[#E6E9F8] px-5 py-2.5 text-sm font-medium text-[#4F4F63] cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                {!availableLocations && !showDisconnectConfirm && (
+                  <div className="flex flex-wrap gap-3">
+                    {!connected ? (
+                      <button
+                        onClick={() => void handleConnectGoogle("update")}
+                        disabled={connectingGoogle}
+                        className="rounded-2xl bg-[#5F30EB] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
+                      >
+                        {connectingGoogle ? "Connecting..." : "Connect Business Profile"}
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => void handleSyncReviews()}
+                          disabled={syncingReviews}
+                          className="rounded-2xl bg-[#5F30EB] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
+                        >
+                          {syncingReviews ? "Syncing..." : "Sync Reviews"}
+                        </button>
+                        <button
+                          onClick={() => void handleConnectGoogle("update")}
+                          disabled={connectingGoogle}
+                          className="rounded-2xl border border-[#E6E9F8] px-5 py-2.5 text-sm font-medium text-[#4F4F63] disabled:opacity-60 cursor-pointer"
+                        >
+                          {connectingGoogle ? "Loading..." : "Change Business"}
+                        </button>
+                        {typeof googleStatus?.connectedAccounts === "number" &&
+                          typeof googleStatus?.maxAccounts === "number" &&
+                          googleStatus.connectedAccounts < googleStatus.maxAccounts && (
+                          <button
+                            onClick={() => void handleConnectGoogle("add")}
+                            disabled={connectingGoogle}
+                            className="rounded-2xl border border-[#5F30EB]/30 px-5 py-2.5 text-sm font-medium text-[#5F30EB] disabled:opacity-60 cursor-pointer"
+                          >
+                            {connectingGoogle ? "Loading..." : "Add Profile"}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowDisconnectConfirm(true)}
+                          className="rounded-2xl border border-red-500/20 px-5 py-2.5 text-sm font-medium text-red-500 cursor-pointer"
+                        >
+                          Disconnect
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-3">
+
+              {/* Review stats */}
+              <div className="grid grid-cols-3 gap-3 xl:grid-cols-1 xl:w-28">
                 {[
                   { label: "Total", value: summary.total },
                   { label: "Replied", value: summary.replied },

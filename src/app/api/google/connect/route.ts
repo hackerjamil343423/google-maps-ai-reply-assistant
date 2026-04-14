@@ -143,23 +143,27 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const connectedCount = await getConnectedAccountsCount(workspaceId);
-  if (connectedCount >= access.planInfo.maxAccounts) {
-    return NextResponse.json(
-      {
-        error: `Your ${access.plan} plan allows up to ${access.planInfo.maxAccounts} connected account(s). Upgrade your plan to add more.`,
-        errorCode: "account_limit_reached",
-        action: "none",
-      },
-      { status: 403 }
-    );
+  const body = await req.json().catch(() => ({})) as { locationName?: string; mode?: string };
+  const preferredLocationId = typeof body.locationName === "string" ? body.locationName : undefined;
+  const mode = body.mode === "add" ? "add" : "update";
+
+  // Only enforce account limit when adding a new profile (not when changing an existing one)
+  if (mode === "add") {
+    const connectedCount = await getConnectedAccountsCount(workspaceId);
+    if (connectedCount >= access.planInfo.maxAccounts) {
+      return NextResponse.json(
+        {
+          error: `Your ${access.plan} plan allows up to ${access.planInfo.maxAccounts} connected account(s). Upgrade your plan to add more.`,
+          errorCode: "account_limit_reached",
+          action: "none",
+        },
+        { status: 403 }
+      );
+    }
   }
 
-  const body = await req.json().catch(() => ({})) as { locationName?: string };
-  const preferredLocationId = typeof body.locationName === "string" ? body.locationName : undefined;
-
   try {
-    const business = await connectWorkspaceGoogleBusiness(workspaceId, req.headers, preferredLocationId);
+    const business = await connectWorkspaceGoogleBusiness(workspaceId, req.headers, preferredLocationId, mode);
     return NextResponse.json({ connected: true, business });
   } catch (error) {
     const message =

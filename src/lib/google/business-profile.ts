@@ -280,7 +280,8 @@ export async function listWorkspaceGoogleLocations(
 export async function connectWorkspaceGoogleBusiness(
   workspaceId: string,
   headers: Headers,
-  preferredLocationId?: string
+  preferredLocationId?: string,
+  mode: "update" | "add" = "update"
 ): Promise<GoogleBusinessConnection> {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -327,25 +328,10 @@ export async function connectWorkspaceGoogleBusiness(
   const locationName = normalizeGoogleLocationName(googleAccount.name, location.name!);
   const businessName = location.title?.trim() || "Google Business Profile";
 
-  const existing = await db.query.businesses.findFirst({
-    where: eq(businesses.workspaceId, workspaceId),
-    orderBy: [desc(businesses.createdAt)],
-  });
+  let businessId: string | undefined;
 
-  let businessId = existing?.id;
-
-  if (existing?.id) {
-    await db
-      .update(businesses)
-      .set({
-        name: businessName,
-        googleLocationId: locationName,
-        status: "active",
-        connectedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(businesses.id, existing.id));
-  } else {
+  if (mode === "add") {
+    // Insert a new business record (multi-location: add another profile)
     const [created] = await db
       .insert(businesses)
       .values({
@@ -355,8 +341,49 @@ export async function connectWorkspaceGoogleBusiness(
         status: "active",
         connectedAt: new Date(),
       })
+      .onConflictDoUpdate({
+        target: [businesses.workspaceId, businesses.googleLocationId],
+        set: {
+          name: businessName,
+          status: "active",
+          connectedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      })
       .returning({ id: businesses.id });
     businessId = created?.id;
+  } else {
+    // Update the first existing business record (change location)
+    const existing = await db.query.businesses.findFirst({
+      where: eq(businesses.workspaceId, workspaceId),
+      orderBy: [desc(businesses.createdAt)],
+    });
+
+    if (existing?.id) {
+      await db
+        .update(businesses)
+        .set({
+          name: businessName,
+          googleLocationId: locationName,
+          status: "active",
+          connectedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(businesses.id, existing.id));
+      businessId = existing.id;
+    } else {
+      const [created] = await db
+        .insert(businesses)
+        .values({
+          workspaceId,
+          name: businessName,
+          googleLocationId: locationName,
+          status: "active",
+          connectedAt: new Date(),
+        })
+        .returning({ id: businesses.id });
+      businessId = created?.id;
+    }
   }
 
   if (!businessId) {
