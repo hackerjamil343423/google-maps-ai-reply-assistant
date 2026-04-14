@@ -12,7 +12,7 @@ type ConnectedBusiness = {
   id: string;
   name: string;
   googleLocationId: string | null;
-  connectedAt: string;
+  connectedAt: string | null;
   syncedReviewCount: number;
 };
 
@@ -74,7 +74,10 @@ export default function ReportsPageClient() {
 
   useEffect(() => {
     if (activeBusiness) {
-      setSelectedBusiness(activeBusiness);
+      setSelectedBusiness((current) => {
+        const match = businesses.find((business) => business.id === activeBusiness.id);
+        return match ?? current ?? null;
+      });
       return;
     }
 
