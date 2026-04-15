@@ -4,7 +4,7 @@ import { z } from "zod";
 import { recordReplyEvent } from "@/lib/analytics/reply-events";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
-import { postGoogleReviewReply } from "@/lib/google/business-profile";
+import { postWorkspaceGoogleReviewReply } from "@/lib/google/business-profile";
 import {
   getLatestReplyForReview,
   getWorkspaceReviewById,
@@ -99,7 +99,7 @@ export async function POST(
   }
 
   try {
-    await postGoogleReviewReply(req.headers, review.googleReviewId, content);
+    await postWorkspaceGoogleReviewReply(workspaceId, review.googleReviewId, content);
   } catch (error) {
     const message =
       error instanceof Error

@@ -557,7 +557,7 @@ export async function syncWorkspaceReviewsFromGoogle(
     await connectWorkspaceGoogleBusiness(workspaceId, headers);
   }
 
-  const accessToken = await getGoogleAccessTokenFromHeaders(headers);
+  const accessToken = await getGoogleAccessTokenForWorkspace(workspaceId);
   if (!accessToken) {
     throw new Error("Google account is not linked or access token is unavailable.");
   }
@@ -586,6 +586,19 @@ export async function postGoogleReviewReply(
   content: string
 ) {
   const accessToken = await getGoogleAccessTokenFromHeaders(headers);
+  if (!accessToken) {
+    throw new Error("Google account is not linked or access token is unavailable.");
+  }
+
+  await postGoogleReviewReplyWithToken(accessToken, reviewResourceName, content);
+}
+
+export async function postWorkspaceGoogleReviewReply(
+  workspaceId: string,
+  reviewResourceName: string,
+  content: string
+) {
+  const accessToken = await getGoogleAccessTokenForWorkspace(workspaceId);
   if (!accessToken) {
     throw new Error("Google account is not linked or access token is unavailable.");
   }
@@ -703,7 +716,7 @@ export async function getWorkspaceGoogleReviewLink(
     throw new Error("No connected Google Business Profile found.");
   }
 
-  const accessToken = await getGoogleAccessTokenFromHeaders(headers);
+  const accessToken = await getGoogleAccessTokenForWorkspace(workspaceId);
   if (!accessToken) {
     throw new Error("Google account is not linked or access token is unavailable.");
   }
