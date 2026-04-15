@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date();
-  // Warn when trial ends within 3 days
-  const warningWindowEnd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  // Warn when trial ends within 2 days
+  const warningWindowEnd = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
   // Find subscriptions that are still trialing and expire in the next 3 days
   if (!db) {
