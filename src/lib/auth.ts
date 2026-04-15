@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 
 import * as schema from "@/lib/db/schema";
 import { env } from "@/lib/env";
+import { sendWelcomeEmail } from "@/lib/emails";
 
 const DEV_AUTH_SECRET =
   "dev-only-secret-change-before-production-1234567890";
@@ -38,4 +39,18 @@ export const auth = betterAuth({
     enabled: true,
   },
   socialProviders,
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          await sendWelcomeEmail({
+            toEmail: user.email,
+            name: user.name ?? user.email,
+          }).catch(() => {
+            // Do not block sign-up if the welcome email fails
+          });
+        },
+      },
+    },
+  },
 });
