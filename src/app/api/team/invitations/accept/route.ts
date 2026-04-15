@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getRequestSession } from "@/lib/api/session";
 import { getInvitationAccess, replaceWorkspaceMemberBusinessAssignments } from "@/lib/business-access";
 import { db } from "@/lib/db";
-import { teamInvitations, workspaceMembers } from "@/lib/db/schema";
+import { businesses, teamInvitations, workspaceMembers, workspaces } from "@/lib/db/schema";
 
 const acceptSchema = z.object({
   token: z.string().min(1),
@@ -61,20 +61,42 @@ export async function POST(req: NextRequest) {
 
   const existingMembership = await db.query.workspaceMembers.findFirst({
     where: eq(workspaceMembers.userId, session.user.id),
-    columns: { workspaceId: true },
+    columns: { workspaceId: true, role: true },
   });
 
   if (
     existingMembership &&
     existingMembership.workspaceId !== invitation.workspaceId
   ) {
-    return NextResponse.json(
-      {
-        error:
-          "This account already belongs to another workspace. Workspace switching is not supported yet.",
-      },
-      { status: 409 }
-    );
+    const existingWorkspaceId = existingMembership.workspaceId;
+    const existingWorkspaceMembers = await db.query.workspaceMembers.findMany({
+      where: eq(workspaceMembers.workspaceId, existingWorkspaceId),
+      columns: { userId: true },
+    });
+    const existingBusinesses = await db.query.businesses.findMany({
+      where: eq(businesses.workspaceId, existingWorkspaceId),
+      columns: { id: true },
+    });
+
+    const canAutoMove =
+      existingMembership.role === "owner" &&
+      existingWorkspaceMembers.length === 1 &&
+      existingWorkspaceMembers[0]?.userId === session.user.id &&
+      existingBusinesses.length === 0;
+
+    if (!canAutoMove) {
+      return NextResponse.json(
+        {
+          error:
+            "This account already belongs to another active workspace. Remove it from that workspace first, or use a different email for this invitation.",
+        },
+        { status: 409 }
+      );
+    }
+
+    await db
+      .delete(workspaces)
+      .where(eq(workspaces.id, existingWorkspaceId));
   }
 
   await db
