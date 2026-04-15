@@ -584,10 +584,11 @@ export default function SettingsPage() {
 
   function getBusinessNames(businessIds: string[]) {
     if (businessIds.length === 0) return "No profiles selected";
+    const separator = language === "ar" ? "، " : ", ";
     return businessIds
       .map((id) => businesses.find((item) => item.id === id)?.name)
       .filter(Boolean)
-      .join(", ");
+      .join(separator);
   }
 
   const connected = Boolean(googleStatus?.connected);

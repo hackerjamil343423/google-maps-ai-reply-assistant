@@ -742,4 +742,12 @@ export const AR_STATIC_MAP: Record<string, string> = {
     "حدث خطأ. يرجى المحاولة مرة أخرى.",
   "Google connected successfully.": "تم ربط Google بنجاح.",
   "Invitation sent to": "تم إرسال دعوة إلى",
+  "Profile access": "صلاحية الوصول إلى الملفات",
+  "All profiles": "كل الملفات",
+  "Selected profiles": "ملفات محددة",
+  "No profiles available yet.": "لا توجد ملفات متاحة بعد.",
+  "No profiles selected": "لم يتم تحديد أي ملفات.",
+  "Failed to update profile access.": "فشل تحديث صلاحية الوصول إلى الملفات.",
+  Access: "الوصول",
+  "Access:": "الوصول:",
 };
