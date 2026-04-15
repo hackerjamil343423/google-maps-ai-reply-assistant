@@ -636,7 +636,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative flex min-h-[85vh] flex-col items-center justify-center pt-32 text-[#040404] md:px-6 md:pb-20 md:pt-36">
+      <section className="relative flex min-h-[85vh] flex-col items-center justify-center pt-28 text-[#040404] px-4 pb-16 md:px-6 md:pb-20 md:pt-36">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="landing-grid-bg absolute inset-0 opacity-70" />
           <div className="absolute left-1/2 top-[8%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[#00E0FF33] blur-3xl" />
@@ -644,15 +644,15 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[8%] h-[320px] w-[320px] rounded-full bg-[#5F30EB1C] blur-3xl" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto w-full space-y-8">
+        <div className="relative z-10 flex flex-col items-center text-center px-4 sm:px-6 max-w-4xl mx-auto w-full space-y-6 md:space-y-8">
           {/* Badge */}
           <div className="flex items-center space-x-3">
             <div className="hidden md:flex items-center">
               <div className="w-20 h-px bg-gradient-to-r from-transparent to-white shadow-lg shadow-white/50" />
               <div className="w-2 h-2 rotate-45 bg-white shadow-lg shadow-white/50" />
             </div>
-            <div className="landing-glass-panel rounded-full px-6 py-2 md:px-12">
-              <span className="text-[#040404] text-[12px] md:text-xl tracking-wider">
+            <div className="landing-glass-panel rounded-full px-4 py-2 sm:px-6 md:px-12">
+              <span className="text-[#040404] text-[11px] sm:text-sm md:text-xl tracking-wider">
                 Auto-Reply To Your Google Reviews Using AI
               </span>
             </div>
@@ -664,7 +664,7 @@ export default function Home() {
 
           {/* Headline */}
           <div className="space-y-2 w-full max-w-3xl">
-            <h1 className="text-2xl md:text-4xl 2xl:text-5xl leading-tight font-semibold">
+            <h1 className="text-xl sm:text-2xl md:text-4xl 2xl:text-5xl leading-tight font-semibold">
               Let AI respond to hundreds of your Google Business Profile reviews
               in your unique brand voice.
             </h1>
@@ -816,10 +816,10 @@ export default function Home() {
       </section>
 
       {/* Why Your Business Needs This */}
-      <section className="landing-section-divider py-14 md:py-24 text-[#040404] grid place-items-center">
-        <div className="max-w-6xl mx-auto px-6 w-full">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-5xl font-semibold mb-4">
+      <section className="landing-section-divider py-12 md:py-24 text-[#040404] grid place-items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 w-full">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-3 md:mb-4">
               Why Your Business Needs This
             </h2>
             <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
@@ -828,15 +828,15 @@ export default function Home() {
               critical engine for growth.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {WHY_CARDS.map((card) => (
-              <div key={card.title} className="landing-card rounded-3xl p-8 flex items-center gap-6 text-start">
+              <div key={card.title} className="landing-card rounded-3xl p-5 sm:p-6 md:p-8 flex items-center gap-4 md:gap-6 text-start">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
-                  <p className="text-[#6A6A82] leading-relaxed">{card.desc}</p>
+                  <h3 className="text-lg md:text-xl font-semibold mb-2 md:mb-3">{card.title}</h3>
+                  <p className="text-[#6A6A82] text-sm md:text-base leading-relaxed">{card.desc}</p>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={card.image} className="w-32 h-32 object-contain flex-shrink-0 drop-shadow-sm" alt="" />
+                <img src={card.image} className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 object-contain flex-shrink-0 drop-shadow-sm" alt="" />
               </div>
             ))}
           </div>
@@ -852,10 +852,10 @@ export default function Home() {
       </section>
 
       {/* The Cost of Silence */}
-      <section className="landing-section-divider landing-alt-section py-14 md:py-24 text-[#040404]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-5xl font-semibold mb-4">
+      <section className="landing-section-divider landing-alt-section py-12 md:py-24 text-[#040404]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-3 md:mb-4">
               The Cost of Silence
             </h2>
             <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
@@ -879,21 +879,21 @@ export default function Home() {
       </section>
 
       {/* The Customers We Serve */}
-      <section className="landing-section-divider py-14 md:py-24 text-[#040404]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-5xl font-semibold mb-4">
+      <section className="landing-section-divider py-12 md:py-24 text-[#040404]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-3 md:mb-4">
               The Customers We Serve
             </h2>
           </div>
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 md:gap-8">
             {SERVE_CARDS.map((card) => (
-              <div key={card.title} className="landing-card rounded-3xl p-10 flex items-center gap-12 text-start">
+              <div key={card.title} className="landing-card rounded-3xl p-6 sm:p-8 md:p-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8 md:gap-12 text-start">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={card.image} className="w-56 h-56 object-contain flex-shrink-0 drop-shadow-md" alt="" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-2xl font-semibold mb-4">{card.title}</h3>
-                  <p className="text-[#6A6A82] text-lg leading-relaxed">{card.desc}</p>
+                <img src={card.image} className="w-36 h-36 sm:w-44 sm:h-44 md:w-56 md:h-56 object-contain flex-shrink-0 drop-shadow-md" alt="" />
+                <div className="flex-1 min-w-0 text-center sm:text-start">
+                  <h3 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4">{card.title}</h3>
+                  <p className="text-[#6A6A82] text-base md:text-lg leading-relaxed">{card.desc}</p>
                 </div>
               </div>
             ))}
@@ -902,10 +902,10 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section className="landing-section-divider relative overflow-hidden py-14 md:py-24 text-[#040404]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-5xl font-semibold mb-4">
+      <section className="landing-section-divider relative overflow-hidden py-12 md:py-24 text-[#040404]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-3 md:mb-4">
               Pricing
             </h2>
             <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
@@ -914,11 +914,11 @@ export default function Home() {
               questions to uncover customer pain points conveniently.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {PRICING_PLANS.map((plan) => (
               <div
                 key={plan.name}
-                className={`landing-card rounded-3xl p-8 flex flex-col ${
+                className={`landing-card rounded-3xl p-6 md:p-8 flex flex-col ${
                   plan.highlighted ? "ring-2 ring-[#5F30EB4D] md:-translate-y-3" : ""
                 }`}
               >
@@ -984,18 +984,18 @@ export default function Home() {
       </section>
 
       {/* Join Us / CTA Banner */}
-      <section className="landing-section-divider relative overflow-hidden py-16 md:py-24">
-        <div className="relative z-10 mx-auto max-w-5xl px-6">
-          <div className="landing-glass-panel relative overflow-hidden rounded-[2rem] px-8 py-12 text-center md:px-14">
+      <section className="landing-section-divider relative overflow-hidden py-12 md:py-24">
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="landing-glass-panel relative overflow-hidden rounded-[2rem] px-5 py-10 text-center sm:px-8 sm:py-12 md:px-14">
             <div className="landing-grid-bg pointer-events-none absolute inset-0 opacity-50" />
             <div className="pointer-events-none absolute left-1/2 top-0 h-56 w-56 -translate-x-1/2 rounded-full bg-[#00E0FF2E] blur-3xl" />
             <div className="pointer-events-none absolute -bottom-16 right-10 h-44 w-44 rounded-full bg-[#5F30EB2A] blur-3xl" />
             <div className="relative z-10">
-              <h2 className="mb-6 text-3xl font-semibold md:text-5xl">Join Us</h2>
-              <h3 className="mb-4 text-xl font-medium md:text-2xl">
+              <h2 className="mb-4 text-2xl font-semibold sm:mb-6 sm:text-3xl md:text-5xl">Join Us</h2>
+              <h3 className="mb-3 text-lg font-medium sm:mb-4 sm:text-xl md:text-2xl">
                 Ready to Save Time and Rank Higher?
               </h3>
-              <p className="mx-auto mb-10 max-w-2xl text-lg text-[#4E4E5E]">
+              <p className="mx-auto mb-8 max-w-2xl text-base text-[#4E4E5E] sm:mb-10 sm:text-lg">
                 Your customers are talking about you. It is time to join the
                 conversation.
               </p>
@@ -1011,9 +1011,9 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="landing-section-divider relative overflow-hidden py-12">
+      <footer className="landing-section-divider relative overflow-hidden py-10 md:py-12">
         <div className="landing-grid-bg pointer-events-none absolute inset-0 opacity-35" />
-        <div className="relative z-10 max-w-6xl mx-auto px-6">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex flex-col items-center md:items-start gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
