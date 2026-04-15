@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
+import { getAccessibleBusinessIds } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { reviewAnalysisReports } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const session = await getRequestSession(req);
@@ -20,8 +21,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ reports: [] });
   }
 
+  const accessibleBusinessIds = await getAccessibleBusinessIds(
+    workspaceId,
+    session.user.id
+  );
+  if (accessibleBusinessIds.length === 0) {
+    return NextResponse.json({ reports: [] });
+  }
+
   const reports = await db.query.reviewAnalysisReports.findMany({
-    where: eq(reviewAnalysisReports.workspaceId, workspaceId),
+    where: inArray(reviewAnalysisReports.businessId, accessibleBusinessIds),
     orderBy: [desc(reviewAnalysisReports.generatedAt)],
     columns: {
       id: true,

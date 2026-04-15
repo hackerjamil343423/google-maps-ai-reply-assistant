@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
+import { userCanAccessBusiness } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { businesses, reviewAnalysisReports, reviews as reviewsTable } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
@@ -57,6 +58,15 @@ export async function POST(req: NextRequest) {
   const selectedPeriod: Period = period ?? "this_month";
   const selectedLanguage: "en" | "ar" = language ?? "en";
   const periodBounds = computePeriodBounds(selectedPeriod);
+
+  const hasAccess = await userCanAccessBusiness(
+    workspaceId,
+    session.user.id,
+    businessId
+  );
+  if (!hasAccess) {
+    return NextResponse.json({ error: "Business not found or not connected" }, { status: 404 });
+  }
 
   // Verify business belongs to this workspace and is active
   const business = await db.query.businesses.findFirst({

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getRequestSession } from "@/lib/api/session";
+import { userCanAccessBusiness } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { getWorkspaceGoogleReviewLink } from "@/lib/google/business-profile";
@@ -114,6 +115,19 @@ export async function GET(req: NextRequest) {
   }
 
   const businessId = req.nextUrl.searchParams.get("businessId") || undefined;
+  if (businessId) {
+    const hasAccess = await userCanAccessBusiness(
+      workspaceId,
+      session.user.id,
+      businessId
+    );
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Business not found." },
+        { status: 404 }
+      );
+    }
+  }
 
   try {
     const data = await getWorkspaceGoogleReviewLink(workspaceId, req.headers, businessId);

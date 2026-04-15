@@ -2,6 +2,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getRequestSession } from "@/lib/api/session";
+import { getAccessibleBusinessIds } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { businesses, reviewReplies, reviews } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
@@ -113,9 +114,16 @@ export async function GET(req: NextRequest) {
     where: eq(businesses.workspaceId, workspaceId),
     columns: { id: true, status: true, googleLocationId: true },
   });
+  const accessibleBusinessIds = await getAccessibleBusinessIds(
+    workspaceId,
+    session.user.id
+  );
 
   const activeWorkspaceBusinesses = workspaceBusinesses.filter(
-    (item) => item.status === "active" && Boolean(item.googleLocationId)
+    (item) =>
+      item.status === "active" &&
+      Boolean(item.googleLocationId) &&
+      accessibleBusinessIds.includes(item.id)
   );
   const allBusinessIds = activeWorkspaceBusinesses.map((item) => item.id);
   const businessIds = businessIdFilter

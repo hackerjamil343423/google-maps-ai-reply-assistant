@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
+import { getAccessibleBusinessIds } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { businesses, reviews } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const session = await getRequestSession(req);
@@ -20,6 +21,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Workspace not found" }, { status: 500 });
   }
 
+  const accessibleBusinessIds = await getAccessibleBusinessIds(
+    workspaceId,
+    session.user.id
+  );
+  if (accessibleBusinessIds.length === 0) {
+    return NextResponse.json({ businesses: [] });
+  }
+
   const businessList = await db
     .select({
       id: businesses.id,
@@ -33,7 +42,8 @@ export async function GET(req: NextRequest) {
     .where(
       and(
         eq(businesses.workspaceId, workspaceId),
-        eq(businesses.status, "active")
+        eq(businesses.status, "active"),
+        inArray(businesses.id, accessibleBusinessIds)
       )
     )
     .groupBy(

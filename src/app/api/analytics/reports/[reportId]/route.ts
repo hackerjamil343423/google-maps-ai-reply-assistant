@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
+import { userCanAccessBusiness } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { reviewAnalysisReports } from "@/lib/db/schema";
 import { getResponseStatsForBusiness } from "@/lib/reviews/analysis";
@@ -34,6 +35,15 @@ export async function GET(
   });
 
   if (!report) {
+    return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  }
+
+  const hasAccess = await userCanAccessBusiness(
+    workspaceId,
+    session.user.id,
+    report.businessId
+  );
+  if (!hasAccess) {
     return NextResponse.json({ error: "Report not found" }, { status: 404 });
   }
 

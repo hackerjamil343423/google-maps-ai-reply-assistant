@@ -12,6 +12,11 @@ import { useLanguage } from "@/lib/i18n/language-context";
 type PostType = "auto" | "review";
 type SettingsTab = "profile" | "ai" | "google" | "team" | "billing";
 type Role = "VIEWER" | "EDITOR" | "MANAGER";
+type BusinessAccessMode = "all" | "selected";
+type TeamBusiness = {
+  id: string;
+  name: string;
+};
 type TeamMember = {
   id: string;
   kind: "active" | "invitation";
@@ -22,6 +27,9 @@ type TeamMember = {
   joinedAt: string;
   canEditRole: boolean;
   canRemove: boolean;
+  canEditAccess: boolean;
+  accessMode: BusinessAccessMode;
+  assignedBusinessIds: string[];
 };
 type GoogleStatus = {
   configured: boolean;
@@ -154,14 +162,17 @@ export default function SettingsPage() {
   const [connectedProfiles, setConnectedProfiles] = useState<ConnectedProfile[]>([]);
 
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [businesses, setBusinesses] = useState<string[]>([]);
+  const [businesses, setBusinesses] = useState<TeamBusiness[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteBusiness, setInviteBusiness] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("EDITOR");
+  const [inviteAccessMode, setInviteAccessMode] = useState<BusinessAccessMode>("all");
+  const [inviteBusinessIds, setInviteBusinessIds] = useState<string[]>([]);
   const [teamError, setTeamError] = useState("");
   const [teamSuccess, setTeamSuccess] = useState("");
   const [sendingInvite, setSendingInvite] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [updatingAccessId, setUpdatingAccessId] = useState<string | null>(null);
 
   const [subscription, setSubscription] = useState<SubscriptionState>(FALLBACK_SUBSCRIPTION);
   const [billingError, setBillingError] = useState("");
@@ -238,10 +249,10 @@ export default function SettingsPage() {
     const teamRes = await fetch("/api/team/members", { cache: "no-store" });
     const teamJson = await teamRes.json().catch(() => null);
     if (teamRes.ok) {
-      const nextBusinesses = Array.isArray(teamJson?.businesses) ? teamJson.businesses : ["Primary Workspace"];
+      const nextBusinesses = Array.isArray(teamJson?.businesses) ? teamJson.businesses : [];
       setMembers(Array.isArray(teamJson?.members) ? teamJson.members : []);
       setBusinesses(nextBusinesses);
-      setInviteBusiness((prev) => prev || nextBusinesses[0]);
+      setInviteBusiness((prev) => prev || nextBusinesses[0]?.name || "");
     } else {
       setTeamError(teamJson?.error || "Failed to load team.");
     }
@@ -450,16 +461,28 @@ export default function SettingsPage() {
     event.preventDefault();
     setSendingInvite(true);
     setTeamError("");
+    setTeamSuccess("");
     try {
       const res = await fetch("/api/team/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail, business: inviteBusiness, role: inviteRole }),
+        body: JSON.stringify({
+          email: inviteEmail,
+          business:
+            inviteAccessMode === "selected" && inviteBusinessIds.length === 1
+              ? businesses.find((item) => item.id === inviteBusinessIds[0])?.name || inviteBusiness
+              : inviteBusiness,
+          role: inviteRole,
+          accessMode: inviteAccessMode,
+          businessIds: inviteBusinessIds,
+        }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) throw new Error(json?.error || "Failed to send invitation.");
       setTeamSuccess(`Invitation sent to ${inviteEmail}.`);
       setInviteEmail("");
+      setInviteAccessMode("all");
+      setInviteBusinessIds([]);
       await loadAll();
     } catch (err) {
       setTeamError(err instanceof Error ? err.message : "Failed to send invitation.");
@@ -470,6 +493,8 @@ export default function SettingsPage() {
 
   async function changeMemberRole(member: TeamMember, role: Role) {
     if (!member.canEditRole) return;
+    setTeamError("");
+    setTeamSuccess("");
     const res = await fetch("/api/team/members/role", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -485,6 +510,8 @@ export default function SettingsPage() {
 
   async function removeMember(member: TeamMember) {
     if (!member.canRemove) return;
+    setTeamError("");
+    setTeamSuccess("");
     setRemovingId(member.id);
     const res = await fetch("/api/team/members", {
       method: "DELETE",
@@ -498,6 +525,37 @@ export default function SettingsPage() {
       setMembers((prev) => prev.filter((item) => item.id !== member.id));
     }
     setRemovingId(null);
+  }
+
+  async function changeMemberAccess(
+    member: TeamMember,
+    accessMode: BusinessAccessMode,
+    businessIds: string[]
+  ) {
+    if (!member.canEditAccess) return;
+    setTeamError("");
+    setTeamSuccess("");
+    setUpdatingAccessId(member.id);
+    const res = await fetch("/api/team/members/access", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId: member.id, kind: member.kind, accessMode, businessIds }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      setTeamError(json?.error || "Failed to update profile access.");
+      setUpdatingAccessId(null);
+      return;
+    }
+
+    setMembers((prev) =>
+      prev.map((item) =>
+        item.id === member.id
+          ? { ...item, accessMode, assignedBusinessIds: businessIds }
+          : item
+      )
+    );
+    setUpdatingAccessId(null);
   }
 
   async function startUpgrade(planName: (typeof PLANS)[number]["name"]) {
@@ -514,6 +572,22 @@ export default function SettingsPage() {
       return;
     }
     window.location.href = json.checkoutUrl as string;
+  }
+
+  function toggleInviteBusiness(businessId: string) {
+    setInviteBusinessIds((prev) =>
+      prev.includes(businessId)
+        ? prev.filter((id) => id !== businessId)
+        : [...prev, businessId]
+    );
+  }
+
+  function getBusinessNames(businessIds: string[]) {
+    if (businessIds.length === 0) return "No profiles selected";
+    return businessIds
+      .map((id) => businesses.find((item) => item.id === id)?.name)
+      .filter(Boolean)
+      .join(", ");
   }
 
   const connected = Boolean(googleStatus?.connected);
@@ -1046,12 +1120,28 @@ export default function SettingsPage() {
             <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
               <form onSubmit={sendInvite} className="space-y-4 rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-5">
                 <input required type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="team@example.com" className={INPUT} />
-                <select value={inviteBusiness} onChange={(e) => setInviteBusiness(e.target.value)} className={INPUT}>{businesses.map((item) => <option key={item} value={item}>{item}</option>)}</select>
                 <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Role)} className={INPUT}>
                   <option value="VIEWER">Viewer</option>
                   <option value="EDITOR">Editor</option>
                   <option value="MANAGER">Manager</option>
                 </select>
+                <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4">
+                  <p className="text-sm font-medium text-[#040404]">Profile access</p>
+                  <div className="mt-3 flex gap-2">
+                    <button type="button" onClick={() => { setInviteAccessMode("all"); setInviteBusinessIds([]); }} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${inviteAccessMode === "all" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>All profiles</button>
+                    <button type="button" onClick={() => setInviteAccessMode("selected")} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${inviteAccessMode === "selected" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>Selected profiles</button>
+                  </div>
+                  {inviteAccessMode === "selected" && (
+                    <div className="mt-3 space-y-2">
+                      {businesses.length === 0 ? <p className="text-xs text-[#8A8AA0]">No profiles available yet.</p> : businesses.map((item) => (
+                        <label key={item.id} className="flex items-center gap-2 text-sm text-[#4F4F63]">
+                          <input type="checkbox" checked={inviteBusinessIds.includes(item.id)} onChange={() => toggleInviteBusiness(item.id)} className="accent-[#5F30EB]" />
+                          <span>{item.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <button type="submit" disabled={sendingInvite} className="w-full rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white cursor-pointer disabled:opacity-60">{sendingInvite ? "Sending..." : "Send Invitation"}</button>
               </form>
               <div className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-5">
@@ -1065,7 +1155,8 @@ export default function SettingsPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="text-sm font-medium text-[#040404]">{member.email}</p>
-                          <p className="text-xs text-[#8A8AA0]">{member.business} • {member.joinedAt}</p>
+                          <p className="text-xs text-[#8A8AA0]">{member.business} - {member.joinedAt}</p>
+                          <p className="mt-1 text-xs text-[#6A6A82]">{member.accessMode === "all" ? "Access: All profiles" : `Access: ${getBusinessNames(member.assignedBusinessIds)}`}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_COLORS[member.status]}`}>{member.status}</span>
@@ -1078,6 +1169,26 @@ export default function SettingsPage() {
                             Remove
                           </button>
                         </div>
+                      </div>
+                      <div className="mt-4 rounded-2xl border border-[#F0F2FA] bg-[#FBFBFF] p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button type="button" disabled={!member.canEditAccess || updatingAccessId === member.id} onClick={() => void changeMemberAccess(member, "all", [])} className={`rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${member.accessMode === "all" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>All profiles</button>
+                          <button type="button" disabled={!member.canEditAccess || updatingAccessId === member.id} onClick={() => void changeMemberAccess(member, "selected", member.assignedBusinessIds)} className={`rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${member.accessMode === "selected" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>Selected profiles</button>
+                        </div>
+                        {member.accessMode === "selected" && (
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            {businesses.map((item) => {
+                              const checked = member.assignedBusinessIds.includes(item.id);
+                              const nextIds = checked ? member.assignedBusinessIds.filter((id) => id !== item.id) : [...member.assignedBusinessIds, item.id];
+                              return (
+                                <label key={`${member.id}:${item.id}`} className="flex items-center gap-2 text-sm text-[#4F4F63]">
+                                  <input type="checkbox" checked={checked} disabled={!member.canEditAccess || updatingAccessId === member.id} onChange={() => void changeMemberAccess(member, "selected", nextIds)} className="accent-[#5F30EB]" />
+                                  <span>{item.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

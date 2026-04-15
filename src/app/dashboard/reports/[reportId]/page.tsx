@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { userCanAccessBusiness } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { reviewAnalysisReports } from "@/lib/db/schema";
 import { getResponseStatsForBusiness } from "@/lib/reviews/analysis";
@@ -54,6 +55,19 @@ export default async function ReportDetailPage(
   });
 
   if (!report) {
+    return (
+      <DashboardShell activeHref="/dashboard/reports">
+        <ErrorState reportId={reportId} message="Report not found. It may have been deleted or you don't have access." />
+      </DashboardShell>
+    );
+  }
+
+  const hasAccess = await userCanAccessBusiness(
+    workspaceId,
+    session.user.id,
+    report.businessId
+  );
+  if (!hasAccess) {
     return (
       <DashboardShell activeHref="/dashboard/reports">
         <ErrorState reportId={reportId} message="Report not found. It may have been deleted or you don't have access." />

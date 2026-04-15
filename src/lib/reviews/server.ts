@@ -1,5 +1,6 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
+import { getAccessibleBusinessIds } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { businesses, reviewReplies, reviews } from "@/lib/db/schema";
 
@@ -16,9 +17,17 @@ export interface WorkspaceReviewRecord {
 
 export async function getWorkspaceReviewById(
   workspaceId: string,
-  reviewId: string
+  reviewId: string,
+  userId?: string
 ): Promise<WorkspaceReviewRecord | null> {
   if (!db) return null;
+
+  const accessibleBusinessIds = userId
+    ? await getAccessibleBusinessIds(workspaceId, userId)
+    : [];
+  if (userId && accessibleBusinessIds.length === 0) {
+    return null;
+  }
 
   const row = await db
     .select({
@@ -33,7 +42,13 @@ export async function getWorkspaceReviewById(
     })
     .from(reviews)
     .innerJoin(businesses, eq(businesses.id, reviews.businessId))
-    .where(and(eq(reviews.id, reviewId), eq(businesses.workspaceId, workspaceId)))
+    .where(
+      and(
+        eq(reviews.id, reviewId),
+        eq(businesses.workspaceId, workspaceId),
+        ...(userId ? [inArray(businesses.id, accessibleBusinessIds)] : [])
+      )
+    )
     .limit(1);
 
   return row[0] ?? null;

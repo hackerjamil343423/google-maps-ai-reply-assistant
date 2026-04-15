@@ -4,20 +4,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getRequestSession } from "@/lib/api/session";
+import {
+  replaceInvitationBusinessAssignments,
+  validateBusinessIdsForWorkspace,
+} from "@/lib/business-access";
 import { db } from "@/lib/db";
-import { teamInvitations, user, workspaceMembers } from "@/lib/db/schema";
+import { businesses, teamInvitations, workspaceMembers, workspaces } from "@/lib/db/schema";
+import { sendTeamInvitationEmail, TeamInvitationEmailError } from "@/lib/team-invitations";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const inviteSchema = z.object({
   email: z.string().trim().email(),
   role: z.enum(["VIEWER", "EDITOR", "MANAGER"]),
   business: z.string().trim().optional(),
+  accessMode: z.enum(["all", "selected"]).default("all"),
+  businessIds: z.array(z.string().uuid()).default([]),
 });
 
 function toDbRole(role: "VIEWER" | "EDITOR" | "MANAGER") {
   if (role === "VIEWER") return "viewer";
   if (role === "EDITOR") return "editor";
   return "manager";
+}
+
+function toRoleLabel(role: "VIEWER" | "EDITOR" | "MANAGER") {
+  if (role === "VIEWER") return "Viewer";
+  if (role === "EDITOR") return "Editor";
+  return "Manager";
 }
 
 export async function POST(req: NextRequest) {
@@ -70,33 +83,46 @@ export async function POST(req: NextRequest) {
   }
 
   const role = toDbRole(parsed.data.role);
-  const existingUser = await db.query.user.findFirst({
-    where: eq(user.email, email),
-    columns: { id: true },
+  const workspace = await db.query.workspaces.findFirst({
+    where: eq(workspaces.id, workspaceId),
+    columns: { name: true },
   });
 
-  if (existingUser) {
-    const existingMember = await db.query.workspaceMembers.findFirst({
+  const trimmedBusinessName = parsed.data.business?.trim() || null;
+  if (trimmedBusinessName) {
+    const business = await db.query.businesses.findFirst({
       where: and(
-        eq(workspaceMembers.workspaceId, workspaceId),
-        eq(workspaceMembers.userId, existingUser.id)
+        eq(businesses.workspaceId, workspaceId),
+        eq(businesses.name, trimmedBusinessName)
       ),
-      columns: { userId: true },
+      columns: { id: true },
     });
-    if (existingMember) {
+    if (!business) {
       return NextResponse.json(
-        { error: "This user is already in your workspace." },
+        { error: "Selected business was not found in this workspace." },
         { status: 400 }
       );
     }
+  }
 
-    await db.insert(workspaceMembers).values({
-      workspaceId,
-      userId: existingUser.id,
-      role,
-    });
+  let selectedBusinessIds: string[] = [];
+  try {
+    selectedBusinessIds =
+      parsed.data.accessMode === "selected"
+        ? await validateBusinessIdsForWorkspace(workspaceId, parsed.data.businessIds)
+        : [];
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid profile selection." },
+      { status: 400 }
+    );
+  }
 
-    return NextResponse.json({ success: true, status: "active" });
+  if (parsed.data.accessMode === "selected" && selectedBusinessIds.length === 0) {
+    return NextResponse.json(
+      { error: "Select at least one profile or use All profiles." },
+      { status: 400 }
+    );
   }
 
   const pending = await db.query.teamInvitations.findFirst({
@@ -116,15 +142,59 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const token = randomUUID();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  await db.insert(teamInvitations).values({
+  const [invitation] = await db.insert(teamInvitations).values({
     workspaceId,
     email,
+    businessName: trimmedBusinessName,
+    accessAllBusinesses: parsed.data.accessMode === "all",
     role,
-    token: randomUUID(),
+    token,
     expiresAt,
     invitedBy: session.user.id,
-  });
+  }).returning({ id: teamInvitations.id });
+
+  if (invitation?.id) {
+    await replaceInvitationBusinessAssignments({
+      invitationId: invitation.id,
+      accessMode: parsed.data.accessMode,
+      businessIds: selectedBusinessIds,
+    });
+  }
+
+  try {
+    await sendTeamInvitationEmail({
+      token,
+      invitedEmail: email,
+      inviterName: session.user.name || "A teammate",
+      workspaceName: workspace?.name ?? "Primary Workspace",
+      businessName: trimmedBusinessName,
+      roleLabel: toRoleLabel(parsed.data.role),
+    });
+  } catch (error) {
+    await db
+      .delete(teamInvitations)
+      .where(
+        and(
+          eq(teamInvitations.workspaceId, workspaceId),
+          eq(teamInvitations.token, token)
+        )
+      );
+
+    if (error instanceof TeamInvitationEmailError) {
+      return NextResponse.json(
+        { error: "Invitation email is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL." },
+        { status: 503 }
+      );
+    }
+
+    console.error("Failed to send invitation email", error);
+    return NextResponse.json(
+      { error: "Failed to send the invitation email." },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ success: true, status: "pending" });
 }

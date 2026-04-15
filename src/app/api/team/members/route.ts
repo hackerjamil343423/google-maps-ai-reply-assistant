@@ -1,9 +1,19 @@
 import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  getInvitationAccess,
+  getWorkspaceMemberAccess,
+  getWorkspaceBusinesses,
+} from "@/lib/business-access";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
-import { teamInvitations, user, workspaceMembers, workspaces } from "@/lib/db/schema";
+import {
+  teamInvitations,
+  user,
+  workspaceMembers,
+  workspaces,
+} from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 type UiRole = "VIEWER" | "EDITOR" | "MANAGER";
@@ -15,7 +25,7 @@ function toUiRole(role: string): UiRole {
 }
 
 function formatDate(value: Date | null) {
-  if (!value) return "—";
+  if (!value) return "-";
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "2-digit",
@@ -32,7 +42,7 @@ export async function GET(req: NextRequest) {
   if (!db) {
     return NextResponse.json({
       workspaceName: "Primary Workspace",
-      businesses: ["Primary Workspace"],
+      businesses: [],
       members: [],
     });
   }
@@ -50,7 +60,7 @@ export async function GET(req: NextRequest) {
 
   const workspace = await db.query.workspaces.findFirst({
     where: eq(workspaces.id, workspaceId),
-    columns: { name: true },
+    columns: { name: true, ownerUserId: true },
   });
 
   const myMembership = await db.query.workspaceMembers.findFirst({
@@ -60,7 +70,14 @@ export async function GET(req: NextRequest) {
     ),
     columns: { role: true },
   });
-  const canManage = myMembership?.role === "owner" || myMembership?.role === "manager";
+  const canManage =
+    myMembership?.role === "owner" || myMembership?.role === "manager";
+
+  const workspaceBusinessList = await getWorkspaceBusinesses(workspaceId);
+  const availableBusinesses = workspaceBusinessList.map((item) => ({
+    id: item.id,
+    name: item.name,
+  }));
 
   const activeMembers = await db
     .select({
@@ -68,6 +85,7 @@ export async function GET(req: NextRequest) {
       memberRole: workspaceMembers.role,
       createdAt: workspaceMembers.createdAt,
       email: user.email,
+      accessAllBusinesses: workspaceMembers.accessAllBusinesses,
     })
     .from(workspaceMembers)
     .innerJoin(user, eq(user.id, workspaceMembers.userId))
@@ -83,37 +101,51 @@ export async function GET(req: NextRequest) {
     orderBy: desc(teamInvitations.createdAt),
   });
 
-  const members = [
-    ...activeMembers.map((item) => {
-      const isOwner = item.memberRole === "owner";
+  const members = await Promise.all([
+    ...activeMembers.map(async (item) => {
+      const isOwner = item.memberUserId === workspace?.ownerUserId;
+      const access = await getWorkspaceMemberAccess(
+        workspaceId,
+        item.memberUserId
+      );
+
       return {
         id: item.memberUserId,
         kind: "active" as const,
         email: item.email,
         role: toUiRole(item.memberRole),
-        business: workspace?.name ?? "Primary Workspace",
+        business: workspace?.name ?? "Workspace access",
         status: "active" as const,
         joinedAt: formatDate(item.createdAt),
         canEditRole: canManage && !isOwner,
         canRemove: canManage && !isOwner,
+        canEditAccess: canManage && !isOwner,
+        accessMode: access?.accessMode ?? "all",
+        assignedBusinessIds: access?.businessIds ?? [],
       };
     }),
-    ...pendingInvites.map((item) => ({
-      id: item.id,
-      kind: "invitation" as const,
-      email: item.email,
-      role: toUiRole(item.role),
-      business: workspace?.name ?? "Primary Workspace",
-      status: "pending" as const,
-      joinedAt: "—",
-      canEditRole: canManage,
-      canRemove: canManage,
-    })),
-  ];
+    ...pendingInvites.map(async (item) => {
+      const access = await getInvitationAccess(item.id);
+      return {
+        id: item.id,
+        kind: "invitation" as const,
+        email: item.email,
+        role: toUiRole(item.role),
+        business: item.businessName ?? (workspace?.name ?? "Workspace access"),
+        status: "pending" as const,
+        joinedAt: "-",
+        canEditRole: canManage,
+        canRemove: canManage,
+        canEditAccess: canManage,
+        accessMode: access.accessMode,
+        assignedBusinessIds: access.businessIds,
+      };
+    }),
+  ]);
 
   return NextResponse.json({
     workspaceName: workspace?.name ?? "Primary Workspace",
-    businesses: [workspace?.name ?? "Primary Workspace"],
+    businesses: availableBusinesses,
     members,
   });
 }
@@ -146,13 +178,21 @@ export async function DELETE(req: NextRequest) {
     where: and(
       eq(workspaceMembers.workspaceId, workspaceId),
       eq(workspaceMembers.userId, session.user.id),
-      or(eq(workspaceMembers.role, "owner"), eq(workspaceMembers.role, "manager"))
+      or(
+        eq(workspaceMembers.role, "owner"),
+        eq(workspaceMembers.role, "manager")
+      )
     ),
     columns: { userId: true },
   });
   if (!myMembership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  const workspace = await db.query.workspaces.findFirst({
+    where: eq(workspaces.id, workspaceId),
+    columns: { ownerUserId: true },
+  });
 
   const body = await req.json().catch(() => null);
   const memberId =
@@ -164,22 +204,13 @@ export async function DELETE(req: NextRequest) {
   }
 
   if (kind === "active") {
-    const member = await db.query.workspaceMembers.findFirst({
-      where: and(
-        eq(workspaceMembers.workspaceId, workspaceId),
-        eq(workspaceMembers.userId, memberId)
-      ),
-      columns: { role: true },
-    });
-    if (!member) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 });
-    }
-    if (member.role === "owner") {
+    if (memberId === workspace?.ownerUserId) {
       return NextResponse.json(
         { error: "Owner cannot be removed." },
         { status: 400 }
       );
     }
+
     await db
       .delete(workspaceMembers)
       .where(

@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   const failed: Array<{ reviewId: string; error: string }> = [];
 
   for (const reviewId of reviewIds) {
-    const review = await getWorkspaceReviewById(workspaceId, reviewId);
+    const review = await getWorkspaceReviewById(workspaceId, reviewId, session.user.id);
     if (!review) {
       failed.push({ reviewId, error: "Review not found." });
       continue;

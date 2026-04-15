@@ -181,6 +181,7 @@ export const workspaceMembers = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: memberRoleEnum("role").notNull().default("viewer"),
+    accessAllBusinesses: boolean("access_all_businesses").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -291,6 +292,10 @@ export const teamInvitations = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
     email: text("email").notNull(),
+    businessName: text("business_name"),
+    accessAllBusinesses: boolean("access_all_businesses")
+      .notNull()
+      .default(true),
     role: memberRoleEnum("role").notNull().default("viewer"),
     token: text("token").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
@@ -306,6 +311,48 @@ export const teamInvitations = pgTable(
     uniqueIndex("team_invitations_token_unique").on(table.token),
     index("team_invitations_workspace_id_idx").on(table.workspaceId),
     index("team_invitations_email_idx").on(table.email),
+  ]
+);
+
+export const workspaceMemberBusinessAssignments = pgTable(
+  "workspace_member_business_assignments",
+  {
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.workspaceId, table.userId, table.businessId] }),
+    index("workspace_member_business_assignments_user_idx").on(table.userId),
+    index("workspace_member_business_assignments_business_idx").on(table.businessId),
+  ]
+);
+
+export const teamInvitationBusinessAssignments = pgTable(
+  "team_invitation_business_assignments",
+  {
+    invitationId: uuid("invitation_id")
+      .notNull()
+      .references(() => teamInvitations.id, { onDelete: "cascade" }),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.invitationId, table.businessId] }),
+    index("team_invitation_business_assignments_business_idx").on(table.businessId),
   ]
 );
 

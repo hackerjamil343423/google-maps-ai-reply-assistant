@@ -47,6 +47,8 @@ const serverEnvSchema = z.object({
   STREAM_PRODUCT_AGENCY_MAX: optionalNonEmptyString,
   MINIMAX_API_KEY: optionalNonEmptyString,
   CRON_SECRET: optionalNonEmptyString,
+  RESEND_API_KEY: optionalNonEmptyString,
+  RESEND_FROM_EMAIL: optionalNonEmptyString,
 });
 
 export const env = serverEnvSchema.parse({
@@ -67,6 +69,8 @@ export const env = serverEnvSchema.parse({
   STREAM_PRODUCT_AGENCY_MAX: process.env.STREAM_PRODUCT_AGENCY_MAX,
   MINIMAX_API_KEY: process.env.MINIMAX_API_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
 });
 
 export const isProduction = env.NODE_ENV === "production";

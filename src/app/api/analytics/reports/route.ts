@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
+import { userCanAccessBusiness } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { businesses, reviewAnalysisReports } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
@@ -25,6 +26,15 @@ export async function GET(req: NextRequest) {
   const businessId = req.nextUrl.searchParams.get("businessId");
   if (!businessId) {
     return NextResponse.json({ error: "businessId is required" }, { status: 400 });
+  }
+
+  const hasAccess = await userCanAccessBusiness(
+    workspaceId,
+    session.user.id,
+    businessId
+  );
+  if (!hasAccess) {
+    return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
   // Verify business belongs to workspace
@@ -82,6 +92,15 @@ export async function POST(req: NextRequest) {
 
   if (!businessId) {
     return NextResponse.json({ error: "businessId is required" }, { status: 400 });
+  }
+
+  const hasAccess = await userCanAccessBusiness(
+    workspaceId,
+    session.user.id,
+    businessId
+  );
+  if (!hasAccess) {
+    return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
   // Verify business belongs to workspace

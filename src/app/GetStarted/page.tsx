@@ -57,6 +57,7 @@ function GetStartedContent() {
   const isArabic = language === "ar";
   const mode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const isLogin = mode === "login";
+  const redirectParam = sanitizeRedirect(searchParams.get("redirect"));
 
   const copy = useMemo(
     () =>
@@ -164,7 +165,10 @@ function GetStartedContent() {
 
   function switchMode() {
     const nextMode = isLogin ? "signup" : "login";
-    router.replace(`/GetStarted?mode=${nextMode}`);
+    const redirectQuery = redirectParam
+      ? `&redirect=${encodeURIComponent(redirectParam)}`
+      : "";
+    router.replace(`/GetStarted?mode=${nextMode}${redirectQuery}`);
     setError("");
     setPassword("");
     setConfirmPassword("");
@@ -196,11 +200,11 @@ function GetStartedContent() {
           setError(res.error.message ?? copy.signupFailed);
           return;
         }
-        router.push("/onboarding");
+        router.push(redirectParam || "/onboarding");
         return;
       }
 
-      router.push("/dashboard");
+      router.push(redirectParam || "/dashboard");
       router.refresh();
     } catch {
       setError(copy.authFailed);
@@ -215,7 +219,7 @@ function GetStartedContent() {
     try {
       const res = (await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/onboarding",
+        callbackURL: redirectParam || "/onboarding",
       })) as unknown as {
         error?: { message?: string };
         data?: { url?: string } | null;
@@ -478,6 +482,12 @@ function GetStartedContent() {
       </div>
     </main>
   );
+}
+
+function sanitizeRedirect(value: string | null) {
+  if (!value) return "";
+  if (!value.startsWith("/") || value.startsWith("//")) return "";
+  return value;
 }
 
 export default function GetStartedPage() {

@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -58,7 +59,9 @@ function OnboardingRoot({
 
   // Keep canGoNext fresh without needing it in useCallback deps
   const canGoNextRef = useRef(canGoNext);
-  canGoNextRef.current = canGoNext;
+  useEffect(() => {
+    canGoNextRef.current = canGoNext;
+  }, [canGoNext]);
 
   const step = value ?? internalStep;
 

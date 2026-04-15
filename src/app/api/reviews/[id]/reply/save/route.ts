@@ -46,7 +46,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid review id." }, { status: 400 });
   }
 
-  const review = await getWorkspaceReviewById(workspaceId, reviewId);
+  const review = await getWorkspaceReviewById(workspaceId, reviewId, session.user.id);
   if (!review) {
     return NextResponse.json({ error: "Review not found." }, { status: 404 });
   }
