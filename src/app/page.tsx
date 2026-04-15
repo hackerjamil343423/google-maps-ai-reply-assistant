@@ -735,10 +735,6 @@ export default function Home() {
             )}
 
             <div className="text-center text-[#4F4F63] max-w-2xl px-4">
-              <p className="mb-2">
-                Don&apos;t just take our word for it. Watch our AI write a
-                perfect response for your business right now.
-              </p>
               <p>
                 Try It For FREE! Enter your business name as it appears on
                 Google above and watch the AI respond to 3 of your reviews
