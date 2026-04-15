@@ -10,7 +10,7 @@ import { DEFAULT_AI_PROMPT, TONE_OPTIONS } from "@/lib/ai/default-settings";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 type PostType = "auto" | "review";
-type SettingsTab = "profile" | "ai" | "google" | "team" | "billing";
+type SettingsTab = "profile" | "ai" | "google" | "team" | "billing" | "workspace";
 type Role = "VIEWER" | "EDITOR" | "MANAGER";
 type BusinessAccessMode = "all" | "selected";
 type TeamBusiness = {
@@ -137,7 +137,7 @@ export default function SettingsPage() {
   const handledGoogleCallback = useRef(false);
   const handledBillingParams = useRef(false);
 
-  const currentTab = (["profile", "ai", "google", "team", "billing"].includes(searchParams.get("section") || "")
+  const currentTab = (["profile", "ai", "google", "team", "billing", "workspace"].includes(searchParams.get("section") || "")
     ? searchParams.get("section")
     : "ai") as SettingsTab;
 
@@ -178,6 +178,16 @@ export default function SettingsPage() {
   const [billingError, setBillingError] = useState("");
   const [billingNotice, setBillingNotice] = useState("");
   const [upgrading, setUpgrading] = useState<string | null>(null);
+
+  /* ── Workspace state ── */
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [workspaceRole, setWorkspaceRole] = useState("");
+  const [workspaceIsOwner, setWorkspaceIsOwner] = useState(false);
+  const [savingWorkspaceName, setSavingWorkspaceName] = useState(false);
+  const [savedWorkspaceName, setSavedWorkspaceName] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState("");
+  const [leavingWorkspace, setLeavingWorkspace] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   /* ── Profile state ── */
   const { language, setLanguage, ready: languageReady } = useLanguage();
@@ -263,6 +273,14 @@ export default function SettingsPage() {
       setSubscription({ ...FALLBACK_SUBSCRIPTION, ...billingJson });
     } else {
       setBillingError(billingJson?.error || "Failed to load billing.");
+    }
+
+    const workspaceRes = await fetch("/api/workspace", { cache: "no-store" });
+    const workspaceJson = await workspaceRes.json().catch(() => null);
+    if (workspaceRes.ok && workspaceJson) {
+      setWorkspaceName(workspaceJson.name ?? "");
+      setWorkspaceRole(workspaceJson.role ?? "");
+      setWorkspaceIsOwner(workspaceJson.isOwner ?? false);
     }
   }, []);
 
@@ -574,6 +592,44 @@ export default function SettingsPage() {
     window.location.href = json.checkoutUrl as string;
   }
 
+  async function handleWorkspaceNameSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingWorkspaceName(true);
+    setSavedWorkspaceName(false);
+    setWorkspaceError("");
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: workspaceName }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || "Failed to save workspace name.");
+      setSavedWorkspaceName(true);
+      setTimeout(() => setSavedWorkspaceName(false), 2500);
+    } catch (err) {
+      setWorkspaceError(err instanceof Error ? err.message : "Failed to save workspace name.");
+    } finally {
+      setSavingWorkspaceName(false);
+    }
+  }
+
+  async function handleLeaveWorkspace() {
+    setLeavingWorkspace(true);
+    setWorkspaceError("");
+    try {
+      const res = await fetch("/api/workspace", { method: "DELETE" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || "Failed to leave workspace.");
+      router.refresh();
+      router.push("/dashboard/analytics");
+    } catch (err) {
+      setWorkspaceError(err instanceof Error ? err.message : "Failed to leave workspace.");
+      setLeavingWorkspace(false);
+      setShowLeaveConfirm(false);
+    }
+  }
+
   function toggleInviteBusiness(businessId: string) {
     setInviteBusinessIds((prev) =>
       prev.includes(businessId)
@@ -661,6 +717,7 @@ export default function SettingsPage() {
             { key: "google", label: "Google Business" },
             { key: "team", label: "Team" },
             { key: "billing", label: "Billing" },
+            { key: "workspace", label: language === "ar" ? "مساحة العمل" : "Workspace" },
           ].map((tab) => {
             const isActive = currentTab === tab.key;
             return (
@@ -1195,6 +1252,137 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
+            </div>
+          </section>
+        )}
+
+        {currentTab === "workspace" && (
+          <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
+            <h2 className="text-xl font-semibold text-[#040404]">
+              {language === "ar" ? "مساحة العمل" : "Workspace"}
+            </h2>
+            <p className="text-sm text-[#6A6A82] mt-1">
+              {language === "ar"
+                ? "إدارة إعدادات مساحة العمل وعضويتك."
+                : "Manage this workspace's settings and your membership."}
+            </p>
+
+            {workspaceError && (
+              <div className="mt-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                {workspaceError}
+              </div>
+            )}
+
+            <div className="mt-6 space-y-8">
+              {/* Name */}
+              <div>
+                <h3 className="text-base font-medium text-[#040404] mb-4 pb-3 border-b border-[#E6E1FA]">
+                  {language === "ar" ? "اسم مساحة العمل" : "Workspace Name"}
+                </h3>
+                <form onSubmit={handleWorkspaceNameSave} className="flex items-end gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm text-[#6A6A82] mb-1.5">
+                      {language === "ar" ? "الاسم" : "Name"}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={100}
+                      className={INPUT}
+                      value={workspaceName}
+                      onChange={(e) => setWorkspaceName(e.target.value)}
+                      disabled={!workspaceIsOwner}
+                    />
+                    {!workspaceIsOwner && (
+                      <p className="mt-1.5 text-xs text-[#9490A8]">
+                        {language === "ar"
+                          ? "يمكن لمالك مساحة العمل فقط إعادة تسميتها."
+                          : "Only the workspace owner can rename it."}
+                      </p>
+                    )}
+                  </div>
+                  {workspaceIsOwner && (
+                    <button
+                      type="submit"
+                      disabled={savingWorkspaceName}
+                      className="px-6 py-3 rounded-full font-semibold text-white bg-[#5F30EB] transition-all cursor-pointer disabled:opacity-60 hover:opacity-90 active:scale-[0.97] flex items-center gap-2 shrink-0"
+                    >
+                      {savingWorkspaceName ? (
+                        <>
+                          <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                          {language === "ar" ? "جارٍ الحفظ..." : "Saving…"}
+                        </>
+                      ) : (language === "ar" ? "حفظ" : "Save")}
+                    </button>
+                  )}
+                  {savedWorkspaceName && (
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-600 text-sm shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                      {language === "ar" ? "تم الحفظ" : "Saved"}
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              {/* Role */}
+              <div>
+                <h3 className="text-base font-medium text-[#040404] mb-4 pb-3 border-b border-[#E6E1FA]">
+                  {language === "ar" ? "دورك" : "Your Role"}
+                </h3>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#E6E9F8] bg-[#FBFBFF] px-4 py-2 text-sm font-medium text-[#040404]">
+                  {workspaceRole
+                    ? language === "ar"
+                      ? ({ owner: "مالك", manager: "مدير", editor: "محرر", viewer: "مشاهد" }[workspaceRole] ?? workspaceRole)
+                      : workspaceRole.charAt(0).toUpperCase() + workspaceRole.slice(1)
+                    : "—"}
+                </div>
+              </div>
+
+              {/* Leave workspace (non-owners only) */}
+              {!workspaceIsOwner && (
+                <div>
+                  <h3 className="text-base font-medium text-[#040404] mb-4 pb-3 border-b border-[#E6E1FA]">
+                    {language === "ar" ? "مغادرة مساحة العمل" : "Leave Workspace"}
+                  </h3>
+                  <p className="text-sm text-[#6A6A82] mb-4">
+                    {language === "ar"
+                      ? "سيتم إزالتك من مساحة العمل هذه. يمكنك الانضمام مجدداً بدعوة جديدة لاحقاً."
+                      : "You will be removed from this workspace. You can always be re-invited later."}
+                  </p>
+                  {!showLeaveConfirm ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowLeaveConfirm(true)}
+                      className="px-5 py-3 rounded-full text-sm font-semibold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+                    >
+                      {language === "ar" ? "مغادرة مساحة العمل" : "Leave workspace"}
+                    </button>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-sm text-[#040404] font-medium">
+                        {language === "ar" ? "هل أنت متأكد؟" : "Are you sure?"}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleLeaveWorkspace()}
+                        disabled={leavingWorkspace}
+                        className="px-5 py-3 rounded-full text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-60"
+                      >
+                        {leavingWorkspace
+                          ? (language === "ar" ? "جارٍ المغادرة..." : "Leaving…")
+                          : (language === "ar" ? "نعم، غادر" : "Yes, leave")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowLeaveConfirm(false)}
+                        className="px-5 py-3 rounded-full text-sm font-medium text-[#5E5876] border border-[#E6E9F8] hover:bg-[#F0EBFF] transition-colors cursor-pointer"
+                      >
+                        {language === "ar" ? "إلغاء" : "Cancel"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         )}

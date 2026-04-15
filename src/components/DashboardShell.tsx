@@ -109,22 +109,137 @@ function SidebarSection({
   );
 }
 
+type WorkspaceEntry = {
+  id: string;
+  name: string;
+  role: string;
+  isActive: boolean;
+};
+
+const ROLE_AR: Record<string, string> = {
+  owner: "مالك",
+  manager: "مدير",
+  editor: "محرر",
+  viewer: "مشاهد",
+};
+
+function WorkspaceSelector({
+  workspaces,
+  collapsed,
+  onSwitch,
+}: {
+  workspaces: WorkspaceEntry[];
+  collapsed: boolean;
+  onSwitch: (id: string) => void;
+}) {
+  const { language } = useLanguage();
+  const isArabic = language === "ar";
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const active = workspaces.find((w) => w.isActive) ?? workspaces[0];
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  if (!active) return null;
+
+  const initial = active.name.charAt(0).toUpperCase();
+
+  function roleLabel(role: string) {
+    if (isArabic) return ROLE_AR[role] ?? role;
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  }
+
+  return (
+    <div ref={ref} className={`relative ${collapsed ? "flex justify-center" : ""}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        title={collapsed ? active.name : undefined}
+        className={`flex items-center gap-2.5 rounded-2xl border border-[#E6E1FA] bg-[#F8F7FF] transition-colors hover:bg-[#F0EBFF] cursor-pointer ${
+          collapsed ? "h-10 w-10 justify-center" : "w-full px-3 py-2.5"
+        }`}
+      >
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#5F30EB] text-xs font-bold text-white">
+          {initial}
+        </span>
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate text-start text-sm font-medium text-[#040404]">
+              {active.name}
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-[#9490A8]">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </>
+        )}
+      </button>
+
+      {open && (
+        <div
+          className={`absolute z-50 min-w-[220px] rounded-2xl border border-[#E6E1FA] bg-white shadow-[0_8px_24px_rgba(95,48,235,0.12)] overflow-hidden ${
+            collapsed ? "start-full ms-3 top-0" : "top-full mt-2 start-0 end-0"
+          }`}
+        >
+          <p className="px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9490A8]">
+            {isArabic ? "مساحات العمل" : "Workspaces"}
+          </p>
+          {workspaces.map((w) => (
+            <button
+              key={w.id}
+              type="button"
+              onClick={() => { onSwitch(w.id); setOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-start transition-colors hover:bg-[#F0EBFF] cursor-pointer border-t border-[#F4F2FC] ${
+                w.isActive ? "bg-[#F0EBFF]" : ""
+              }`}
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#5F30EB] text-xs font-bold text-white">
+                {w.name.charAt(0).toUpperCase()}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className={`truncate text-sm ${w.isActive ? "font-semibold text-[#5F30EB]" : "font-medium text-[#040404]"}`}>
+                  {w.name}
+                </p>
+                <p className="text-xs text-[#9490A8]">{roleLabel(w.role)}</p>
+              </div>
+              {w.isActive && (
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-[#5F30EB]">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SidebarContent({
   activeHref,
   collapsed,
   onToggle,
   onLogout,
   onNavigate,
+  onSwitchWorkspace,
   profile,
   initials,
+  workspaces: workspaceList,
 }: {
   activeHref: string;
   collapsed: boolean;
   onToggle: () => void;
   onLogout: () => Promise<void>;
   onNavigate?: () => void;
+  onSwitchWorkspace: (id: string) => void;
   profile: { name: string; email: string };
   initials: string;
+  workspaces: WorkspaceEntry[];
 }) {
   return (
     <div className={`flex h-full flex-col rounded-[28px] border border-[#E6E1FA] bg-white text-[#040404] shadow-[0_4px_24px_rgba(95,48,235,0.08)] transition-all ${collapsed ? "w-[88px]" : "w-[272px]"}`}>
@@ -171,6 +286,15 @@ function SidebarContent({
       )}
 
       <div className={`no-scrollbar flex-1 overflow-y-auto ${collapsed ? "px-3" : "px-4"}`}>
+        {workspaceList.length > 0 && (
+          <div className="mt-4">
+            <WorkspaceSelector
+              workspaces={workspaceList}
+              collapsed={collapsed}
+              onSwitch={onSwitchWorkspace}
+            />
+          </div>
+        )}
         <SidebarSection activeHref={activeHref} collapsed={collapsed} onNavigate={onNavigate} />
       </div>
 
@@ -298,9 +422,11 @@ function DashboardShellInner({
     name: "Account",
     email: "",
   });
+  const [workspaceList, setWorkspaceList] = useState<WorkspaceEntry[]>([]);
 
   useEffect(() => {
     let mounted = true;
+
     void fetch("/api/me", { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return null;
@@ -313,18 +439,22 @@ function DashboardShellInner({
       .then((data) => {
         if (!mounted || !data) return;
         const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
-        setProfile({
-          name: fullName || "Account",
-          email: data.email || "",
-        });
+        setProfile({ name: fullName || "Account", email: data.email || "" });
       })
-      .catch(() => {
-        // Keep fallback profile values.
-      });
+      .catch(() => null);
 
-    return () => {
-      mounted = false;
-    };
+    void fetch("/api/workspaces", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{ workspaces: WorkspaceEntry[] }>;
+      })
+      .then((data) => {
+        if (!mounted || !data) return;
+        setWorkspaceList(data.workspaces);
+      })
+      .catch(() => null);
+
+    return () => { mounted = false; };
   }, []);
 
   const initials = useMemo(() => {
@@ -349,6 +479,19 @@ function DashboardShellInner({
     router.refresh();
   }
 
+  async function handleSwitchWorkspace(workspaceId: string) {
+    const res = await fetch("/api/workspaces/switch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspaceId }),
+    });
+    if (!res.ok) return;
+    setWorkspaceList((prev) =>
+      prev.map((w) => ({ ...w, isActive: w.id === workspaceId }))
+    );
+    router.refresh();
+  }
+
   const desktopOffset = collapsed ? "md:ps-[120px]" : "md:ps-[304px]";
 
   return (
@@ -361,8 +504,10 @@ function DashboardShellInner({
           collapsed={collapsed}
           onToggle={toggleSidebar}
           onLogout={handleLogout}
+          onSwitchWorkspace={handleSwitchWorkspace}
           profile={profile}
           initials={initials}
+          workspaces={workspaceList}
         />
       </aside>
 
@@ -376,8 +521,10 @@ function DashboardShellInner({
               onToggle={() => setMobileOpen(false)}
               onLogout={handleLogout}
               onNavigate={() => setMobileOpen(false)}
+              onSwitchWorkspace={handleSwitchWorkspace}
               profile={profile}
               initials={initials}
+              workspaces={workspaceList}
             />
           </div>
         </div>

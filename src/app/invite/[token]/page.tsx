@@ -84,13 +84,15 @@ export default function InvitePage() {
         body: JSON.stringify({ token }),
       });
       const json = (await res.json().catch(() => null)) as
-        | { error?: string }
+        | { error?: string; workspaceId?: string }
         | null;
       if (!res.ok) {
         throw new Error(json?.error || "Failed to accept invitation.");
       }
-      router.push("/dashboard/settings?section=team");
+      // The accept API already set the active_workspace_id cookie.
+      // Refresh then navigate to the dashboard in the new workspace.
       router.refresh();
+      router.push("/dashboard/analytics");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to accept invitation."

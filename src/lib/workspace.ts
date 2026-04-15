@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 
 import { DEFAULT_AI_PROMPT } from "@/lib/ai/default-settings";
 import { db } from "@/lib/db";
@@ -9,12 +10,38 @@ import {
   workspaces,
 } from "@/lib/db/schema";
 
+export const ACTIVE_WORKSPACE_COOKIE = "active_workspace_id";
+
+async function readActiveCookieWorkspace(userId: string): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const cookieWorkspaceId = cookieStore.get(ACTIVE_WORKSPACE_COOKIE)?.value;
+    if (!cookieWorkspaceId || !db) return null;
+    const membership = await db.query.workspaceMembers.findFirst({
+      where: and(
+        eq(workspaceMembers.workspaceId, cookieWorkspaceId),
+        eq(workspaceMembers.userId, userId)
+      ),
+      columns: { workspaceId: true },
+    });
+    return membership?.workspaceId ?? null;
+  } catch {
+    // cookies() unavailable outside request context (e.g., tests)
+    return null;
+  }
+}
+
 export async function ensureWorkspaceForUser(
   userId: string,
   name?: string | null
 ): Promise<string | null> {
   if (!db) return null;
 
+  // Honour the active-workspace cookie when the user belongs to multiple workspaces
+  const cookieWsId = await readActiveCookieWorkspace(userId);
+  if (cookieWsId) return cookieWsId;
+
+  // Fall back to the first workspace this user is a member of
   const member = await db.query.workspaceMembers.findFirst({
     where: eq(workspaceMembers.userId, userId),
     columns: { workspaceId: true },
@@ -24,6 +51,7 @@ export async function ensureWorkspaceForUser(
     return member.workspaceId;
   }
 
+  // No workspace exists — create a personal one
   const workspaceName = `${name?.trim() || "My"} Workspace`;
   const [workspace] = await db
     .insert(workspaces)
@@ -61,6 +89,9 @@ export async function ensureWorkspaceForUser(
 
 export async function getWorkspaceIdForUser(userId: string) {
   if (!db) return null;
+
+  const cookieWsId = await readActiveCookieWorkspace(userId);
+  if (cookieWsId) return cookieWsId;
 
   const member = await db.query.workspaceMembers.findFirst({
     where: eq(workspaceMembers.userId, userId),

@@ -5,7 +5,8 @@ import { z } from "zod";
 import { getRequestSession } from "@/lib/api/session";
 import { getInvitationAccess, replaceWorkspaceMemberBusinessAssignments } from "@/lib/business-access";
 import { db } from "@/lib/db";
-import { businesses, teamInvitations, workspaceMembers, workspaces } from "@/lib/db/schema";
+import { teamInvitations, userProfiles, workspaceMembers } from "@/lib/db/schema";
+import { ACTIVE_WORKSPACE_COOKIE } from "@/lib/workspace";
 
 const acceptSchema = z.object({
   token: z.string().min(1),
@@ -59,46 +60,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const existingMembership = await db.query.workspaceMembers.findFirst({
-    where: eq(workspaceMembers.userId, session.user.id),
-    columns: { workspaceId: true, role: true },
-  });
-
-  if (
-    existingMembership &&
-    existingMembership.workspaceId !== invitation.workspaceId
-  ) {
-    const existingWorkspaceId = existingMembership.workspaceId;
-    const existingWorkspaceMembers = await db.query.workspaceMembers.findMany({
-      where: eq(workspaceMembers.workspaceId, existingWorkspaceId),
-      columns: { userId: true },
-    });
-    const existingBusinesses = await db.query.businesses.findMany({
-      where: eq(businesses.workspaceId, existingWorkspaceId),
-      columns: { id: true },
-    });
-
-    const canAutoMove =
-      existingMembership.role === "owner" &&
-      existingWorkspaceMembers.length === 1 &&
-      existingWorkspaceMembers[0]?.userId === session.user.id &&
-      existingBusinesses.length === 0;
-
-    if (!canAutoMove) {
-      return NextResponse.json(
-        {
-          error:
-            "This account already belongs to another active workspace. Remove it from that workspace first, or use a different email for this invitation.",
-        },
-        { status: 409 }
-      );
-    }
-
-    await db
-      .delete(workspaces)
-      .where(eq(workspaces.id, existingWorkspaceId));
-  }
-
+  // Add (or re-add) user to the invited workspace.
+  // No conflict check — users can belong to multiple workspaces.
   await db
     .insert(workspaceMembers)
     .values({
@@ -139,5 +102,31 @@ export async function POST(req: NextRequest) {
       )
     );
 
-  return NextResponse.json({ success: true });
+  // Mark onboarding as complete so the user lands in the dashboard, not onboarding.
+  await db
+    .insert(userProfiles)
+    .values({
+      userId: session.user.id,
+      onboardingCompleted: true,
+    })
+    .onConflictDoUpdate({
+      target: userProfiles.userId,
+      set: {
+        onboardingCompleted: true,
+        updatedAt: new Date(),
+      },
+    });
+
+  // Switch the active workspace cookie to the newly joined workspace.
+  const response = NextResponse.json({
+    success: true,
+    workspaceId: invitation.workspaceId,
+  });
+  response.cookies.set(ACTIVE_WORKSPACE_COOKIE, invitation.workspaceId, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  return response;
 }
