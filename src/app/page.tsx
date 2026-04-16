@@ -74,16 +74,77 @@ const COST_CARDS = [
   },
 ];
 
+const LOCAL_CATEGORIES = [
+  {
+    label: "مطاعم",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
+      </svg>
+    ),
+  },
+  {
+    label: "مقاهي",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /><line x1="6" y1="2" x2="6" y2="4" /><line x1="10" y1="2" x2="10" y2="4" /><line x1="14" y1="2" x2="14" y2="4" />
+      </svg>
+    ),
+  },
+  {
+    label: "عيادات",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+      </svg>
+    ),
+  },
+  {
+    label: "صالونات",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="6" cy="6" r="3" /><path d="M8.12 8.12 12 12" /><path d="M20 4 8.12 15.88" /><circle cx="18" cy="18" r="3" /><path d="M11.88 11.88 16 16" />
+      </svg>
+    ),
+  },
+  {
+    label: "مراكز تجميل",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 3c-1 3-4 4.5-4 8a4 4 0 0 0 8 0c0-3.5-3-5-4-8z" /><path d="M12 15v6" /><path d="M9 18h6" />
+      </svg>
+    ),
+  },
+  {
+    label: "ورش",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+  },
+  {
+    label: "خدمات منزلية",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    ),
+  },
+];
+
 const SERVE_CARDS = [
+  {
+    image: "/assets/landing/serve-local.png",
+    title: "Local Businesses",
+    desc: "This is for the restaurant owner, plumber, dentist, beauty salon, and more. You want to cut down the hours spent manually typing responses. You want to rank higher in Google Maps' \"recommended businesses\" without hiring a dedicated marketing manager.",
+    categories: LOCAL_CATEGORIES,
+  },
   {
     image: "/assets/landing/serve-agencies.png",
     title: "Marketing Agencies",
     desc: "Stop wasting hours writing manual replies for your clients. Whitelabel our AI automation tool and resell it to your clients at a healthy margin. It is the perfect add-on to generate recurring revenue while delivering tangible SEO results.",
-  },
-  {
-    image: "/assets/landing/serve-local.png",
-    title: "Local Businesses",
-    desc: 'This is for the restaurant owner, plumber, dentist, beauty salon, and more. You want to cut down the hours spent manually typing responses. You want to rank higher in Google Maps\' "recommended businesses" without hiring a dedicated marketing manager.',
+    categories: null,
   },
 ];
 
@@ -832,6 +893,19 @@ export default function Home() {
                 <div className="flex-1 min-w-0 text-center sm:text-start">
                   <h3 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4">{card.title}</h3>
                   <p className="text-[#6A6A82] text-base md:text-lg leading-relaxed">{card.desc}</p>
+                  {card.categories && (
+                    <div className="mt-5 flex flex-wrap justify-center sm:justify-start gap-2">
+                      {card.categories.map((cat) => (
+                        <span
+                          key={cat.label}
+                          className="inline-flex items-center gap-1.5 rounded-2xl border border-[#5F30EB22] bg-[#5F30EB08] px-3 py-1.5 text-xs font-medium text-[#4E4E5E]"
+                        >
+                          <span className="text-[#5F30EB]">{cat.icon}</span>
+                          {cat.label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
