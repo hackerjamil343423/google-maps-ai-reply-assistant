@@ -400,13 +400,14 @@ export default function Home() {
         }}
       >
         <div className="relative flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2 w-40">
+          <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/wakkelni-logo.png"
               alt="Wakkelni Stars Logo"
               className="h-10 w-auto object-contain"
             />
+            <span className="font-semibold text-[#040404] text-sm whitespace-nowrap">Wakkelni Stars</span>
           </Link>
 
           {/* Desktop Nav Links */}
@@ -894,12 +895,15 @@ export default function Home() {
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex flex-col items-center md:items-start gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/assets/brand/wakkelni-logo.png"
-                alt="Wakkelni Stars Logo"
-                className="h-10 w-auto object-contain"
-              />
+              <div className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/assets/brand/wakkelni-logo.png"
+                  alt="Wakkelni Stars Logo"
+                  className="h-10 w-auto object-contain"
+                />
+                <span className="font-semibold text-[#040404] text-sm">Wakkelni Stars</span>
+              </div>
               <p className="text-[#6A6A82] text-sm max-w-xs text-center md:text-start">
                 Transform customer feedback into meaningful connections. Our
                 AI-powered platform helps businesses respond to reviews with

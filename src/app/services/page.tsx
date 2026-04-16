@@ -55,13 +55,14 @@ export default function ServicesPage() {
         }}
       >
         <div className="relative flex items-center justify-between" dir="ltr">
-          <Link href="/" className="flex items-center space-x-2 w-40">
+          <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/wakkelni-logo.png"
               alt="Wakkelni Stars Logo"
               className="h-10 w-auto object-contain"
             />
+            <span className="font-semibold text-[#040404] text-sm whitespace-nowrap">Wakkelni Stars</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -218,9 +219,10 @@ export default function ServicesPage() {
         </div>
         <div className="max-w-7xl mx-auto flex px-4 justify-between flex-col gap-4 lg:flex-row lg:items-center">
           <div className="space-y-4">
-            <div className="w-40">
+            <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni Stars Logo" className="h-10 w-auto object-contain" />
+              <span className="font-semibold text-[#040404] text-sm">Wakkelni Stars</span>
             </div>
             <p className="text-sm text-[#6A6A82] max-w-md leading-relaxed">
               Transform customer feedback into meaningful connections. Our AI-powered platform helps businesses respond to reviews with personalized, professional replies.
