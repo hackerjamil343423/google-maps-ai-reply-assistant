@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
+import PricingCards from "@/components/PricingCards";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -83,66 +84,6 @@ const SERVE_CARDS = [
     image: "/assets/landing/serve-local.png",
     title: "Local Businesses",
     desc: 'This is for the restaurant owner, plumber, dentist, beauty salon, and more. You want to cut down the hours spent manually typing responses. You want to rank higher in Google Maps\' "recommended businesses" without hiring a dedicated marketing manager.',
-  },
-];
-
-const PRICING_PLANS = [
-  {
-    name: "Local Business",
-    tagline:
-      "Perfect for small businesses looking to automate their Google review responses.",
-    price: "$15",
-    period: "/per month",
-    features: [
-      "Single Google Business Profile",
-      "Auto-Reply to Google Reviews",
-      "Auto-Post or Manual Approval",
-      "Customizable AI Prompt",
-      "Tone Control",
-      "Star-Based Review Filtering",
-      "Google Business Profile Integration",
-      "Bulk Reply Management",
-      "AI Rewrite Assistant",
-    ],
-    highlighted: false,
-  },
-  {
-    name: "Multi-Location",
-    tagline:
-      "Ideal for businesses with multiple locations needing comprehensive review management.",
-    price: "$49",
-    period: "/per month",
-    features: [
-      "Up to 5 Google Business Profiles",
-      "Auto-Reply to Google Reviews",
-      "Auto-Post or Manual Approval",
-      "Customizable AI Prompt",
-      "Tone Control",
-      "Star-Based Review Filtering",
-      "Google Business Profile Integration",
-      "Bulk Reply Management",
-      "AI Rewrite Assistant",
-    ],
-    highlighted: true,
-  },
-  {
-    name: "Agency Max",
-    tagline:
-      "Ultimate solution for agencies managing multiple clients' review strategies.",
-    price: "$199",
-    period: "/per month",
-    features: [
-      "Up to 60 Google Business Profiles",
-      "Auto-Reply to Google Reviews",
-      "Auto-Post or Manual Approval",
-      "Customizable AI Prompt",
-      "Tone Control",
-      "Star-Based Review Filtering",
-      "Google Business Profile Integration",
-      "Bulk Reply Management",
-      "AI Rewrite Assistant",
-    ],
-    highlighted: false,
   },
 ];
 
@@ -900,71 +841,12 @@ export default function Home() {
       {/* Pricing */}
       <section className="landing-section-divider relative overflow-hidden py-12 md:py-24 text-[#040404]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10 md:mb-16">
+          <div className="text-center mb-10 md:mb-14">
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-3 md:mb-4">
               Pricing
             </h2>
-            <p className="text-[#4E4E5E] text-sm md:text-lg max-w-2xl mx-auto">
-              Ready to transform your business through AI? Understanding your
-              review content can be tough. Simplify the process with our pre-set
-              questions to uncover customer pain points conveniently.
-            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {PRICING_PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`landing-card rounded-3xl p-6 md:p-8 flex flex-col ${
-                  plan.highlighted ? "ring-2 ring-[#5F30EB4D] md:-translate-y-3" : ""
-                }`}
-              >
-                <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                <p className="text-[#6A6A82] text-sm mb-5 leading-relaxed">
-                  {plan.tagline}
-                </p>
-                <div className="mb-6 pb-6 border-b border-[#5F30EB14]">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-[#6A6A82] text-sm ml-1">
-                    {plan.period}
-                  </span>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-center gap-3 text-sm text-[#4E4E5E]"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#5F30EB"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/GetStarted?mode=signup"
-                  className={`block text-center py-3 rounded-full font-semibold transition-colors ${
-                    plan.highlighted
-                      ? "bg-[#5F30EB] text-[#F6F4FF] hover:bg-[#040404]"
-                      : "bg-white text-black hover:bg-[#5F30EB] hover:text-[#F6F4FF]"
-                  }`}
-                >
-                  Get Started
-                </Link>
-              </div>
-            ))}
-          </div>
+          <PricingCards />
           <div className="text-center mt-12">
             <Link
               href="/GetStarted?mode=signup"

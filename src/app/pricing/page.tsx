@@ -3,53 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PricingCards from "@/components/PricingCards";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Demo", href: "/demo" },
   { label: "Pricing", href: "/pricing" },
   { label: "Services", href: "/services" },
-];
-
-const FEATURES = [
-  "Auto-Reply to Google Reviews",
-  "Auto-Post or Manual Approval",
-  "Customizable AI Prompt",
-  "Tone Control",
-  "Star-Based Review Filtering",
-  "Google Business Profile Integration",
-  "Bulk Reply Management",
-  "AI Rewrite Assistant",
-];
-
-const PLANS = [
-  {
-    name: "Local Business",
-    tagline:
-      "Perfect for small businesses looking to automate their Google review responses.",
-    price: "$15",
-    period: "/per month",
-    profileLine: "Single Google Business Profile",
-    highlighted: false,
-  },
-  {
-    name: "Multi-Location",
-    tagline:
-      "Ideal for businesses with multiple locations needing comprehensive review management.",
-    price: "$49",
-    period: "/per month",
-    profileLine: "Up to 5 Google Business Profiles",
-    highlighted: true,
-  },
-  {
-    name: "Agency Max",
-    tagline:
-      "Ultimate solution for agencies managing multiple clients' review strategies.",
-    price: "$199",
-    period: "/per month",
-    profileLine: "Up to 60 Google Business Profiles",
-    highlighted: false,
-  },
 ];
 
 const FAQS = [
@@ -74,25 +34,6 @@ const FAQS = [
     a: "Absolutely. We use enterprise-grade encryption and security measures. Your customer data and business information are never shared with third parties and are stored securely in compliance with privacy regulations.",
   },
 ];
-
-function CheckIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
 
 function Badge({ label }: { label: string }) {
   return (
@@ -306,107 +247,23 @@ export default function PricingPage() {
 
       {/* Pricing Section */}
       <section className="pt-32 pb-12 md:pt-36 md:pb-24 bg-[#F6F4FF] text-[#040404] relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 text-center grid place-items-center">
-          <Badge label="Pricing" />
-
-          <h2 className="text-xl md:text-3xl max-w-2xl lg:text-4xl font-semibold mb-4">
-            Ready to transform your business through AI?
-          </h2>
-          <p className="text-[#6A6A82] max-w-2xl mx-auto mb-8 md:mb-12">
-            Understanding your review content can be tough. Simplify the process
-            with our pre-set questions to uncover customer pain points
-            conveniently.
-          </p>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 md:mb-14">
+            <Badge label="Pricing" />
+          </div>
 
           {/* Checkout error banner */}
           {checkoutError && (
-            <div className="w-full max-w-xl mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-500 text-sm text-center">
+            <div className="w-full max-w-xl mx-auto mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-500 text-sm text-center">
               {checkoutError}
             </div>
           )}
 
-          {/* Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 place-items-center w-full">
-            {PLANS.map((plan) => {
-              const isLoadingThis = checkingOut === plan.name;
-              return (
-                <div
-                  key={plan.name}
-                  className={`relative rounded-2xl border p-10 backdrop-blur-md ease-in-out w-full ${
-                    plan.highlighted
-                      ? "border-[#5F30EB33] lg:scale-105 lg:mb-40 shadow-[0px_0px_60px_10px_rgba(0,245,212,0.2)]"
-                      : "border-[#5F30EB33]"
-                  }`}
-                  style={{
-                    background: plan.highlighted
-                      ? "linear-gradient(to bottom, #F6F4FF, #EEF2FF, #F6F4FF)"
-                      : "#F6F4FF",
-                    boxShadow: plan.highlighted
-                      ? "0px -4px 100px 21px #EFEFEF14 inset, 0px 0px 60px 10px rgba(0,245,212,0.2)"
-                      : "0px -4px 100px 21px #EFEFEF14 inset",
-                  }}
-                >
-                  <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                  <p className="text-[#6A6A82] text-sm mb-6 leading-relaxed">
-                    {plan.tagline}
-                  </p>
-
-                  {/* Divider */}
-                  <div className="h-px w-full bg-gradient-to-r from-transparent via-[#00E0FF] to-transparent mb-6" />
-
-                  {/* Features */}
-                  <ul className="space-y-3 mb-8 text-left">
-                    <li className="flex items-center text-[#4F4F63] text-[15px]">
-                      <div className="w-5 h-5 rounded-md bg-[#5F30EB] flex items-center justify-center mr-3 flex-shrink-0 text-black">
-                        <CheckIcon />
-                      </div>
-                      {plan.profileLine}
-                    </li>
-                    {FEATURES.map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-center text-[#4F4F63] text-[15px]"
-                      >
-                        <div className="w-5 h-5 rounded-md bg-[#5F30EB] flex items-center justify-center mr-3 flex-shrink-0 text-black">
-                          <CheckIcon />
-                        </div>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Price + CTA */}
-                  <div className="w-full grid place-items-center md:place-items-start">
-                    <h4 className="text-4xl font-bold mb-4 text-[#040404]">
-                      {plan.price}{" "}
-                      <span className="text-sm text-[#00E0FF]">
-                        {plan.period}
-                      </span>
-                    </h4>
-                    <button
-                      onClick={() => void handlePlanClick(plan.name)}
-                      disabled={!!checkingOut}
-                      className="w-[60%] py-3 px-6 rounded-full font-medium transition-all text-center bg-[#EEF2FF] border border-[#00E0FF]/30 text-[#00E0FF] hover:bg-[#00E0FF]/10 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {isLoadingThis ? (
-                        <>
-                          <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                          </svg>
-                          Redirecting...
-                        </>
-                      ) : isAuthenticated ? (
-                        "Subscribe Now"
-                      ) : (
-                        "Get Started"
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <PricingCards
+            onPlanClick={(name) => void handlePlanClick(name)}
+            checkingOut={checkingOut}
+            isAuthenticated={isAuthenticated}
+          />
 
           {/* Free Trial CTA */}
           <div className="mt-16 md:mt-24 flex flex-col items-center">

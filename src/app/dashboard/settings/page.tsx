@@ -1,10 +1,12 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import DashboardShell from "@/components/DashboardShell";
+import SarIcon from "@/components/SarIcon";
 import { useBusinessContext } from "@/lib/business-context";
 import { DEFAULT_AI_PROMPT, TONE_OPTIONS } from "@/lib/ai/default-settings";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -39,7 +41,7 @@ type GoogleStatus = {
   business: { name: string } | null;
   requiredScopes: string[];
   subscriptionAllowed?: boolean;
-  subscriptionReason?: "trial_expired" | "canceled" | "plan_limit";
+  subscriptionReason?: "trial_expired" | "canceled" | "plan_limit" | "subscription_expired";
   plan?: "Local Business" | "Multi-Location" | "Agency Max" | "free";
   subscriptionStatus?: string;
   connectedAccounts?: number;
@@ -57,6 +59,7 @@ type SubscriptionState = {
   plan: "Local Business" | "Multi-Location" | "Agency Max" | "free";
   status: "trialing" | "active" | "past_due" | "canceled";
   price: string;
+  billingInterval: "monthly" | "yearly";
   nextBillingAt: string;
   connectedAccounts: number;
   maxAccounts: number;
@@ -77,15 +80,16 @@ const STATUS_COLORS: Record<TeamMember["status"], string> = {
 };
 
 const PLANS = [
-  { name: "Local Business", price: "$15", accounts: "Up to 1 account" },
-  { name: "Multi-Location", price: "$49", accounts: "Up to 5 accounts" },
-  { name: "Agency Max", price: "$199", accounts: "Up to 60 accounts" },
+  { name: "Local Business", monthlyPrice: "149", yearlyPrice: "1,430", yearlyMonthly: "119", accounts: "Up to 1 account" },
+  { name: "Multi-Location", monthlyPrice: "349", yearlyPrice: "3,350", yearlyMonthly: "279", accounts: "Up to 5 accounts" },
+  { name: "Agency Max", monthlyPrice: "999", yearlyPrice: "9,590", yearlyMonthly: "799", accounts: "Up to 60 accounts" },
 ] as const;
 
 const FALLBACK_SUBSCRIPTION: SubscriptionState = {
   plan: "free",
   status: "trialing",
-  price: "$0",
+  price: "0",
+  billingInterval: "monthly",
   nextBillingAt: "N/A",
   connectedAccounts: 0,
   maxAccounts: 1,
@@ -112,9 +116,13 @@ function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
     return "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.";
   }
   if (status.subscriptionAllowed === false) {
-    return status.subscriptionReason === "trial_expired"
-      ? "Your free trial has expired. Upgrade your plan before connecting Google Business."
-      : "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
+    if (status.subscriptionReason === "trial_expired") {
+      return "Your free trial has expired. Upgrade your plan before connecting Google Business.";
+    }
+    if (status.subscriptionReason === "subscription_expired") {
+      return "Your subscription has expired. Renew your plan before connecting Google Business.";
+    }
+    return "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
   }
 
   if (
@@ -178,6 +186,7 @@ export default function SettingsPage() {
   const [billingError, setBillingError] = useState("");
   const [billingNotice, setBillingNotice] = useState("");
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [selectedInterval, setSelectedInterval] = useState<"monthly" | "yearly">("monthly");
 
   /* ── Workspace state ── */
   const [workspaceName, setWorkspaceName] = useState("");
@@ -581,7 +590,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/subscription/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: planName }),
+      body: JSON.stringify({ plan: planName, billingInterval: selectedInterval }),
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.checkoutUrl) {
@@ -1398,28 +1407,102 @@ export default function SettingsPage() {
             </div>
             {billingNotice && <p className="mt-4 text-sm text-green-600">{billingNotice}</p>}
             {billingError && <p className="mt-4 text-sm text-red-500">{billingError}</p>}
+
+            {/* Current plan stats */}
             <div className="mt-5 grid gap-4 lg:grid-cols-4">
-              {[
-                { label: "Plan", value: subscription.plan === "free" ? "Free" : subscription.plan },
-                { label: "Status", value: subscription.status },
-                { label: "Price", value: `${subscription.price}/month` },
-                { label: "Next Billing", value: subscription.nextBillingAt },
-              ].map((item) => (
+              {(
+                [
+                  { label: "Plan", value: subscription.plan === "free" ? "Free" : subscription.plan },
+                  { label: "Status", value: subscription.status },
+                  {
+                    label: "Price",
+                    value: subscription.plan === "free" ? (
+                      "Free"
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <SarIcon className="h-3.5 w-auto flex-shrink-0" />
+                        {subscription.price}
+                        {subscription.billingInterval === "yearly" ? "/year" : "/month"}
+                      </span>
+                    ),
+                  },
+                  { label: "Next Billing", value: subscription.nextBillingAt },
+                ] as { label: string; value: React.ReactNode }[]
+              ).map((item) => (
                 <div key={item.label} className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-[#8A8AA0]">{item.label}</p>
-                  <p className="mt-2 text-sm font-semibold text-[#040404]">{item.value}</p>
+                  <p className="mt-2 text-sm font-semibold text-[#040404] capitalize">{item.value}</p>
                 </div>
               ))}
             </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
+
+            {/* Billing interval toggle */}
+            <div className="mt-7 flex flex-col items-center gap-2">
+              <div className="inline-flex items-center rounded-full border border-[#E6E9F8] bg-[#FBFBFF] p-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedInterval("monthly")}
+                  className={`rounded-full px-5 py-2 text-sm font-medium transition-all cursor-pointer ${
+                    selectedInterval === "monthly"
+                      ? "bg-[#1A1824] text-white shadow-sm"
+                      : "text-[#5E5876] hover:text-[#5F30EB]"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedInterval("yearly")}
+                  className={`rounded-full px-5 py-2 text-sm font-medium transition-all cursor-pointer ${
+                    selectedInterval === "yearly"
+                      ? "bg-[#1A1824] text-white shadow-sm"
+                      : "text-[#5E5876] hover:text-[#5F30EB]"
+                  }`}
+                >
+                  Yearly
+                </button>
+              </div>
+              {selectedInterval === "yearly" && (
+                <p className="text-xs font-semibold text-green-600">Save 2 months — get 12 months for the price of 10</p>
+              )}
+            </div>
+
+            {/* Plan cards */}
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
               {PLANS.map((plan) => {
-                const isCurrent = subscription.plan === plan.name;
+                const isCurrent =
+                  subscription.plan === plan.name &&
+                  subscription.billingInterval === selectedInterval;
+                const displayPrice =
+                  selectedInterval === "yearly" ? plan.yearlyMonthly : plan.monthlyPrice;
                 return (
-                  <div key={plan.name} className={`rounded-[24px] border p-5 ${isCurrent ? "border-[#5F30EB]/30 bg-[#5F30EB]/8" : "border-[#E6E9F8] bg-[#FBFBFF]"}`}>
-                    <p className="text-sm font-semibold text-[#040404]">{plan.name}</p>
-                    <p className="mt-2 text-2xl font-semibold text-[#5F30EB]">{plan.price}<span className="text-sm text-[#8A8AA0]">/mo</span></p>
+                  <div key={plan.name} className={`rounded-[24px] border p-5 ${isCurrent ? "border-[#5F30EB]/30 bg-[#5F30EB]/[0.05]" : "border-[#E6E9F8] bg-[#FBFBFF]"}`}>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-[#040404]">{plan.name}</p>
+                      {selectedInterval === "yearly" && (
+                        <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
+                          Save 2 months
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold text-[#5F30EB] flex items-center gap-1">
+                      <SarIcon className="h-5 w-auto flex-shrink-0" />
+                      {displayPrice}
+                      <span className="text-sm text-[#8A8AA0]">/mo</span>
+                    </p>
+                    {selectedInterval === "yearly" && (
+                      <p className="mt-0.5 text-xs text-[#8A8AA0] flex items-center gap-0.5">
+                        Billed as <SarIcon className="h-2.5 w-auto" />{plan.yearlyPrice}/year
+                      </p>
+                    )}
                     <p className="mt-2 text-sm text-[#6A6A82]">{plan.accounts}</p>
-                    <button onClick={() => !isCurrent && startUpgrade(plan.name)} disabled={isCurrent || upgrading === plan.name} className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold cursor-pointer ${isCurrent ? "bg-[#5F30EB]/12 text-[#5F30EB]" : "bg-[#5F30EB] text-white"} disabled:opacity-60`}>
+                    <button
+                      onClick={() => !isCurrent && startUpgrade(plan.name)}
+                      disabled={isCurrent || upgrading === plan.name}
+                      className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold cursor-pointer transition-opacity ${
+                        isCurrent ? "bg-[#5F30EB]/12 text-[#5F30EB]" : "bg-[#5F30EB] text-white hover:opacity-90"
+                      } disabled:opacity-60`}
+                    >
                       {upgrading === plan.name ? "Processing..." : isCurrent ? "Active Plan" : "Upgrade"}
                     </button>
                   </div>
