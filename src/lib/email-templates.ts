@@ -208,6 +208,61 @@ export function buildTrialExpiryEmailText(input: {
 }
 
 // ---------------------------------------------------------------------------
+// Renewal failed email
+// ---------------------------------------------------------------------------
+
+export function buildRenewalFailedEmailHtml(input: {
+  name: string;
+  workspaceName: string;
+  plan: string;
+  upgradeUrl: string;
+}): string {
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#040404;line-height:1.3;">
+      Your subscription renewal failed
+    </h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#555555;line-height:1.7;">
+      Hi ${escapeHtml(input.name)}, we were unable to renew your <strong>${escapeHtml(input.plan)}</strong> subscription for <strong>${escapeHtml(input.workspaceName)}</strong>. Your account has been placed on hold. Please update your payment details to restore access.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;background:#FFF5F5;border:1px solid #FED7D7;border-radius:12px;width:100%;">
+      <tr>
+        <td style="padding:24px;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#C53030;text-transform:uppercase;letter-spacing:0.8px;">What this means</p>
+          <ul style="margin:0;padding-left:18px;font-size:14px;color:#333333;line-height:2;">
+            <li>AI replies and posting have been paused</li>
+            <li>Your data and settings are preserved</li>
+            <li>Access is restored immediately after payment</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 16px;">
+      ${primaryButton("Update payment details", input.upgradeUrl)}
+    </p>
+  `;
+
+  return emailShell(body);
+}
+
+export function buildRenewalFailedEmailText(input: {
+  name: string;
+  workspaceName: string;
+  plan: string;
+  upgradeUrl: string;
+}): string {
+  return [
+    `Subscription renewal failed - ${input.workspaceName}`,
+    "",
+    `Hi ${input.name}, we were unable to renew your ${input.plan} subscription for ${input.workspaceName}.`,
+    "Your account is on hold. Please update your payment details to restore access.",
+    "",
+    "Update payment here: " + input.upgradeUrl,
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Team invitation email
 // ---------------------------------------------------------------------------
 

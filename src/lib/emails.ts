@@ -4,6 +4,8 @@ import { env } from "@/lib/env";
 import {
   buildInvitationEmailHtml,
   buildInvitationEmailText,
+  buildRenewalFailedEmailHtml,
+  buildRenewalFailedEmailText,
   buildTrialExpiryEmailHtml,
   buildTrialExpiryEmailText,
   buildWelcomeEmailHtml,
@@ -21,7 +23,7 @@ function isEmailConfigured() {
 }
 
 // ---------------------------------------------------------------------------
-// Welcome email — sent immediately after account creation
+// Welcome email - sent immediately after account creation
 // ---------------------------------------------------------------------------
 
 export async function sendWelcomeEmail(input: {
@@ -42,7 +44,7 @@ export async function sendWelcomeEmail(input: {
 }
 
 // ---------------------------------------------------------------------------
-// Trial expiry email — call this from a cron job
+// Trial expiry email - call this from a cron job
 // ---------------------------------------------------------------------------
 
 export async function sendTrialExpiryEmail(input: {
@@ -65,7 +67,30 @@ export async function sendTrialExpiryEmail(input: {
 }
 
 // ---------------------------------------------------------------------------
-// Team invitation email — replaces the inline version in team-invitations.ts
+// Renewal failed email - sent by the webhook handler
+// ---------------------------------------------------------------------------
+
+export async function sendRenewalFailedEmail(input: {
+  toEmail: string;
+  name: string;
+  workspaceName: string;
+  plan: string;
+}) {
+  if (!isEmailConfigured()) return;
+
+  const upgradeUrl = `${getBaseUrl()}/dashboard/settings?section=billing`;
+
+  await resend!.emails.send({
+    from: env.RESEND_FROM_EMAIL!,
+    to: input.toEmail,
+    subject: `Action required: subscription renewal failed for ${input.workspaceName}`,
+    html: buildRenewalFailedEmailHtml({ ...input, upgradeUrl }),
+    text: buildRenewalFailedEmailText({ ...input, upgradeUrl }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Team invitation email - replaces the inline version in team-invitations.ts
 // ---------------------------------------------------------------------------
 
 export async function sendInvitationEmail(input: {

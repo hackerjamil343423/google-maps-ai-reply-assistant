@@ -11,6 +11,7 @@ import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const checkoutSchema = z.object({
   plan: z.enum(["Local Business", "Multi-Location", "Agency Max"]),
+  billingInterval: z.enum(["monthly", "yearly"]).default("monthly"),
 });
 
 export async function POST(req: NextRequest) {
@@ -26,12 +27,11 @@ export async function POST(req: NextRequest) {
   const payload = await req.json().catch(() => null);
   const parsed = checkoutSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid plan or billing interval." }, { status: 400 });
   }
 
-  const { plan } = parsed.data;
-  // Read product ID at request time — never at module load time
-  const productId = getPlanProductId(plan);
+  const { plan, billingInterval } = parsed.data;
+  const productId = getPlanProductId(plan, billingInterval);
   if (!productId) {
     return NextResponse.json(
       { error: "Payment is not configured for this plan. Please contact support." },
@@ -85,14 +85,15 @@ export async function POST(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   const paymentLink = await createPaymentLink({
-    name: `${plan} Plan`,
+    name: `${plan} Plan (${billingInterval})`,
     product_id: productId,
     organization_consumer_id: streamConsumerId,
-    success_redirect_url: `${appUrl}/api/subscription/callback?plan=${encodeURIComponent(plan)}`,
+    success_redirect_url: `${appUrl}/api/subscription/callback?plan=${encodeURIComponent(plan)}&interval=${billingInterval}`,
     failure_redirect_url: `${appUrl}/dashboard/subscription?error=payment_failed`,
     custom_metadata: {
       workspaceId,
       plan,
+      billingInterval,
     },
   });
 

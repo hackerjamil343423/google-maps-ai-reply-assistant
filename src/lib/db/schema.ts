@@ -364,6 +364,7 @@ export const subscriptions = pgTable("subscriptions", {
   status: subscriptionStatusEnum("status").notNull().default("trialing"),
   streamConsumerId: text("stream_consumer_id"),
   streamSubscriptionId: text("stream_subscription_id"),
+  billingInterval: text("billing_interval").default("monthly"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })

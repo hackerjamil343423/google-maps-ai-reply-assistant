@@ -6,6 +6,11 @@ import { subscriptions } from "@/lib/db/schema";
 import { getInvoice, getPayment } from "@/lib/streampay/client";
 import { isKnownPlan } from "@/lib/subscription/plans";
 
+function periodEndFromInterval(interval: string): Date {
+  const days = interval === "yearly" ? 365 : 30;
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const status = searchParams.get("status");
@@ -13,6 +18,7 @@ export async function GET(req: NextRequest) {
   const invoiceId = searchParams.get("invoice_id");
   const plan = searchParams.get("plan");
   const consumerId = searchParams.get("organization_consumer_id");
+  const billingInterval = searchParams.get("interval") ?? "monthly";
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const failureUrl = `${appUrl}/dashboard/subscription?error=payment_failed`;
@@ -47,7 +53,6 @@ export async function GET(req: NextRequest) {
       : null;
 
     if (!sub) {
-      // Fallback: can't identify workspace — redirect with error
       return NextResponse.redirect(failureUrl);
     }
 
@@ -56,7 +61,8 @@ export async function GET(req: NextRequest) {
       .set({
         plan,
         status: "active",
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        billingInterval,
+        currentPeriodEnd: periodEndFromInterval(billingInterval),
         ...(streamSubscriptionId ? { streamSubscriptionId } : {}),
         updatedAt: new Date(),
       })

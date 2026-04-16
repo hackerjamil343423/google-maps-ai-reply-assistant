@@ -6,7 +6,7 @@ import { isKnownPlan, PLAN_LIMITS, type PlanInfo, type PlanName } from "./plans"
 
 export type SubscriptionAccess = {
   allowed: boolean;
-  reason?: "trial_expired" | "canceled" | "plan_limit";
+  reason?: "trial_expired" | "canceled" | "plan_limit" | "subscription_expired";
   plan: PlanName;
   planInfo: PlanInfo;
   status: string;
@@ -47,6 +47,14 @@ export async function getWorkspaceAccess(
     const trialExpired = sub.trialEndsAt != null && sub.trialEndsAt < new Date();
     if (trialExpired) {
       return { allowed: false, reason: "trial_expired", plan, planInfo, status };
+    }
+  }
+
+  if (status === "active" || status === "past_due") {
+    const periodExpired =
+      sub.currentPeriodEnd != null && sub.currentPeriodEnd < new Date();
+    if (periodExpired) {
+      return { allowed: false, reason: "subscription_expired", plan, planInfo, status };
     }
   }
 

@@ -43,6 +43,13 @@
       "when": 1776214800000,
       "tag": "0005_team_business_assignments",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776313453807,
+      "tag": "0006_subscription_billing_interval",
+      "breakpoints": true
     }
   ]
 }
