@@ -98,10 +98,17 @@ export async function GET(req: NextRequest) {
     ),
   });
 
+  const billingInterval = subscription?.billingInterval ?? "monthly";
+  const price =
+    billingInterval === "yearly" ? planInfo.yearlyPrice : planInfo.monthlyPrice;
+
   return NextResponse.json({
     plan: planName,
     status: subscription?.status ?? "trialing",
-    price: planInfo.price,
+    price,
+    billingInterval,
+    monthlyPrice: planInfo.monthlyPrice,
+    yearlyPrice: planInfo.yearlyPrice,
     trialEndsAt: formatDate(subscription?.trialEndsAt),
     nextBillingAt: formatDate(subscription?.currentPeriodEnd),
     connectedAccounts,
