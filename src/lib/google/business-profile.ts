@@ -113,6 +113,10 @@ function buildGoogleMapsPlaceUrl(placeId: string) {
   )}&query_place_id=${encodeURIComponent(placeId)}`;
 }
 
+function buildGoogleWriteReviewUrl(placeId: string) {
+  return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
+}
+
 function normalizeGoogleReviewName(locationName: string, review: { name?: string; reviewId?: string }) {
   if (review.name?.startsWith("accounts/")) {
     return review.name;
@@ -736,7 +740,7 @@ export async function getWorkspaceGoogleReviewLink(
   const placeId = location.metadata?.placeId?.trim() || null;
   const newReviewUri = location.metadata?.newReviewUri?.trim() || "";
   const reviewLink =
-    (placeId ? buildGoogleMapsPlaceUrl(placeId) : "") || newReviewUri;
+    newReviewUri || (placeId ? buildGoogleWriteReviewUrl(placeId) : "");
 
   if (!reviewLink) {
     throw new Error("Google review link is not available for this business yet.");
