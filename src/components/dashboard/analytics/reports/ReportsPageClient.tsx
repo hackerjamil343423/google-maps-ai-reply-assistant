@@ -186,11 +186,7 @@ export default function ReportsPageClient() {
     <DashboardShell activeHref="/dashboard/reports">
       <div>
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
-          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">AI Reviews Analysis</h2>
-          <p className="mt-2 text-sm text-[#6A6A82]">
-            Generate an AI-powered analysis report from your connected business reviews.
-          </p>
+          <h2 className="text-2xl md:text-3xl font-semibold text-[#040404]">AI Reviews Analysis</h2>
         </div>
 
         <div className="rounded-2xl border border-[#E6E9F8] bg-white p-5 mb-6">

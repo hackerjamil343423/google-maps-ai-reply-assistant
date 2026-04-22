@@ -124,8 +124,7 @@ export default async function ReportDetailPage(
             Back to Reports
           </Link>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Analytics</p>
-            <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">
+            <h2 className="text-2xl md:text-3xl font-semibold text-[#040404]">
               {reportData ? "AI Reviews Analysis" : (report.businessId || "Report")}
             </h2>
             <p className="mt-2 text-sm text-[#6A6A82]">

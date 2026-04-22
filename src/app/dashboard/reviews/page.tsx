@@ -376,8 +376,7 @@ export default function ReviewsPage() {
     <DashboardShell activeHref="/dashboard/reviews">
       <div>
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Reviews</p>
-          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Reply Workflow</h2>
+          <h2 className="text-2xl md:text-3xl font-semibold text-[#040404]">Reply Workflow</h2>
         </div>
 
         <div

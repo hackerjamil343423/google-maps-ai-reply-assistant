@@ -333,8 +333,7 @@ export default function AnalyticsPage() {
     <DashboardShell activeHref="/dashboard/analytics">
       <div>
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Dashboard</p>
-          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Review Performance</h2>
+          <h2 className="text-2xl md:text-3xl font-semibold text-[#040404]">Review Performance</h2>
         </div>
 
         {error && <p className="text-sm text-red-400 mb-4">{error}</p>}

@@ -135,11 +135,7 @@ export default function ReviewLinkPage() {
         >
           <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5F30EB]">Share</p>
               <h1 className="text-2xl md:text-3xl font-semibold text-[#040404]">Review Link</h1>
-              <p className="text-sm text-[#6A6A82] mt-2">
-                Make it easy for customers to review {businessName} on Google.
-              </p>
             </div>
           </div>
 

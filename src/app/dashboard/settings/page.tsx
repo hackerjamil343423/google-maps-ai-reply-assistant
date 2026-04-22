@@ -808,8 +808,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#5F30EB]">Settings</p>
-            <h1 className="mt-2 text-2xl md:text-3xl font-semibold text-[#040404]">Workspace Settings</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold text-[#040404]">Workspace Settings</h1>
           </div>
         </div>
 
