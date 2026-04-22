@@ -263,6 +263,153 @@ export function buildRenewalFailedEmailText(input: {
 }
 
 // ---------------------------------------------------------------------------
+// Cancellation scheduled email
+// ---------------------------------------------------------------------------
+
+function formatAccessUntil(date: Date | null | undefined): string {
+  if (!date) return "the end of your current period";
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export function buildCancellationScheduledEmailHtml(input: {
+  name: string;
+  workspaceName: string;
+  plan: string;
+  accessUntil: Date | null;
+  billingUrl: string;
+}): string {
+  const accessDate = formatAccessUntil(input.accessUntil);
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#040404;line-height:1.3;">
+      Your subscription will end on ${escapeHtml(accessDate)}
+    </h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#555555;line-height:1.7;">
+      Hi ${escapeHtml(input.name)}, we've scheduled the cancellation of your <strong>${escapeHtml(input.plan)}</strong> subscription for <strong>${escapeHtml(input.workspaceName)}</strong>. You'll keep full access until ${escapeHtml(accessDate)}.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;background:#F6F4FF;border-radius:12px;width:100%;">
+      <tr>
+        <td style="padding:24px;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#5F30EB;text-transform:uppercase;letter-spacing:0.8px;">What happens next</p>
+          <ul style="margin:0;padding-left:18px;font-size:14px;color:#333333;line-height:2;">
+            <li>Full access to AI replies and Google Business features continues until ${escapeHtml(accessDate)}</li>
+            <li>No further charges will be made</li>
+            <li>Your data and settings are preserved</li>
+            <li>You can re-subscribe any time from your billing settings</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 16px;">
+      ${primaryButton("Go to billing settings", input.billingUrl)}
+    </p>
+  `;
+
+  return emailShell(body);
+}
+
+export function buildCancellationScheduledEmailText(input: {
+  name: string;
+  workspaceName: string;
+  plan: string;
+  accessUntil: Date | null;
+  billingUrl: string;
+}): string {
+  const accessDate = formatAccessUntil(input.accessUntil);
+  return [
+    `Your ${input.plan} subscription will end on ${accessDate}`,
+    "",
+    `Hi ${input.name}, we've scheduled the cancellation of your ${input.plan} subscription for ${input.workspaceName}.`,
+    `You'll keep full access until ${accessDate}. No further charges will be made.`,
+    "",
+    `Change your mind? Re-subscribe here: ${input.billingUrl}`,
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Downgrade ready email
+// ---------------------------------------------------------------------------
+
+export function buildDowngradeReadyEmailHtml(input: {
+  name: string;
+  workspaceName: string;
+  fromPlan: string;
+  toPlan: string;
+  accessUntil: Date | null;
+  checkoutUrl: string;
+}): string {
+  const accessDate = formatAccessUntil(input.accessUntil);
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#040404;line-height:1.3;">
+      Your ${escapeHtml(input.toPlan)} subscription is ready to activate
+    </h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#555555;line-height:1.7;">
+      Hi ${escapeHtml(input.name)}, your <strong>${escapeHtml(input.fromPlan)}</strong> subscription for <strong>${escapeHtml(input.workspaceName)}</strong> has ended. To continue with the <strong>${escapeHtml(input.toPlan)}</strong> plan, complete your new subscription below.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;background:#F6F4FF;border-radius:12px;width:100%;">
+      <tr>
+        <td style="padding:24px;">
+          <table cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="padding:8px 0;border-bottom:1px solid #E6E9F8;">
+                <span style="font-size:13px;color:#888888;display:block;margin-bottom:2px;">Previous plan</span>
+                <span style="font-size:15px;font-weight:600;color:#040404;">${escapeHtml(input.fromPlan)}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;border-bottom:1px solid #E6E9F8;">
+                <span style="font-size:13px;color:#888888;display:block;margin-bottom:2px;">New plan</span>
+                <span style="font-size:15px;font-weight:600;color:#5F30EB;">${escapeHtml(input.toPlan)}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;">
+                <span style="font-size:13px;color:#888888;display:block;margin-bottom:2px;">Access ended</span>
+                <span style="font-size:15px;font-weight:600;color:#040404;">${escapeHtml(accessDate)}</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 16px;">
+      ${primaryButton(`Activate ${input.toPlan}`, input.checkoutUrl)}
+    </p>
+
+    ${fallbackLink(input.checkoutUrl)}
+  `;
+
+  return emailShell(body);
+}
+
+export function buildDowngradeReadyEmailText(input: {
+  name: string;
+  workspaceName: string;
+  fromPlan: string;
+  toPlan: string;
+  accessUntil: Date | null;
+  checkoutUrl: string;
+}): string {
+  return [
+    `Your ${input.toPlan} subscription is ready to activate`,
+    "",
+    `Hi ${input.name}, your ${input.fromPlan} subscription for ${input.workspaceName} has ended.`,
+    `To continue with the ${input.toPlan} plan, complete your new subscription here:`,
+    "",
+    input.checkoutUrl,
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Team invitation email
 // ---------------------------------------------------------------------------
 

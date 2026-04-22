@@ -63,6 +63,15 @@ type SubscriptionState = {
   nextBillingAt: string;
   connectedAccounts: number;
   maxAccounts: number;
+  cancelAtPeriodEnd: boolean;
+  scheduledDowngradePlan: string | null;
+};
+
+const PLAN_RANK: Record<string, number> = {
+  free: 0,
+  "Local Business": 1,
+  "Multi-Location": 2,
+  "Agency Max": 3,
 };
 
 const INPUT =
@@ -93,6 +102,8 @@ const FALLBACK_SUBSCRIPTION: SubscriptionState = {
   nextBillingAt: "N/A",
   connectedAccounts: 0,
   maxAccounts: 1,
+  cancelAtPeriodEnd: false,
+  scheduledDowngradePlan: null,
 };
 
 async function parseJsonSafe<T>(res: Response): Promise<T | null> {
@@ -187,6 +198,13 @@ export default function SettingsPage() {
   const [billingNotice, setBillingNotice] = useState("");
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [selectedInterval, setSelectedInterval] = useState<"monthly" | "yearly">("monthly");
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [downgradeTarget, setDowngradeTarget] = useState<string | null>(null);
+  const [downgradeWarning, setDowngradeWarning] = useState<string | null>(null);
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [downgrading, setDowngrading] = useState(false);
+  const handledAutoCheckout = useRef(false);
 
   /* ── Workspace state ── */
   const [workspaceName, setWorkspaceName] = useState("");
@@ -419,6 +437,21 @@ export default function SettingsPage() {
     }
   }, [searchParams, router]);
 
+  // Auto-launch checkout when user arrives via the downgrade-ready email.
+  useEffect(() => {
+    if (handledAutoCheckout.current) return;
+    const autoCheckout = searchParams.get("autoCheckout");
+    if (!autoCheckout) return;
+    const valid = ["Local Business", "Multi-Location", "Agency Max"] as const;
+    if (!(valid as readonly string[]).includes(autoCheckout)) return;
+    handledAutoCheckout.current = true;
+    router.replace("/dashboard/settings?section=billing");
+    setTimeout(() => {
+      void startUpgrade(autoCheckout as (typeof PLANS)[number]["name"]);
+    }, 400);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   async function saveSettings(event: React.FormEvent) {
     event.preventDefault();
     setSavingSettings(true);
@@ -599,6 +632,67 @@ export default function SettingsPage() {
       return;
     }
     window.location.href = json.checkoutUrl as string;
+  }
+
+  async function handleConfirmCancel() {
+    setCancelling(true);
+    setBillingError("");
+    const res = await fetch("/api/subscription/cancel", { method: "POST" });
+    const json = await res.json().catch(() => null);
+    setCancelling(false);
+    if (!res.ok) {
+      setBillingError(json?.error || "Failed to cancel subscription.");
+      return;
+    }
+    setSubscription((s) => ({ ...s, cancelAtPeriodEnd: true }));
+    setBillingNotice(`Your subscription will end on ${subscription.nextBillingAt}. Full access continues until then.`);
+    setShowCancelDialog(false);
+  }
+
+  function openDowngradeDialog(targetPlan: string) {
+    const count = subscription.connectedAccounts ?? 0;
+    const planMap: Record<string, number> = {
+      "Local Business": 1,
+      "Multi-Location": 5,
+      "Agency Max": 60,
+    };
+    const newMax = planMap[targetPlan] ?? 1;
+    const warning =
+      count > newMax
+        ? `You have ${count} connected profile(s). ${targetPlan} allows ${newMax}. You'll need to disconnect ${count - newMax} profile(s) after the downgrade takes effect.`
+        : null;
+
+    setDowngradeTarget(targetPlan);
+    setDowngradeWarning(warning);
+    setShowDowngradeDialog(true);
+  }
+
+  async function handleConfirmDowngrade() {
+    if (!downgradeTarget) return;
+    setDowngrading(true);
+    setBillingError("");
+    const res = await fetch("/api/subscription/downgrade", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetPlan: downgradeTarget }),
+    });
+    const json = await res.json().catch(() => null);
+    setDowngrading(false);
+    if (!res.ok) {
+      setBillingError(json?.error || "Failed to schedule downgrade.");
+      return;
+    }
+    setSubscription((s) => ({
+      ...s,
+      cancelAtPeriodEnd: true,
+      scheduledDowngradePlan: downgradeTarget,
+    }));
+    setBillingNotice(
+      `Downgrade to ${downgradeTarget} scheduled. You'll receive an email when your current period ends on ${subscription.nextBillingAt}.`
+    );
+    setShowDowngradeDialog(false);
+    setDowngradeTarget(null);
+    setDowngradeWarning(null);
   }
 
   async function handleWorkspaceNameSave(e: React.FormEvent) {
@@ -1408,6 +1502,39 @@ export default function SettingsPage() {
             {billingNotice && <p className="mt-4 text-sm text-green-600">{billingNotice}</p>}
             {billingError && <p className="mt-4 text-sm text-red-500">{billingError}</p>}
 
+            {/* Cancel-at-period-end banner (without downgrade) */}
+            {subscription.cancelAtPeriodEnd && !subscription.scheduledDowngradePlan && (
+              <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-orange-700">
+                    Subscription ends on {subscription.nextBillingAt}
+                  </p>
+                  <p className="mt-0.5 text-xs text-orange-600">
+                    Full access continues until then. You can re-subscribe any time.
+                  </p>
+                </div>
+                <button
+                  onClick={() => startUpgrade(subscription.plan === "free" ? "Local Business" : subscription.plan)}
+                  disabled={subscription.plan === "free" || !!upgrading}
+                  className="shrink-0 rounded-xl bg-orange-600 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                >
+                  Re-subscribe
+                </button>
+              </div>
+            )}
+
+            {/* Downgrade-scheduled banner */}
+            {subscription.scheduledDowngradePlan && (
+              <div className="mt-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
+                <p className="text-sm font-semibold text-yellow-800">
+                  Downgrading to {subscription.scheduledDowngradePlan} on {subscription.nextBillingAt}
+                </p>
+                <p className="mt-0.5 text-xs text-yellow-700">
+                  You&apos;ll receive an email when your current period ends to complete your new {subscription.scheduledDowngradePlan} subscription.
+                </p>
+              </div>
+            )}
+
             {/* Current plan stats */}
             <div className="mt-5 grid gap-4 lg:grid-cols-4">
               {(
@@ -1475,6 +1602,18 @@ export default function SettingsPage() {
                   subscription.billingInterval === selectedInterval;
                 const displayPrice =
                   selectedInterval === "yearly" ? plan.yearlyMonthly : plan.monthlyPrice;
+                const currentRank = PLAN_RANK[subscription.plan] ?? 0;
+                const thisRank = PLAN_RANK[plan.name] ?? 0;
+                const isDowngrade =
+                  !isCurrent &&
+                  subscription.status === "active" &&
+                  !subscription.cancelAtPeriodEnd &&
+                  thisRank < currentRank &&
+                  // Multi-Location → Local Business is the only downgrade target row we support,
+                  // and Agency Max → any lower; exclude free as a downgrade destination
+                  plan.name !== ("free" as string);
+                const blockedByPending =
+                  subscription.cancelAtPeriodEnd || !!subscription.scheduledDowngradePlan;
                 return (
                   <div key={plan.name} className={`rounded-[24px] border p-5 ${isCurrent ? "border-[#5F30EB]/30 bg-[#5F30EB]/[0.05]" : "border-[#E6E9F8] bg-[#FBFBFF]"}`}>
                     <div className="flex items-center justify-between">
@@ -1497,18 +1636,130 @@ export default function SettingsPage() {
                     )}
                     <p className="mt-2 text-sm text-[#6A6A82]">{plan.accounts}</p>
                     <button
-                      onClick={() => !isCurrent && startUpgrade(plan.name)}
-                      disabled={isCurrent || upgrading === plan.name}
+                      onClick={() => {
+                        if (isCurrent) return;
+                        if (isDowngrade) {
+                          openDowngradeDialog(plan.name);
+                        } else {
+                          void startUpgrade(plan.name);
+                        }
+                      }}
+                      disabled={isCurrent || upgrading === plan.name || blockedByPending}
                       className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold cursor-pointer transition-opacity ${
-                        isCurrent ? "bg-[#5F30EB]/12 text-[#5F30EB]" : "bg-[#5F30EB] text-white hover:opacity-90"
+                        isCurrent
+                          ? "bg-[#5F30EB]/12 text-[#5F30EB]"
+                          : isDowngrade
+                          ? "bg-white border border-[#5F30EB] text-[#5F30EB] hover:bg-[#5F30EB]/5"
+                          : "bg-[#5F30EB] text-white hover:opacity-90"
                       } disabled:opacity-60`}
                     >
-                      {upgrading === plan.name ? "Processing..." : isCurrent ? "Active Plan" : "Upgrade"}
+                      {upgrading === plan.name
+                        ? "Processing..."
+                        : isCurrent
+                        ? "Active Plan"
+                        : isDowngrade
+                        ? "Downgrade"
+                        : "Upgrade"}
                     </button>
+                    {isCurrent &&
+                      (subscription.status === "active" || subscription.status === "past_due") &&
+                      !subscription.cancelAtPeriodEnd &&
+                      !subscription.scheduledDowngradePlan &&
+                      subscription.plan !== "free" && (
+                        <button
+                          onClick={() => setShowCancelDialog(true)}
+                          className="mt-3 w-full text-xs font-medium text-red-500 hover:underline"
+                        >
+                          Cancel subscription
+                        </button>
+                      )}
                   </div>
                 );
               })}
             </div>
+
+            {/* Cancel confirmation dialog */}
+            {showCancelDialog && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                onClick={() => !cancelling && setShowCancelDialog(false)}
+              >
+                <div
+                  className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className="text-lg font-semibold text-[#040404]">Cancel your subscription?</h3>
+                  <p className="mt-3 text-sm text-[#6A6A82]">
+                    You&apos;ll keep full access to {subscription.plan} until{" "}
+                    <span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>.
+                    After that, AI reply generation and Google Business management will be disabled.
+                  </p>
+                  <p className="mt-3 text-sm text-[#6A6A82]">
+                    No further charges will be made. You can re-subscribe any time.
+                  </p>
+                  <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <button
+                      onClick={() => setShowCancelDialog(false)}
+                      disabled={cancelling}
+                      className="rounded-2xl border border-[#E6E9F8] px-4 py-2.5 text-sm font-semibold text-[#040404] hover:bg-[#FBFBFF] disabled:opacity-60"
+                    >
+                      Keep subscription
+                    </button>
+                    <button
+                      onClick={handleConfirmCancel}
+                      disabled={cancelling}
+                      className="rounded-2xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+                    >
+                      {cancelling ? "Cancelling..." : "Cancel at period end"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Downgrade confirmation dialog */}
+            {showDowngradeDialog && downgradeTarget && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                onClick={() => !downgrading && setShowDowngradeDialog(false)}
+              >
+                <div
+                  className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className="text-lg font-semibold text-[#040404]">
+                    Downgrade to {downgradeTarget}?
+                  </h3>
+                  <p className="mt-3 text-sm text-[#6A6A82]">
+                    Your current {subscription.plan} access continues until{" "}
+                    <span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>.
+                    After that, you&apos;ll receive an email to set up your {downgradeTarget} subscription.
+                  </p>
+                  {downgradeWarning && (
+                    <div className="mt-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-3">
+                      <p className="text-xs font-semibold text-yellow-800">⚠ Account limit notice</p>
+                      <p className="mt-1 text-xs text-yellow-700">{downgradeWarning}</p>
+                    </div>
+                  )}
+                  <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <button
+                      onClick={() => setShowDowngradeDialog(false)}
+                      disabled={downgrading}
+                      className="rounded-2xl border border-[#E6E9F8] px-4 py-2.5 text-sm font-semibold text-[#040404] hover:bg-[#FBFBFF] disabled:opacity-60"
+                    >
+                      Keep current plan
+                    </button>
+                    <button
+                      onClick={handleConfirmDowngrade}
+                      disabled={downgrading}
+                      className="rounded-2xl bg-[#5F30EB] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                    >
+                      {downgrading ? "Scheduling..." : "Schedule downgrade"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
       </div>

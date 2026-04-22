@@ -133,8 +133,7 @@ export async function POST(req: NextRequest) {
         break;
 
       case "SUBSCRIPTION_CANCEL_AT_PERIOD_END":
-        // Informational; no immediate DB action needed.
-        console.log(`[webhook] subscription scheduled to cancel: ${entity_id}`);
+        await handleCancelAtPeriodEnd(entity_id);
         break;
 
       default:
@@ -200,7 +199,34 @@ async function handleInvoiceCompleted(invoiceId: string) {
 }
 
 /**
+ * SUBSCRIPTION_CANCEL_AT_PERIOD_END: confirm the cancelAtPeriodEnd flag in DB.
+ * Safety net — the cancel/downgrade API routes set this flag optimistically,
+ * but this ensures consistency if the API route had a partial failure.
+ */
+async function handleCancelAtPeriodEnd(streamSubscriptionId: string) {
+  if (!db) return;
+
+  const sub = await db.query.subscriptions.findFirst({
+    where: eq(dbSchema.subscriptions.streamSubscriptionId, streamSubscriptionId),
+  });
+
+  if (!sub) return;
+
+  await db
+    .update(dbSchema.subscriptions)
+    .set({ cancelAtPeriodEnd: true, updatedAt: new Date() })
+    .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
+
+  console.log(`[webhook] cancel-at-period-end confirmed for workspace ${sub.workspaceId}`);
+}
+
+/**
  * SUBSCRIPTION_CANCELED / SUBSCRIPTION_INACTIVATED: mark the workspace subscription as canceled.
+ * currentPeriodEnd is intentionally kept — server.ts allows access until it expires.
+ * scheduledDowngradePlan is intentionally kept — the cron job sends the downgrade
+ * activation email when the period actually ends (not now, because StreamPay
+ * fires this event immediately after our /downgrade API call, which would email
+ * the user while they still have paid access to the old plan).
  */
 async function handleSubscriptionCanceled(streamSubscriptionId: string) {
   if (!db) return;
@@ -213,7 +239,12 @@ async function handleSubscriptionCanceled(streamSubscriptionId: string) {
 
   await db
     .update(dbSchema.subscriptions)
-    .set({ status: "canceled", updatedAt: new Date() })
+    .set({
+      status: "canceled",
+      cancelAtPeriodEnd: false,
+      // scheduledDowngradePlan intentionally preserved; cron sends the email at period end
+      updatedAt: new Date(),
+    })
     .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
 
   console.log(`[webhook] canceled subscription for workspace ${sub.workspaceId}`);

@@ -2,6 +2,10 @@ import { Resend } from "resend";
 
 import { env } from "@/lib/env";
 import {
+  buildCancellationScheduledEmailHtml,
+  buildCancellationScheduledEmailText,
+  buildDowngradeReadyEmailHtml,
+  buildDowngradeReadyEmailText,
   buildInvitationEmailHtml,
   buildInvitationEmailText,
   buildRenewalFailedEmailHtml,
@@ -86,6 +90,61 @@ export async function sendRenewalFailedEmail(input: {
     subject: `Action required: subscription renewal failed for ${input.workspaceName}`,
     html: buildRenewalFailedEmailHtml({ ...input, upgradeUrl }),
     text: buildRenewalFailedEmailText({ ...input, upgradeUrl }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Cancellation scheduled email - sent when a user cancels their subscription
+// ---------------------------------------------------------------------------
+
+export async function sendCancellationScheduledEmail(input: {
+  toEmail: string;
+  name: string;
+  workspaceName: string;
+  plan: string;
+  accessUntil: Date | null;
+}) {
+  if (!isEmailConfigured()) return;
+
+  const billingUrl = `${getBaseUrl()}/dashboard/settings?section=billing`;
+  const accessDate = input.accessUntil
+    ? input.accessUntil.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+      })
+    : "the end of your current period";
+
+  await resend!.emails.send({
+    from: env.RESEND_FROM_EMAIL!,
+    to: input.toEmail,
+    subject: `Your ${input.plan} subscription ends on ${accessDate}`,
+    html: buildCancellationScheduledEmailHtml({ ...input, billingUrl }),
+    text: buildCancellationScheduledEmailText({ ...input, billingUrl }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Downgrade ready email - sent from the webhook when SUBSCRIPTION_CANCELED
+// fires and a scheduledDowngradePlan was stored
+// ---------------------------------------------------------------------------
+
+export async function sendDowngradeReadyEmail(input: {
+  toEmail: string;
+  name: string;
+  workspaceName: string;
+  fromPlan: string;
+  toPlan: string;
+  accessUntil: Date | null;
+  checkoutUrl: string;
+}) {
+  if (!isEmailConfigured()) return;
+
+  await resend!.emails.send({
+    from: env.RESEND_FROM_EMAIL!,
+    to: input.toEmail,
+    subject: `Activate your ${input.toPlan} subscription`,
+    html: buildDowngradeReadyEmailHtml(input),
+    text: buildDowngradeReadyEmailText(input),
   });
 }
 

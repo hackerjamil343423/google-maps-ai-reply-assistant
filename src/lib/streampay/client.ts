@@ -143,3 +143,56 @@ export async function getInvoice(invoiceId: string): Promise<StreamInvoice> {
 
   return res.json() as Promise<StreamInvoice>;
 }
+
+export type StreamSubscription = {
+  id: string;
+  status: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  recurring_interval: string | null;
+  recurring_interval_count: number | null;
+  auto_cancel_cycles: number | null;
+  organization_consumer_id: string;
+};
+
+/**
+ * Get full subscription details from StreamPay.
+ */
+export async function getSubscription(subscriptionId: string): Promise<StreamSubscription> {
+  const res = await fetch(`${STREAM_BASE}/subscriptions/${subscriptionId}`, {
+    headers: getAuthHeader(),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`StreamPay getSubscription failed: ${res.status} ${text}`);
+  }
+
+  return res.json() as Promise<StreamSubscription>;
+}
+
+/**
+ * Cancel a StreamPay subscription immediately.
+ *
+ * StreamPay has no native "cancel at period end" — cancellation is always immediate.
+ * We implement the "cancel at period end" UX ourselves: server.ts allows access
+ * while status="canceled" but currentPeriodEnd is still in the future.
+ *
+ * Pass cancelOngoingInvoices: false (default) to preserve the current paid invoice
+ * without voiding it. StreamPay fires SUBSCRIPTION_CANCELED webhook after this call.
+ */
+export async function cancelSubscription(
+  subscriptionId: string,
+  options: { cancelOngoingInvoices?: boolean } = {}
+): Promise<void> {
+  const res = await fetch(`${STREAM_BASE}/subscriptions/${subscriptionId}/cancel`, {
+    method: "POST",
+    headers: getAuthHeader(),
+    body: JSON.stringify({ cancel_ongoing_invoices: options.cancelOngoingInvoices ?? false }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`StreamPay cancelSubscription failed: ${res.status} ${text}`);
+  }
+}

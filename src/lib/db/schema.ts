@@ -367,6 +367,8 @@ export const subscriptions = pgTable("subscriptions", {
   billingInterval: text("billing_interval").default("monthly"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  scheduledDowngradePlan: text("scheduled_downgrade_plan"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

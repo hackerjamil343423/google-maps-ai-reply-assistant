@@ -40,6 +40,13 @@ export async function getWorkspaceAccess(
   const status = sub.status;
 
   if (status === "canceled") {
+    // Allow access if still within the paid period (cancel-at-period-end UX).
+    // StreamPay cancels immediately; we honor the remaining time via currentPeriodEnd.
+    const withinPaidPeriod =
+      sub.currentPeriodEnd != null && sub.currentPeriodEnd > new Date();
+    if (withinPaidPeriod) {
+      return { allowed: true, plan, planInfo, status };
+    }
     return { allowed: false, reason: "canceled", plan, planInfo, status };
   }
 

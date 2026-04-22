@@ -115,6 +115,8 @@ export async function GET(req: NextRequest) {
     maxAccounts: planInfo.maxAccounts,
     aiReplies: usage?.aiRepliesGenerated ?? 0,
     reviewsManaged: usage?.reviewsManaged ?? 0,
+    cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
+    scheduledDowngradePlan: subscription?.scheduledDowngradePlan ?? null,
   });
 }
 
