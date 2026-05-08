@@ -61,7 +61,7 @@ STRIPE_SECRET_KEY      # Payment (live billing pending)
   - `api/settings` — Workspace AI settings
   - `api/team/*` — Team member management
   - `api/subscription` — Billing
-  - `api/cron/*` — Background job endpoints
+  - `api/cron/*` — Background job endpoints (process-jobs, schedule-syncs, subscription-expiry, trial-expiry)
 
 **`src/components/`** — React components
 - `dashboard/` — Dashboard-specific components
@@ -80,6 +80,18 @@ STRIPE_SECRET_KEY      # Payment (live billing pending)
 - `assistant/` — AI chat assistant
 
 **`drizzle/`** — Generated Drizzle migrations (auto-generated, don't edit)
+
+### Background Jobs
+- `src/lib/jobs/queue.ts` — Job queue with neon serverless-compatible polling
+- `src/lib/jobs/worker.ts` — Worker that processes queued jobs
+- `src/lib/jobs/handlers/post-reply.ts` — Posts approved replies to Google
+- `src/lib/jobs/handlers/sync-reviews.ts` — Syncs reviews from Google API
+- Cron endpoints hit `/api/cron/*` on an interval to trigger job enqueuing
+
+### AI Assistant
+- `src/lib/assistant/context.ts` — `buildAssistantContext()` queries workspace data for the assistant
+- `src/lib/assistant/platform-knowledge.ts` — Platform knowledge base injected into the assistant prompt
+- `src/lib/subscription/plans.ts` — Plan definitions, limits, and feature gates
 
 ## Architecture Patterns
 
@@ -121,13 +133,19 @@ return NextResponse.json({ data: result });
 ### AI Reply Generation
 - `src/lib/ai/` contains reply generation logic
 - Falls back to templates if OpenAI API key is missing
-- Configurable tone/style via workspace settings (`src/lib/db/schema.ts:workspaceSettings`)
+- Configurable tone/style via workspace settings (`src/lib/db/schema.ts:aiSettings`)
+- Product is **Wakkelni Stars** (not "Five Star Reply")
 
 ## Important Notes
 
 **Database Nullability:**
 - Use `.optional()` or `.nullable()` for optional database columns
-- Always check database existence before querying (some endpoints can work without database in demo mode)
+- Always check database existence before querying (some endpoints work without database in demo mode)
+
+**Assistant/Context:**
+- `buildAssistantContext()` in `src/lib/assistant/context.ts` is the single entry point for assistant workspace data
+- Returns `{ summary, history }` — summary is a newline-joined string of workspace facts, history is recent messages
+- Uses `db.query.*.findFirst` with compound `where` clauses for data fetching
 
 **Google Integration:**
 - OAuth flow redirects to Google, returns auth token
@@ -140,7 +158,7 @@ return NextResponse.json({ data: result });
 
 **Subscription/Billing:**
 - Subscription records in database (persistence layer done)
-- Live Stripe checkout/webhooks still pending (April 2026)
+- Live Stripe checkout/webhooks in progress
 - Fallback UI uses mock subscription flow for demos
 
 ## Testing & Validation
