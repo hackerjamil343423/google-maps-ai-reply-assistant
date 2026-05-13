@@ -5,8 +5,8 @@ import { z } from "zod";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
-import { createConsumer, createPaymentLink } from "@/lib/streampay/client";
-import { getPlanProductId } from "@/lib/subscription/plans";
+import { createSession, createSubscription } from "@/lib/geidea/client";
+import { getPlanGeideaConfig } from "@/lib/subscription/plans";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const checkoutSchema = z.object({
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { plan, billingInterval } = parsed.data;
-  const productId = getPlanProductId(plan, billingInterval);
-  if (!productId) {
+  const planConfig = getPlanGeideaConfig(plan, billingInterval);
+  if (!planConfig) {
     return NextResponse.json(
       { error: "Payment is not configured for this plan. Please contact support." },
       { status: 503 }
@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unable to initialize workspace." }, { status: 500 });
   }
 
-  // Get or create subscription row so we can store streamConsumerId
   let sub = await db.query.subscriptions.findFirst({
     where: eq(subscriptions.workspaceId, workspaceId),
   });
@@ -65,37 +64,53 @@ export async function POST(req: NextRequest) {
     sub = created;
   }
 
-  // Create or reuse StreamPay consumer
-  let streamConsumerId = sub?.streamConsumerId ?? null;
-
-  if (!streamConsumerId) {
-    const consumer = await createConsumer({
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const geideaSubscription = await createSubscription({
+    amount: planConfig.amount,
+    currency: planConfig.currency,
+    cycleInterval: planConfig.cycleInterval,
+    cycleFrequency: planConfig.cycleFrequency,
+    merchantReferenceId: workspaceId,
+    customer: {
       name: session.user.name,
       email: session.user.email,
-      external_id: workspaceId,
-    });
-    streamConsumerId = consumer.id;
-
-    await db
-      .update(subscriptions)
-      .set({ streamConsumerId, updatedAt: new Date() })
-      .where(eq(subscriptions.workspaceId, workspaceId));
-  }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-  const paymentLink = await createPaymentLink({
-    name: `${plan} Plan (${billingInterval})`,
-    product_id: productId,
-    organization_consumer_id: streamConsumerId,
-    success_redirect_url: `${appUrl}/api/subscription/callback?plan=${encodeURIComponent(plan)}&interval=${billingInterval}`,
-    failure_redirect_url: `${appUrl}/dashboard/subscription?error=payment_failed`,
-    custom_metadata: {
-      workspaceId,
-      plan,
-      billingInterval,
     },
   });
 
-  return NextResponse.json({ checkoutUrl: paymentLink.url });
+  if (!geideaSubscription.subscriptionId) {
+    return NextResponse.json(
+      { error: "Payment provider did not return a subscription ID." },
+      { status: 502 }
+    );
+  }
+
+  await db
+    .update(subscriptions)
+    .set({
+      geideaCustomerId: geideaSubscription.customerId ?? sub?.geideaCustomerId ?? null,
+      geideaSubscriptionId: geideaSubscription.subscriptionId,
+      billingInterval,
+      cancelAtPeriodEnd: false,
+      scheduledDowngradePlan: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptions.workspaceId, workspaceId));
+
+  const checkoutSession = await createSession({
+    amount: planConfig.amount,
+    currency: planConfig.currency,
+    merchantReferenceId: workspaceId,
+    subscriptionId: geideaSubscription.subscriptionId,
+    callbackUrl: `${appUrl}/api/subscription/webhook?plan=${encodeURIComponent(plan)}&interval=${billingInterval}`,
+    returnUrl: `${appUrl}/dashboard/settings?section=billing`,
+  });
+
+  if (!checkoutSession.id) {
+    return NextResponse.json(
+      { error: "Payment provider did not return a checkout session." },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({ sessionId: checkoutSession.id });
 }

@@ -57,6 +57,13 @@
       "when": 1777420800000,
       "tag": "0007_subscription_cancel_and_downgrade",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778630400000,
+      "tag": "0008_geidea_subscription_columns",
+      "breakpoints": true
     }
   ]
 }

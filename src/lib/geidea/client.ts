@@ -1,0 +1,236 @@
+import crypto from "crypto";
+
+import type {
+  GeideaCallback,
+  GeideaSession,
+  GeideaSubscription,
+} from "./types";
+
+const GEIDEA_BASE = "https://api.ksamerchant.geidea.net";
+
+function getCredentials() {
+  const publicKey = process.env.GEIDEA_MERCHANT_PUBLIC_KEY;
+  const apiPassword = process.env.GEIDEA_API_PASSWORD;
+
+  if (!publicKey || !apiPassword) {
+    throw new Error("GEIDEA_MERCHANT_PUBLIC_KEY and GEIDEA_API_PASSWORD must be set");
+  }
+
+  return { publicKey, apiPassword };
+}
+
+function authHeaders(): HeadersInit {
+  const { publicKey, apiPassword } = getCredentials();
+  const token = Buffer.from(`${publicKey}:${apiPassword}`).toString("base64");
+
+  return {
+    Authorization: `Basic ${token}`,
+    "Content-Type": "application/json",
+  };
+}
+
+function hmacBase64(message: string, secret: string) {
+  return crypto.createHmac("sha256", secret).update(message).digest("base64");
+}
+
+function timingSafeEqualText(a: string, b: string) {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+export function generateSignature(input: {
+  amount?: number | string | null;
+  currency?: string | null;
+  merchantReferenceId?: string | null;
+  timestamp: string;
+}) {
+  const { publicKey, apiPassword } = getCredentials();
+  const amount = input.amount == null ? "" : String(input.amount);
+  const currency = input.currency ?? "";
+  const merchantReferenceId = input.merchantReferenceId ?? "";
+  return hmacBase64(
+    `${publicKey}${amount}${currency}${merchantReferenceId}${input.timestamp}`,
+    apiPassword
+  );
+}
+
+export function validateCallbackSignature(callback: GeideaCallback) {
+  const signature = callback.signature;
+  if (!signature) return false;
+
+  const { publicKey, apiPassword } = getCredentials();
+  const secret = process.env.GEIDEA_CALLBACK_SECRET ?? apiPassword;
+  const timestamp = callback.timeStamp ?? callback.timestamp ?? "";
+  const order = callback.order;
+  const amount = order?.amount == null ? "" : String(order.amount);
+  const currency = order?.currency ?? "";
+  const merchantReferenceId =
+    callback.merchantReferenceId ?? order?.merchantReferenceId ?? "";
+  const subscriptionAmount =
+    (callback.subscription as { recurringPaymentAmount?: number | string } | undefined)
+      ?.recurringPaymentAmount ??
+    (order?.subscription as { recurringPaymentAmount?: number | string } | undefined)
+      ?.recurringPaymentAmount ??
+    amount;
+  const subscriptionId =
+    callback.subscriptionId ??
+    callback.subscription?.subscriptionId ??
+    order?.subscription?.subscriptionId ??
+    "";
+  const subscriptionStatus =
+    callback.subscription?.status ?? order?.subscription?.status ?? callback.status ?? order?.status ?? "";
+
+  const candidates = [
+    `${publicKey}${amount}${currency}${merchantReferenceId}${timestamp}`,
+    `${publicKey}${callback.orderId ?? order?.orderId ?? order?.id ?? ""}${timestamp}`,
+    `${publicKey}${subscriptionId}${subscriptionStatus}${timestamp}`,
+    `${publicKey}${subscriptionAmount}${subscriptionId}${subscriptionStatus}`,
+  ].map((message) => hmacBase64(message, secret));
+
+  return candidates.some((candidate) => timingSafeEqualText(candidate, signature));
+}
+
+async function geideaFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${GEIDEA_BASE}${path}`, {
+    ...init,
+    headers: {
+      ...authHeaders(),
+      ...(init.headers ?? {}),
+    },
+  });
+
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : null;
+
+  if (!res.ok) {
+    throw new Error(`Geidea API failed: ${res.status} ${text}`);
+  }
+
+  return json as T;
+}
+
+export async function createSubscription(input: {
+  amount: number;
+  currency: string;
+  cycleInterval: "month" | "year";
+  cycleFrequency: number;
+  customer: {
+    name: string;
+    email?: string | null;
+    phoneCountryCode?: string | null;
+    phone?: string | null;
+  };
+  merchantReferenceId: string;
+}): Promise<GeideaSubscription> {
+  const timestamp = new Date().toISOString();
+  const body = {
+    recurringPaymentAmount: input.amount,
+    currency: input.currency,
+    cycleInterval: input.cycleInterval,
+    cycleFrequency: input.cycleFrequency,
+    typeOfPayment: "RecurringPayment",
+    isFirstPmtPBL: false,
+    AmountVariability: "FIXED",
+    merchantReferenceId: input.merchantReferenceId,
+    customerRequest: input.customer,
+    timeStamp: timestamp,
+    signature: generateSignature({
+      amount: input.amount,
+      currency: input.currency,
+      merchantReferenceId: input.merchantReferenceId,
+      timestamp,
+    }),
+  };
+
+  const data = await geideaFetch<
+    (GeideaSubscription & { id?: string }) | { subscription: GeideaSubscription & { id?: string } }
+  >(
+    "/subscriptions/api/v1/direct/subscription",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  );
+
+  const subscription = "subscription" in data ? data.subscription : data;
+
+  return {
+    ...subscription,
+    subscriptionId: subscription.subscriptionId ?? subscription.id ?? "",
+  };
+}
+
+export async function createSession(input: {
+  amount: number;
+  currency: string;
+  merchantReferenceId: string;
+  subscriptionId: string;
+  callbackUrl: string;
+  returnUrl?: string;
+}): Promise<GeideaSession> {
+  const timestamp = new Date().toISOString();
+  const body = {
+    amount: input.amount,
+    currency: input.currency,
+    merchantReferenceId: input.merchantReferenceId,
+    subscriptionId: input.subscriptionId,
+    callbackUrl: input.callbackUrl,
+    returnUrl: input.returnUrl,
+    paymentOperation: "Pay",
+    cardOnFile: true,
+    timeStamp: timestamp,
+    signature: generateSignature({
+      amount: input.amount,
+      currency: input.currency,
+      merchantReferenceId: input.merchantReferenceId,
+      timestamp,
+    }),
+  };
+
+  const data = await geideaFetch<
+    (GeideaSession & { sessionId?: string }) | { session: GeideaSession & { sessionId?: string } }
+  >(
+    "/payment-intent/api/v2/direct/session-subscription",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  );
+
+  const session = "session" in data ? data.session : data;
+
+  return {
+    ...session,
+    id: session.id ?? session.sessionId ?? "",
+  };
+}
+
+export async function getSubscription(
+  subscriptionId: string
+): Promise<GeideaSubscription> {
+  const data = await geideaFetch<GeideaSubscription & { id?: string }>(
+    `/subscriptions/api/v1/direct/subscription/${encodeURIComponent(subscriptionId)}`
+  );
+
+  return {
+    ...data,
+    subscriptionId: data.subscriptionId ?? data.id ?? subscriptionId,
+  };
+}
+
+export async function cancelSubscription(subscriptionId: string): Promise<void> {
+  await geideaFetch(
+    `/subscriptions/api/v1/direct/subscription/${encodeURIComponent(subscriptionId)}/cancel`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    }
+  );
+}
+
+export async function getOrder(orderId: string) {
+  return geideaFetch(
+    `/pgw/api/v1/direct/order?OrderId=${encodeURIComponent(orderId)}`
+  );
+}

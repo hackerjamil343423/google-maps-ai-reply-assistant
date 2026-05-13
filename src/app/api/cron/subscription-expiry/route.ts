@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   }
 
   // 2-day grace period: only expire subscriptions that ended more than 2 days ago.
-  // This gives the StreamPay webhook time to arrive before we step in.
+  // This gives the Geidea callback time to arrive before we step in.
   const graceDeadline = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
   const expired = await db

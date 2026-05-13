@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -55,6 +56,11 @@ type ConnectedProfile = {
   connectedAt: string | null;
   syncedReviewCount: number;
 };
+type ReviewsSummary = {
+  total: number;
+  replied: number;
+  pending: number;
+};
 type SubscriptionState = {
   plan: "Local Business" | "Multi-Location" | "Agency Max" | "free";
   status: "trialing" | "active" | "past_due" | "canceled";
@@ -66,6 +72,16 @@ type SubscriptionState = {
   cancelAtPeriodEnd: boolean;
   scheduledDowngradePlan: string | null;
 };
+
+declare global {
+  interface Window {
+    GeideaCheckout?: new (
+      onSuccess: () => void,
+      onError: (error?: unknown) => void,
+      onCancel: () => void
+    ) => { startPayment: (sessionId: string) => void };
+  }
+}
 
 const PLAN_RANK: Record<string, number> = {
   free: 0,
@@ -168,7 +184,7 @@ export default function SettingsPage() {
   const [savedSettings, setSavedSettings] = useState(false);
 
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(null);
-  const [summary, setSummary] = useState({ total: 0, replied: 0, pending: 0 });
+  const [, setSummary] = useState<ReviewsSummary>({ total: 0, replied: 0, pending: 0 });
   const [googleError, setGoogleError] = useState("");
   const [googleNotice, setGoogleNotice] = useState("");
   const [connectingGoogle, setConnectingGoogle] = useState(false);
@@ -280,7 +296,7 @@ export default function SettingsPage() {
     }
 
     const reviewsRes = await fetch("/api/reviews?status=all&page=1&per_page=1", { cache: "no-store" });
-    const reviewsJson = await parseJsonSafe<{ summary?: typeof summary }>(reviewsRes);
+    const reviewsJson = await parseJsonSafe<{ summary?: ReviewsSummary }>(reviewsRes);
     if (reviewsRes.ok && reviewsJson?.summary) setSummary(reviewsJson.summary);
 
     const teamRes = await fetch("/api/team/members", { cache: "no-store" });
@@ -620,18 +636,43 @@ export default function SettingsPage() {
 
   async function startUpgrade(planName: (typeof PLANS)[number]["name"]) {
     setUpgrading(planName);
+    setBillingError("");
     const res = await fetch("/api/subscription/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plan: planName, billingInterval: selectedInterval }),
     });
     const json = await res.json().catch(() => null);
-    if (!res.ok || !json?.checkoutUrl) {
+    if (!res.ok || !json?.sessionId) {
       setBillingError(json?.error || "Failed to start checkout.");
       setUpgrading(null);
       return;
     }
-    window.location.href = json.checkoutUrl as string;
+
+    if (!window.GeideaCheckout) {
+      setBillingError("Payment checkout is still loading. Please try again in a moment.");
+      setUpgrading(null);
+      return;
+    }
+
+    const payment = new window.GeideaCheckout(
+      () => {
+        setUpgrading(null);
+        router.push("/dashboard/settings?section=billing&success=true");
+      },
+      () => {
+        setUpgrading(null);
+        setBillingError("Payment failed. Please try again.");
+        router.push("/dashboard/settings?section=billing&error=payment_failed");
+      },
+      () => {
+        setUpgrading(null);
+        setBillingError("Payment was cancelled.");
+        router.push("/dashboard/settings?section=billing&error=payment_failed");
+      }
+    );
+
+    payment.startPayment(json.sessionId as string);
   }
 
   async function handleConfirmCancel() {
@@ -804,7 +845,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardShell activeHref="/dashboard/settings">
+    <>
+      <Script src="https://www.ksamerchant.geidea.net/hpp/geideaCheckout.min.js" />
+      <DashboardShell activeHref="/dashboard/settings">
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -1762,6 +1805,7 @@ export default function SettingsPage() {
           </section>
         )}
       </div>
-    </DashboardShell>
+      </DashboardShell>
+    </>
   );
 }

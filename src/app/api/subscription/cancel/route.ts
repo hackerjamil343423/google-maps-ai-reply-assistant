@@ -5,7 +5,7 @@ import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { subscriptions, workspaces } from "@/lib/db/schema";
 import { sendCancellationScheduledEmail } from "@/lib/emails";
-import { cancelSubscription } from "@/lib/streampay/client";
+import { cancelSubscription } from "@/lib/geidea/client";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 export async function POST(req: NextRequest) {
@@ -41,9 +41,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!sub.streamSubscriptionId) {
+  if (!sub.geideaSubscriptionId) {
     return NextResponse.json(
-      { error: "No StreamPay subscription linked. Please contact support." },
+      { error: "No Geidea subscription linked. Please contact support." },
       { status: 400 }
     );
   }
@@ -57,19 +57,16 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Mark locally BEFORE calling StreamPay so the webhook (which fires
-  // immediately after the cancel call) sees the flag and can be consistent.
+  // Mark locally BEFORE calling Geidea so a callback can see the flag.
   await db
     .update(subscriptions)
     .set({ cancelAtPeriodEnd: true, updatedAt: new Date() })
     .where(eq(subscriptions.workspaceId, workspaceId));
 
-  // Cancel in StreamPay — keep current invoice intact (no refund).
-  // Roll back the flag if the call fails.
   try {
-    await cancelSubscription(sub.streamSubscriptionId, { cancelOngoingInvoices: false });
+    await cancelSubscription(sub.geideaSubscriptionId);
   } catch (err) {
-    console.error("[cancel] StreamPay cancelSubscription error:", err);
+    console.error("[cancel] Geidea cancelSubscription error:", err);
     await db
       .update(subscriptions)
       .set({ cancelAtPeriodEnd: false, updatedAt: new Date() })

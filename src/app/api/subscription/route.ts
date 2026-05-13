@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { businesses, subscriptions, usageCounters } from "@/lib/db/schema";
+import { getSubscription as getGeideaSubscription } from "@/lib/geidea/client";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 import {
   isKnownPlan,
@@ -24,6 +25,12 @@ function formatDate(value: Date | null | undefined) {
     day: "numeric",
     year: "numeric",
   }).format(value);
+}
+
+function parseDate(value: string | null | undefined) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export async function GET(req: NextRequest) {
@@ -101,6 +108,16 @@ export async function GET(req: NextRequest) {
   const billingInterval = subscription?.billingInterval ?? "monthly";
   const price =
     billingInterval === "yearly" ? planInfo.yearlyPrice : planInfo.monthlyPrice;
+  let nextBillingAt = subscription?.currentPeriodEnd ?? null;
+
+  if (subscription?.geideaSubscriptionId) {
+    try {
+      const remoteSubscription = await getGeideaSubscription(subscription.geideaSubscriptionId);
+      nextBillingAt = parseDate(remoteSubscription.nextOccurrenceDate) ?? nextBillingAt;
+    } catch {
+      // Fall back to the local value when Geidea is unavailable.
+    }
+  }
 
   return NextResponse.json({
     plan: planName,
@@ -110,7 +127,7 @@ export async function GET(req: NextRequest) {
     monthlyPrice: planInfo.monthlyPrice,
     yearlyPrice: planInfo.yearlyPrice,
     trialEndsAt: formatDate(subscription?.trialEndsAt),
-    nextBillingAt: formatDate(subscription?.currentPeriodEnd),
+    nextBillingAt: formatDate(nextBillingAt),
     connectedAccounts,
     maxAccounts: planInfo.maxAccounts,
     aiReplies: usage?.aiRepliesGenerated ?? 0,

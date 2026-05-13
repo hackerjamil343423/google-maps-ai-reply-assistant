@@ -42,39 +42,37 @@ export const PLAN_LIMITS: Record<string, PlanInfo> = {
 
 export type PlanName = "free" | "Local Business" | "Multi-Location" | "Agency Max";
 
+export type PlanGeideaConfig = {
+  amount: number;
+  currency: "SAR";
+  cycleInterval: "month" | "year";
+  cycleFrequency: number;
+};
+
 export function isKnownPlan(value: string): value is PlanName {
   return value in PLAN_LIMITS;
 }
 
-/**
- * Returns the StreamPay product UUID for a plan + billing interval.
- * Reads from process.env at call time — never at module load time.
- */
-export function getPlanProductId(
+function parsePrice(value: string): number {
+  return Number(value.replace(/,/g, ""));
+}
+
+export function getPlanGeideaConfig(
   plan: string,
   interval: BillingInterval = "monthly"
-): string | null {
-  if (interval === "yearly") {
-    switch (plan) {
-      case "Local Business":
-        return process.env.STREAM_PRODUCT_LOCAL_BUSINESS_YEARLY ?? null;
-      case "Multi-Location":
-        return process.env.STREAM_PRODUCT_MULTI_LOCATION_YEARLY ?? null;
-      case "Agency Max":
-        return process.env.STREAM_PRODUCT_AGENCY_MAX_YEARLY ?? null;
-      default:
-        return null;
-    }
-  }
+): PlanGeideaConfig | null {
+  if (!isKnownPlan(plan) || plan === "free") return null;
 
-  switch (plan) {
-    case "Local Business":
-      return process.env.STREAM_PRODUCT_LOCAL_BUSINESS ?? null;
-    case "Multi-Location":
-      return process.env.STREAM_PRODUCT_MULTI_LOCATION ?? null;
-    case "Agency Max":
-      return process.env.STREAM_PRODUCT_AGENCY_MAX ?? null;
-    default:
-      return null;
-  }
+  const planInfo = PLAN_LIMITS[plan];
+  const amount =
+    interval === "yearly"
+      ? parsePrice(planInfo.yearlyPrice)
+      : parsePrice(planInfo.monthlyPrice);
+
+  return {
+    amount,
+    currency: "SAR",
+    cycleInterval: interval === "yearly" ? "year" : "month",
+    cycleFrequency: 1,
+  };
 }

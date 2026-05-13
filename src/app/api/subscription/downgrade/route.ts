@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { businesses, subscriptions } from "@/lib/db/schema";
-import { cancelSubscription } from "@/lib/streampay/client";
+import { cancelSubscription } from "@/lib/geidea/client";
 import { PLAN_LIMITS } from "@/lib/subscription/plans";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -78,9 +78,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!sub.streamSubscriptionId) {
+  if (!sub.geideaSubscriptionId) {
     return NextResponse.json(
-      { error: "No StreamPay subscription linked. Please contact support." },
+      { error: "No Geidea subscription linked. Please contact support." },
       { status: 400 }
     );
   }
@@ -104,8 +104,7 @@ export async function POST(req: NextRequest) {
       ? `You have ${connectedAccounts} connected profile(s). The ${targetPlan} plan allows ${newMaxAccounts}. You will need to disconnect ${excessAccounts} profile(s) after the downgrade takes effect.`
       : null;
 
-  // Persist the downgrade intent BEFORE calling StreamPay so the webhook
-  // (which fires immediately after the cancel call) can see the intent.
+  // Persist the downgrade intent BEFORE calling Geidea so a callback can see the intent.
   await db
     .update(subscriptions)
     .set({
@@ -115,11 +114,11 @@ export async function POST(req: NextRequest) {
     })
     .where(eq(subscriptions.workspaceId, workspaceId));
 
-  // Cancel in StreamPay; roll back the DB flags if the call fails
+  // Cancel in Geidea; roll back the DB flags if the call fails
   try {
-    await cancelSubscription(sub.streamSubscriptionId, { cancelOngoingInvoices: false });
+    await cancelSubscription(sub.geideaSubscriptionId);
   } catch (err) {
-    console.error("[downgrade] StreamPay cancelSubscription error:", err);
+    console.error("[downgrade] Geidea cancelSubscription error:", err);
     await db
       .update(subscriptions)
       .set({
