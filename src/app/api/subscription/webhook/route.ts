@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { db, dbSchema } from "@/lib/db";
 import { sendRenewalFailedEmail } from "@/lib/emails";
+import { consumeRateLimit } from "@/lib/api/rate-limit";
+import { invalidateCache } from "@/lib/subscription/cache";
 import { getSubscription, validateCallbackSignature } from "@/lib/geidea/client";
 import type { GeideaCallback } from "@/lib/geidea/types";
 import { isKnownPlan } from "@/lib/subscription/plans";
@@ -124,11 +126,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+  const geideaSubscriptionId = getSubscriptionId(payload);
+
+  const rate = consumeRateLimit(
+    `webhook:${geideaSubscriptionId ?? "anonymous"}`,
+    100,
+    60 * 1000
+  );
+  if (!rate.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
+
   if (!db) {
     return NextResponse.json({ error: "Database not configured" }, { status: 500 });
   }
-
-  const geideaSubscriptionId = getSubscriptionId(payload);
   if (!geideaSubscriptionId) {
     return NextResponse.json({ received: true });
   }
@@ -151,19 +162,23 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       })
       .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
+    invalidateCache(`geidea-sub:${geideaSubscriptionId}`);
     return NextResponse.json({ received: true });
   }
 
   if (isFailed(payload)) {
-    await db
-      .update(dbSchema.subscriptions)
-      .set({ status: "past_due", updatedAt: new Date() })
-      .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
+    if (sub.status !== "past_due") {
+      await db
+        .update(dbSchema.subscriptions)
+        .set({ status: "past_due", updatedAt: new Date() })
+        .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
+      invalidateCache(`geidea-sub:${geideaSubscriptionId}`);
 
-    try {
-      await sendFailureEmail(sub.workspaceId);
-    } catch (err) {
-      console.error("[geidea] failed to send renewal failed email:", err);
+      try {
+        await sendFailureEmail(sub.workspaceId);
+      } catch (err) {
+        console.error("[geidea] failed to send renewal failed email:", err);
+      }
     }
 
     return NextResponse.json({ received: true });
@@ -201,6 +216,7 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       })
       .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
+    invalidateCache(`geidea-sub:${geideaSubscriptionId}`);
 
     console.log(
       `[geidea] paid subscription callback for workspace ${sub.workspaceId}, order=${getOrderId(payload) ?? "unknown"}`

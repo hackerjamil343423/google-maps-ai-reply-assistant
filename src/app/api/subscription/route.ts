@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { businesses, subscriptions, usageCounters } from "@/lib/db/schema";
 import { getSubscription as getGeideaSubscription } from "@/lib/geidea/client";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
+import { getCached, setCached } from "@/lib/subscription/cache";
 import {
   isKnownPlan,
   PLAN_LIMITS,
@@ -25,6 +26,10 @@ function formatDate(value: Date | null | undefined) {
     day: "numeric",
     year: "numeric",
   }).format(value);
+}
+
+function formatSar(value: number): string {
+  return value.toLocaleString("en-US");
 }
 
 function parseDate(value: string | null | undefined) {
@@ -107,13 +112,21 @@ export async function GET(req: NextRequest) {
 
   const billingInterval = subscription?.billingInterval ?? "monthly";
   const price =
-    billingInterval === "yearly" ? planInfo.yearlyPrice : planInfo.monthlyPrice;
+    billingInterval === "yearly"
+      ? formatSar(planInfo.yearlyPrice)
+      : formatSar(planInfo.monthlyPrice);
   let nextBillingAt = subscription?.currentPeriodEnd ?? null;
 
   if (subscription?.geideaSubscriptionId) {
+    const cacheKey = `geidea-sub:${subscription.geideaSubscriptionId}`;
     try {
-      const remoteSubscription = await getGeideaSubscription(subscription.geideaSubscriptionId);
-      nextBillingAt = parseDate(remoteSubscription.nextOccurrenceDate) ?? nextBillingAt;
+      let remoteData = getCached<{ nextOccurrenceDate?: string | null }>(cacheKey);
+      if (!remoteData) {
+        const remoteSubscription = await getGeideaSubscription(subscription.geideaSubscriptionId);
+        remoteData = { nextOccurrenceDate: remoteSubscription.nextOccurrenceDate };
+        setCached(cacheKey, remoteData);
+      }
+      nextBillingAt = parseDate(remoteData.nextOccurrenceDate) ?? nextBillingAt;
     } catch {
       // Fall back to the local value when Geidea is unavailable.
     }
@@ -124,8 +137,8 @@ export async function GET(req: NextRequest) {
     status: subscription?.status ?? "trialing",
     price,
     billingInterval,
-    monthlyPrice: planInfo.monthlyPrice,
-    yearlyPrice: planInfo.yearlyPrice,
+    monthlyPrice: formatSar(planInfo.monthlyPrice),
+    yearlyPrice: formatSar(planInfo.yearlyPrice),
     trialEndsAt: formatDate(subscription?.trialEndsAt),
     nextBillingAt: formatDate(nextBillingAt),
     connectedAccounts,
