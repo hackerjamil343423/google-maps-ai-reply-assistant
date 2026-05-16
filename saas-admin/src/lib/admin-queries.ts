@@ -6,6 +6,7 @@ import {
   count,
   and,
   inArray,
+  ilike,
   type SQL,
 } from "drizzle-orm";
 import {
@@ -20,6 +21,11 @@ import {
   usageCounters,
   teamInvitations,
   adminAuditLogs,
+  blogPosts,
+  blogCategories,
+  blogTags,
+  blogPostTags,
+  blogSeoSettings,
 } from "@/lib/db/schema";
 
 export async function getPlatformStats() {
@@ -362,4 +368,336 @@ export async function deletePlatformSetting(key: string) {
   if (!db) return;
   const { platformSettings } = await import("@/lib/db/schema");
   await db.delete(platformSettings).where(eq(platformSettings.key, key));
+}
+
+// ─── Blog Posts ────────────────────────────────────────────────────────────────
+
+export async function getBlogPostsPage(params: {
+  search?: string;
+  status?: string;
+  categoryId?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  if (!db) return { posts: [], total: 0 };
+
+  const { search, status, categoryId, page = 1, pageSize = 20 } = params;
+  const offset = (page - 1) * pageSize;
+
+  const conditions: SQL[] = [];
+  if (search) {
+    conditions.push(
+      sql`(${blogPosts.title} ILIKE ${`%${search}%`} OR ${blogPosts.excerpt} ILIKE ${`%${search}%`})`
+    );
+  }
+  if (status) {
+    conditions.push(eq(blogPosts.status, status as "draft" | "published" | "archived"));
+  }
+  if (categoryId) {
+    conditions.push(eq(blogPosts.categoryId, categoryId));
+  }
+
+  const whereClause = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
+
+  const rows = await db
+    .select({
+      id: blogPosts.id,
+      title: blogPosts.title,
+      slug: blogPosts.slug,
+      excerpt: blogPosts.excerpt,
+      coverImage: blogPosts.coverImage,
+      status: blogPosts.status,
+      categoryId: blogPosts.categoryId,
+      authorId: blogPosts.authorId,
+      seoTitle: blogPosts.seoTitle,
+      seoDescription: blogPosts.seoDescription,
+      publishedAt: blogPosts.publishedAt,
+      createdAt: blogPosts.createdAt,
+      updatedAt: blogPosts.updatedAt,
+      authorName: user.name,
+      categoryName: blogCategories.name,
+    })
+    .from(blogPosts)
+    .leftJoin(user, eq(blogPosts.authorId, user.id))
+    .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
+    .where(whereClause ?? sql`true`)
+    .orderBy(desc(blogPosts.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [totalResult] = await db
+    .select({ count: count() })
+    .from(blogPosts)
+    .where(whereClause ?? sql`true`);
+
+  return { posts: rows, total: totalResult?.count ?? 0 };
+}
+
+export async function getBlogPostById(id: string) {
+  if (!db) return null;
+
+  const [post] = await db
+    .select()
+    .from(blogPosts)
+    .where(eq(blogPosts.id, id))
+    .limit(1);
+
+  if (!post) return null;
+
+  const tags = await db
+    .select({ id: blogTags.id, name: blogTags.name, slug: blogTags.slug })
+    .from(blogPostTags)
+    .innerJoin(blogTags, eq(blogPostTags.tagId, blogTags.id))
+    .where(eq(blogPostTags.postId, id));
+
+  return { ...post, tags };
+}
+
+export async function createBlogPost(data: {
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string;
+  coverImage?: string;
+  categoryId?: string;
+  authorId: string;
+  status?: "draft" | "published";
+  seoTitle?: string;
+  seoDescription?: string;
+  ogImage?: string;
+  tagIds?: string[];
+}) {
+  if (!db) return null;
+
+  const [post] = await db
+    .insert(blogPosts)
+    .values({
+      title: data.title,
+      slug: data.slug,
+      content: data.content,
+      excerpt: data.excerpt ?? null,
+      coverImage: data.coverImage ?? null,
+      categoryId: data.categoryId ?? null,
+      authorId: data.authorId,
+      status: data.status ?? "draft",
+      seoTitle: data.seoTitle ?? null,
+      seoDescription: data.seoDescription ?? null,
+      ogImage: data.ogImage ?? null,
+      publishedAt: data.status === "published" ? new Date() : null,
+    })
+    .returning();
+
+  if (data.tagIds && data.tagIds.length > 0 && post) {
+    await db.insert(blogPostTags).values(
+      data.tagIds.map((tagId) => ({ postId: post.id, tagId }))
+    );
+  }
+
+  return post;
+}
+
+export async function updateBlogPost(
+  id: string,
+  data: {
+    title?: string;
+    slug?: string;
+    content?: string;
+    excerpt?: string;
+    coverImage?: string;
+    categoryId?: string | null;
+    status?: "draft" | "published" | "archived";
+    seoTitle?: string;
+    seoDescription?: string;
+    ogImage?: string;
+    tagIds?: string[];
+  }
+) {
+  if (!db) return null;
+
+  const [post] = await db
+    .update(blogPosts)
+    .set({
+      ...data,
+      categoryId: data.categoryId ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(blogPosts.id, id))
+    .returning();
+
+  if (data.tagIds !== undefined) {
+    await db.delete(blogPostTags).where(eq(blogPostTags.postId, id));
+    if (data.tagIds.length > 0) {
+      await db.insert(blogPostTags).values(
+        data.tagIds.map((tagId) => ({ postId: id, tagId }))
+      );
+    }
+  }
+
+  return post;
+}
+
+export async function toggleBlogPostPublish(id: string) {
+  if (!db) return null;
+
+  const [current] = await db
+    .select({ status: blogPosts.status })
+    .from(blogPosts)
+    .where(eq(blogPosts.id, id))
+    .limit(1);
+
+  if (!current) return null;
+
+  const newStatus = current.status === "published" ? "draft" : "published";
+
+  const [post] = await db
+    .update(blogPosts)
+    .set({
+      status: newStatus,
+      publishedAt: newStatus === "published" ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(blogPosts.id, id))
+    .returning();
+
+  return post;
+}
+
+export async function deleteBlogPost(id: string) {
+  if (!db) return;
+  await db.delete(blogPostTags).where(eq(blogPostTags.postId, id));
+  await db.delete(blogPosts).where(eq(blogPosts.id, id));
+}
+
+// ─── Blog Categories ───────────────────────────────────────────────────────────
+
+export async function getAllBlogCategories() {
+  if (!db) return [];
+
+  const cats = await db
+    .select({
+      id: blogCategories.id,
+      name: blogCategories.name,
+      slug: blogCategories.slug,
+      description: blogCategories.description,
+      createdAt: blogCategories.createdAt,
+    })
+    .from(blogCategories)
+    .orderBy(blogCategories.name);
+
+  const counts = await db
+    .select({ categoryId: blogPosts.categoryId, count: count() })
+    .from(blogPosts)
+    .where(eq(blogPosts.categoryId, sql`${blogPosts.categoryId}`))
+    .groupBy(blogPosts.categoryId);
+
+  const countMap = new Map(counts.map((r) => [r.categoryId, r.count]));
+
+  return cats.map((c) => ({ ...c, postCount: countMap.get(c.id) ?? 0 }));
+}
+
+export async function createBlogCategory(data: { name: string; slug: string; description?: string }) {
+  if (!db) return null;
+  const [cat] = await db
+    .insert(blogCategories)
+    .values({ name: data.name, slug: data.slug, description: data.description ?? null })
+    .returning();
+  return cat;
+}
+
+export async function updateBlogCategory(id: string, data: { name?: string; slug?: string; description?: string }) {
+  if (!db) return null;
+  const [cat] = await db
+    .update(blogCategories)
+    .set(data)
+    .where(eq(blogCategories.id, id))
+    .returning();
+  return cat;
+}
+
+export async function deleteBlogCategory(id: string) {
+  if (!db) return;
+  await db.delete(blogCategories).where(eq(blogCategories.id, id));
+}
+
+// ─── Blog Tags ─────────────────────────────────────────────────────────────────
+
+export async function getAllBlogTags() {
+  if (!db) return [];
+
+  const tags = await db
+    .select({
+      id: blogTags.id,
+      name: blogTags.name,
+      slug: blogTags.slug,
+      createdAt: blogTags.createdAt,
+    })
+    .from(blogTags)
+    .orderBy(blogTags.name);
+
+  const counts = await db
+    .select({ tagId: blogPostTags.tagId, count: count() })
+    .from(blogPostTags)
+    .groupBy(blogPostTags.tagId);
+
+  const countMap = new Map(counts.map((r) => [r.tagId, r.count]));
+
+  return tags.map((t) => ({ ...t, postCount: countMap.get(t.id) ?? 0 }));
+}
+
+export async function createBlogTag(data: { name: string; slug: string }) {
+  if (!db) return null;
+  const [tag] = await db
+    .insert(blogTags)
+    .values({ name: data.name, slug: data.slug })
+    .returning();
+  return tag;
+}
+
+export async function updateBlogTag(id: string, data: { name?: string; slug?: string }) {
+  if (!db) return null;
+  const [tag] = await db
+    .update(blogTags)
+    .set(data)
+    .where(eq(blogTags.id, id))
+    .returning();
+  return tag;
+}
+
+export async function deleteBlogTag(id: string) {
+  if (!db) return;
+  await db.delete(blogPostTags).where(eq(blogPostTags.tagId, id));
+  await db.delete(blogTags).where(eq(blogTags.id, id));
+}
+
+// ─── Blog SEO Settings ─────────────────────────────────────────────────────────
+
+export async function getBlogSeoSettings() {
+  if (!db) return null;
+  const [settings] = await db
+    .select()
+    .from(blogSeoSettings)
+    .where(eq(blogSeoSettings.id, "1"))
+    .limit(1);
+  return settings ?? null;
+}
+
+export async function upsertBlogSeoSettings(data: {
+  siteTitle?: string;
+  siteDescription?: string;
+  ogImage?: string;
+  twitterHandle?: string;
+  googleAnalyticsId?: string;
+  robotsTxt?: string;
+  structuredDataJson?: string;
+}) {
+  if (!db) return null;
+  const [settings] = await db
+    .insert(blogSeoSettings)
+    .values({ id: "1", ...data })
+    .onConflictDoUpdate({
+      target: blogSeoSettings.id,
+      set: { ...data, updatedAt: new Date() },
+    })
+    .returning();
+  return settings;
 }

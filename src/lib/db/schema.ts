@@ -573,3 +573,105 @@ export const replyAnalyticsEvents = pgTable(
 );
 
 export type WorkspaceRole = (typeof memberRoleEnum.enumValues)[number];
+
+/**
+ * Blog tables
+ */
+export const blogPostStatusEnum = pgEnum("blog_post_status", [
+  "draft",
+  "published",
+  "archived",
+]);
+
+export const blogCategories = pgTable(
+  "blog_categories",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }
+);
+
+export const blogTags = pgTable(
+  "blog_tags",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }
+);
+
+export const blogPosts = pgTable(
+  "blog_posts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    content: text("content").notNull().default(""),
+    excerpt: text("excerpt"),
+    coverImage: text("cover_image"),
+    categoryId: uuid("category_id").references(() => blogCategories.id, {
+      onDelete: "set null",
+    }),
+    authorId: text("author_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    status: blogPostStatusEnum("status").notNull().default("draft"),
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    ogImage: text("og_image"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("blog_posts_status_idx").on(table.status),
+    index("blog_posts_category_id_idx").on(table.categoryId),
+    index("blog_posts_author_id_idx").on(table.authorId),
+    index("blog_posts_published_at_idx").on(table.publishedAt),
+  ]
+);
+
+export const blogPostTags = pgTable(
+  "blog_post_tags",
+  {
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => blogPosts.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => blogTags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.postId, table.tagId] })]
+);
+
+export const blogSeoSettings = pgTable("blog_seo_settings", {
+  id: text("id").primaryKey().default("1"),
+  siteTitle: text("site_title").notNull().default(""),
+  siteDescription: text("site_description").notNull().default(""),
+  ogImage: text("og_image"),
+  twitterHandle: text("twitter_handle"),
+  googleAnalyticsId: text("google_analytics_id"),
+  robotsTxt: text("robots_txt"),
+  structuredDataJson: text("structured_data_json"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

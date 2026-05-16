@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { adminAuthClient } from "@/lib/auth/admin-auth-client";
 
+type Section = "general" | "blog";
+
 type NavItem = {
   title: string;
   href: string;
@@ -115,6 +117,145 @@ const SYSTEM_ITEMS: NavItem[] = [
   },
 ];
 
+const BLOG_ITEMS: NavItem[] = [
+  {
+    title: "Articles",
+    href: "/blog/articles",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 2v6h6" />
+        <path d="M16 13H8" />
+        <path d="M16 17H8" />
+        <path d="M10 9H8" />
+      </svg>
+    ),
+  },
+  {
+    title: "New Article",
+    href: "/blog/articles/new",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Categories",
+    href: "/blog/categories",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+        <path d="M7 7h.01" />
+      </svg>
+    ),
+  },
+  {
+    title: "Tags",
+    href: "/blog/tags",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+        <path d="M7 7h.01" />
+      </svg>
+    ),
+  },
+  {
+    title: "SEO Settings",
+    href: "/blog/seo",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+    ),
+  },
+  {
+    title: "Blog Settings",
+    href: "/blog/settings",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    ),
+  },
+];
+
+function getActiveSection(pathname: string): Section {
+  if (pathname.startsWith("/blog")) return "blog";
+  return "general";
+}
+
+function SectionSwitcher({
+  active,
+  onChange,
+  collapsed,
+}: {
+  active: Section;
+  onChange: (s: Section) => void;
+  collapsed: boolean;
+}) {
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onChange("general")}
+          title="General Management"
+          className={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+            active === "general"
+              ? "bg-[#5F30EB] text-white"
+              : "bg-[#F0EBFF] text-[#5F30EB] hover:bg-[#E6E1FA]"
+          }`}
+        >
+          GM
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange("blog")}
+          title="Blog"
+          className={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+            active === "blog"
+              ? "bg-[#5F30EB] text-white"
+              : "bg-[#F0EBFF] text-[#5F30EB] hover:bg-[#E6E1FA]"
+          }`}
+        >
+          B
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex rounded-xl bg-[#F0EBFF] p-1">
+      <button
+        type="button"
+        onClick={() => onChange("general")}
+        className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+          active === "general"
+            ? "bg-[#5F30EB] text-white shadow-sm"
+            : "text-[#6B6487] hover:text-[#5F30EB]"
+        }`}
+      >
+        General
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("blog")}
+        className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+          active === "blog"
+            ? "bg-[#5F30EB] text-white shadow-sm"
+            : "text-[#6B6487] hover:text-[#5F30EB]"
+        }`}
+      >
+        Blog
+      </button>
+    </div>
+  );
+}
+
 function NavSection({
   items,
   label,
@@ -174,11 +315,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [collapsed, setCollapsed] = useState(false);
   const [profile, setProfile] = useState({ name: "Admin", email: "" });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [section, setSection] = useState<Section>("general");
 
   useEffect(() => {
     const stored = localStorage.getItem("admin_sidebar_collapsed");
     if (stored === "true") setCollapsed(true);
   }, []);
+
+  useEffect(() => {
+    setSection(getActiveSection(pathname));
+  }, [pathname]);
 
   useEffect(() => {
     void adminAuthClient.getSession().then((res) => {
@@ -201,6 +347,15 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       localStorage.setItem("admin_sidebar_collapsed", String(next));
       return next;
     });
+  }
+
+  function handleSectionChange(s: Section) {
+    setSection(s);
+    if (s === "blog") {
+      router.push("/blog/articles");
+    } else {
+      router.push("/");
+    }
   }
 
   async function handleLogout() {
@@ -255,13 +410,26 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
       )}
 
+      {/* Section Switcher */}
+      <div className={collapsed ? "px-2 pt-2" : "px-4 pt-3"}>
+        <SectionSwitcher active={section} onChange={handleSectionChange} collapsed={collapsed} />
+      </div>
+
       <div className={`no-scrollbar flex-1 overflow-y-auto ${collapsed ? "px-3" : "px-4"}`}>
-        <div className="mt-4">
-          <NavSection items={MENU_ITEMS} label="Menu" activeHref={pathname} collapsed={collapsed} />
-        </div>
-        <div className="mt-6">
-          <NavSection items={SYSTEM_ITEMS} label="System" activeHref={pathname} collapsed={collapsed} />
-        </div>
+        {section === "general" ? (
+          <>
+            <div className="mt-4">
+              <NavSection items={MENU_ITEMS} label="Menu" activeHref={pathname} collapsed={collapsed} />
+            </div>
+            <div className="mt-6">
+              <NavSection items={SYSTEM_ITEMS} label="System" activeHref={pathname} collapsed={collapsed} />
+            </div>
+          </>
+        ) : (
+          <div className="mt-4">
+            <NavSection items={BLOG_ITEMS} label="Blog" activeHref={pathname} collapsed={collapsed} />
+          </div>
+        )}
       </div>
 
       <div className={`${collapsed ? "px-3 pb-3" : "px-4 pb-4"} mt-auto`}>
