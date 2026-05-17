@@ -31,40 +31,44 @@ function detectBrowserLanguage(): AppLanguage {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<AppLanguage>(() => {
-    if (typeof window === "undefined") {
-      return "en";
-    }
-
-    const fromDom = document.documentElement.lang;
-    let resolved: AppLanguage;
-    if (fromDom) {
-      resolved = normalizeLanguage(fromDom);
-    } else {
-      const stored = window.localStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
-      resolved = stored ? normalizeLanguage(stored) : detectBrowserLanguage();
-    }
-
-    // Apply dir immediately (before first paint) so CSS logical properties
-    // are in the correct position without waiting for useEffect.
-    document.documentElement.dir = resolved === "ar" ? "rtl" : "ltr";
-
-    return resolved;
-  });
+  const [language, setLanguageState] = useState<AppLanguage>("en");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const fromDom = document.documentElement.lang;
+    const stored = window.localStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
+    const resolved = stored
+      ? normalizeLanguage(stored)
+      : fromDom
+      ? normalizeLanguage(fromDom)
+      : detectBrowserLanguage();
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLanguageState(resolved);
+      setReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
     window.localStorage.setItem(APP_LANGUAGE_STORAGE_KEY, language);
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
-  }, [language]);
+  }, [language, ready]);
 
   const value = useMemo<LanguageContextValue>(
     () => ({
       language,
       setLanguage: setLanguageState,
-      ready: true,
+      ready,
     }),
-    [language]
+    [language, ready]
   );
 
   return (

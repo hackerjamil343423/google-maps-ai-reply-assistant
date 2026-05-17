@@ -213,6 +213,7 @@ export default function SettingsPage() {
   const [billingError, setBillingError] = useState("");
   const [billingNotice, setBillingNotice] = useState("");
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [checkoutReady, setCheckoutReady] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<"monthly" | "yearly">("monthly");
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -635,6 +636,11 @@ export default function SettingsPage() {
   }
 
   async function startUpgrade(planName: (typeof PLANS)[number]["name"]) {
+    if (!checkoutReady || !window.GeideaCheckout) {
+      setBillingError("Payment checkout is still loading. Please try again in a moment.");
+      return;
+    }
+
     setUpgrading(planName);
     setBillingError("");
     const res = await fetch("/api/subscription/checkout", {
@@ -645,12 +651,6 @@ export default function SettingsPage() {
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.sessionId) {
       setBillingError(json?.error || "Failed to start checkout.");
-      setUpgrading(null);
-      return;
-    }
-
-    if (!window.GeideaCheckout) {
-      setBillingError("Payment checkout is still loading. Please try again in a moment.");
       setUpgrading(null);
       return;
     }
@@ -846,7 +846,11 @@ export default function SettingsPage() {
 
   return (
     <>
-      <Script src="https://www.ksamerchant.geidea.net/hpp/geideaCheckout.min.js" />
+      <Script
+        src="https://www.ksamerchant.geidea.net/hpp/geideaCheckout.min.js"
+        onLoad={() => setCheckoutReady(true)}
+        onError={() => setBillingError("Payment checkout failed to load. Please refresh and try again.")}
+      />
       <DashboardShell activeHref="/dashboard/settings">
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

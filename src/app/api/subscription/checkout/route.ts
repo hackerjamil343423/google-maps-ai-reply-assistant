@@ -39,6 +39,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (!process.env.GEIDEA_MERCHANT_PUBLIC_KEY || !process.env.GEIDEA_API_PASSWORD) {
+    return NextResponse.json(
+      { error: "Payment provider credentials are not configured." },
+      { status: 503 }
+    );
+  }
+
   const workspaceId = await ensureWorkspaceForUser(
     session.user.id,
     session.user.name
@@ -66,25 +73,26 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  // Cancel any existing Geidea subscription to prevent duplicates
-  if (sub.geideaSubscriptionId) {
-    try {
-      await cancelSubscription(sub.geideaSubscriptionId);
-    } catch (err) {
-      console.error("[checkout] failed to cancel previous Geidea subscription:", err);
-    }
+  let geideaSubscription;
+  try {
+    geideaSubscription = await createSubscription({
+      amount: planConfig.amount,
+      currency: planConfig.currency,
+      cycleInterval: planConfig.cycleInterval,
+      cycleFrequency: planConfig.cycleFrequency,
+      merchantReferenceId: workspaceId,
+      customer: {
+        name: session.user.name,
+        email: session.user.email,
+      },
+    });
+  } catch (err) {
+    console.error("[checkout] createSubscription failed:", err);
+    return NextResponse.json(
+      { error: "Failed to initialize payment provider subscription. Please try again." },
+      { status: 502 }
+    );
   }
-  const geideaSubscription = await createSubscription({
-    amount: planConfig.amount,
-    currency: planConfig.currency,
-    cycleInterval: planConfig.cycleInterval,
-    cycleFrequency: planConfig.cycleFrequency,
-    merchantReferenceId: workspaceId,
-    customer: {
-      name: session.user.name,
-      email: session.user.email,
-    },
-  });
 
   if (!geideaSubscription.subscriptionId) {
     return NextResponse.json(
@@ -92,20 +100,6 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
-
-  const previousGeideaSubscriptionId = sub.geideaSubscriptionId;
-
-  await db
-    .update(subscriptions)
-    .set({
-      geideaCustomerId: geideaSubscription.customerId ?? sub?.geideaCustomerId ?? null,
-      geideaSubscriptionId: geideaSubscription.subscriptionId,
-      billingInterval,
-      cancelAtPeriodEnd: false,
-      scheduledDowngradePlan: null,
-      updatedAt: new Date(),
-    })
-    .where(eq(subscriptions.workspaceId, workspaceId));
 
   let checkoutSession;
   try {
@@ -118,19 +112,12 @@ export async function POST(req: NextRequest) {
       returnUrl: `${appUrl}/dashboard/settings?section=billing`,
     });
   } catch (err) {
-    console.error("[checkout] createSession failed, rolling back:", err);
+    console.error("[checkout] createSession failed:", err);
     try {
       await cancelSubscription(geideaSubscription.subscriptionId);
     } catch (cancelErr) {
       console.error("[checkout] failed to cancel orphaned Geidea subscription:", cancelErr);
     }
-    await db
-      .update(subscriptions)
-      .set({
-        geideaSubscriptionId: previousGeideaSubscriptionId,
-        updatedAt: new Date(),
-      })
-      .where(eq(subscriptions.workspaceId, workspaceId));
 
     return NextResponse.json(
       { error: "Failed to create checkout session. Please try again." },

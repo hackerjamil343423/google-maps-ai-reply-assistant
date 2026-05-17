@@ -80,6 +80,7 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState("");
+  const [checkoutReady, setCheckoutReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -108,6 +109,11 @@ export default function PricingPage() {
       router.push("/GetStarted?mode=signup");
       return;
     }
+    if (!checkoutReady || !window.GeideaCheckout) {
+      setCheckoutError("Payment checkout is still loading. Please try again in a moment.");
+      return;
+    }
+
     setCheckingOut(planName);
     setCheckoutError("");
     try {
@@ -120,10 +126,6 @@ export default function PricingPage() {
       if (!res.ok) throw new Error(data?.error || "Failed to start checkout.");
       const sessionId = data?.sessionId as string | undefined;
       if (!sessionId) throw new Error("No checkout session returned.");
-      if (!window.GeideaCheckout) {
-        throw new Error("Payment checkout is still loading. Please try again in a moment.");
-      }
-
       const payment = new window.GeideaCheckout(
         () => {
           setCheckingOut(null);
@@ -150,7 +152,11 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
-      <Script src="https://www.ksamerchant.geidea.net/hpp/geideaCheckout.min.js" />
+      <Script
+        src="https://www.ksamerchant.geidea.net/hpp/geideaCheckout.min.js"
+        onLoad={() => setCheckoutReady(true)}
+        onError={() => setCheckoutError("Payment checkout failed to load. Please refresh and try again.")}
+      />
       {/* Navbar */}
       <nav
         className="landing-glass-panel fixed left-1/2 top-4 z-50 w-[92vw] max-w-[1120px] -translate-x-1/2 rounded-full px-4 py-3 md:px-6 md:py-4 lg:px-8"
@@ -467,4 +473,3 @@ export default function PricingPage() {
     </div>
   );
 }
-

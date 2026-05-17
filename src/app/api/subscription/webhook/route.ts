@@ -5,7 +5,11 @@ import { db, dbSchema } from "@/lib/db";
 import { sendRenewalFailedEmail } from "@/lib/emails";
 import { consumeRateLimit } from "@/lib/api/rate-limit";
 import { invalidateCache } from "@/lib/subscription/cache";
-import { getSubscription, validateCallbackSignature } from "@/lib/geidea/client";
+import {
+  cancelSubscription,
+  getSubscription,
+  validateCallbackSignature,
+} from "@/lib/geidea/client";
 import type { GeideaCallback } from "@/lib/geidea/types";
 import { isKnownPlan } from "@/lib/subscription/plans";
 
@@ -33,6 +37,10 @@ function getSubscriptionId(payload: GeideaCallback) {
 
 function getOrderId(payload: GeideaCallback) {
   return payload.orderId ?? payload.order?.orderId ?? payload.order?.id ?? null;
+}
+
+function getMerchantReferenceId(payload: GeideaCallback) {
+  return payload.merchantReferenceId ?? payload.order?.merchantReferenceId ?? null;
 }
 
 function getAgreementId(payload: GeideaCallback) {
@@ -144,9 +152,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  const sub = await db.query.subscriptions.findFirst({
+  let sub = await db.query.subscriptions.findFirst({
     where: eq(dbSchema.subscriptions.geideaSubscriptionId, geideaSubscriptionId),
   });
+
+  if (!sub && isPaid(payload)) {
+    const workspaceId = getMerchantReferenceId(payload);
+    if (workspaceId) {
+      sub = await db.query.subscriptions.findFirst({
+        where: eq(dbSchema.subscriptions.workspaceId, workspaceId),
+      });
+    }
+  }
 
   if (!sub) {
     console.warn(`[geidea] no local subscription for ${geideaSubscriptionId}`);
@@ -190,6 +207,7 @@ export async function POST(req: NextRequest) {
     const plan =
       planParam && isKnownPlan(planParam) && planParam !== "free" ? planParam : sub.plan;
     const billingInterval = intervalParam === "yearly" ? "yearly" : sub.billingInterval;
+    const previousGeideaSubscriptionId = sub.geideaSubscriptionId;
 
     let nextOccurrenceDate =
       parseDate(payload.subscription?.nextOccurrenceDate) ??
@@ -211,12 +229,23 @@ export async function POST(req: NextRequest) {
         status: "active",
         billingInterval,
         currentPeriodEnd: nextOccurrenceDate ?? fallbackPeriodEnd(billingInterval),
+        geideaSubscriptionId,
         geideaAgreementId: getAgreementId(payload) ?? sub.geideaAgreementId,
         geideaTokenId: getTokenId(payload) ?? sub.geideaTokenId,
+        cancelAtPeriodEnd: false,
+        scheduledDowngradePlan: null,
         updatedAt: new Date(),
       })
       .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
     invalidateCache(`geidea-sub:${geideaSubscriptionId}`);
+    if (previousGeideaSubscriptionId && previousGeideaSubscriptionId !== geideaSubscriptionId) {
+      invalidateCache(`geidea-sub:${previousGeideaSubscriptionId}`);
+      try {
+        await cancelSubscription(previousGeideaSubscriptionId);
+      } catch (err) {
+        console.error("[geidea] failed to cancel previous subscription after paid checkout:", err);
+      }
+    }
 
     console.log(
       `[geidea] paid subscription callback for workspace ${sub.workspaceId}, order=${getOrderId(payload) ?? "unknown"}`

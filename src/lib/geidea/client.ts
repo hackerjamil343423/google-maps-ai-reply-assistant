@@ -101,7 +101,14 @@ async function geideaFetch<T>(path: string, init: RequestInit = {}): Promise<T> 
   });
 
   const text = await res.text();
-  const json = text ? JSON.parse(text) : null;
+  let json: unknown = null;
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = text;
+    }
+  }
 
   if (!res.ok) {
     throw new Error(`Geidea API failed: ${res.status} ${text}`);
