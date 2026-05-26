@@ -29,7 +29,7 @@ function getBaseUrl() {
   return (
     (typeof process !== "undefined" &&
       (process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL)) ||
-    "https://wakkelni.com"
+    "https://stars.wakkelni.ai"
   );
 }
 

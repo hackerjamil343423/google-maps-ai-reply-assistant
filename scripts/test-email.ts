@@ -16,7 +16,7 @@ import {
 const RESEND_API_KEY = "re_hJvgWMfb_JeJAS8k2NTLxXekS7JMv5Fqv";
 const FROM_EMAIL = "team@wakkelni.ai";
 const TO_EMAIL = "wakklni2025@gmail.com";
-const APP_URL = "https://wakkelni.com";
+const APP_URL = "https://stars.wakkelni.ai";
 
 const resend = new Resend(RESEND_API_KEY);
 

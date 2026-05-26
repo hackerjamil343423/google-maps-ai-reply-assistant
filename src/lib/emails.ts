@@ -22,7 +22,7 @@ import {
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 function getBaseUrl() {
-  return env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  return env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? "https://stars.wakkelni.ai";
 }
 
 function isEmailConfigured() {

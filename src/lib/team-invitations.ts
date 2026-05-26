@@ -9,7 +9,7 @@ export class TeamInvitationEmailError extends Error {
 }
 
 function getBaseUrl() {
-  return env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  return env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? "https://stars.wakkelni.ai";
 }
 
 export function buildInvitationUrl(token: string) {
