@@ -5,7 +5,13 @@ import { z } from "zod";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
-import { createSession, createSubscription, cancelSubscription } from "@/lib/geidea/client";
+import {
+  createPaymentSession,
+  createSession,
+  createSubscription,
+  cancelSubscription,
+  isGeideaSubscriptionNotEnabledError,
+} from "@/lib/geidea/client";
 import { getPlanGeideaConfig } from "@/lib/subscription/plans";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -73,6 +79,9 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+  const callbackUrl = `${appUrl}/api/subscription/webhook?plan=${encodeURIComponent(plan)}&interval=${billingInterval}`;
+  const returnUrl = `${appUrl}/dashboard/settings?section=billing`;
+
   let geideaSubscription;
   try {
     geideaSubscription = await createSubscription({
@@ -88,6 +97,36 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("[checkout] createSubscription failed:", err);
+    if (isGeideaSubscriptionNotEnabledError(err)) {
+      try {
+        const checkoutSession = await createPaymentSession({
+          amount: planConfig.amount,
+          currency: planConfig.currency,
+          merchantReferenceId: workspaceId,
+          callbackUrl: `${callbackUrl}&mode=one_time`,
+          returnUrl,
+        });
+
+        if (!checkoutSession.id) {
+          return NextResponse.json(
+            { error: "Payment provider did not return a checkout session." },
+            { status: 502 }
+          );
+        }
+
+        return NextResponse.json({
+          sessionId: checkoutSession.id,
+          mode: "one_time",
+        });
+      } catch (fallbackErr) {
+        console.error("[checkout] create one-time payment session failed:", fallbackErr);
+        return NextResponse.json(
+          { error: "Failed to create checkout session. Please try again." },
+          { status: 502 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Failed to initialize payment provider subscription. Please try again." },
       { status: 502 }
@@ -108,8 +147,8 @@ export async function POST(req: NextRequest) {
       currency: planConfig.currency,
       merchantReferenceId: workspaceId,
       subscriptionId: geideaSubscription.subscriptionId,
-      callbackUrl: `${appUrl}/api/subscription/webhook?plan=${encodeURIComponent(plan)}&interval=${billingInterval}`,
-      returnUrl: `${appUrl}/dashboard/settings?section=billing`,
+      callbackUrl,
+      returnUrl,
     });
   } catch (err) {
     console.error("[checkout] createSession failed:", err);

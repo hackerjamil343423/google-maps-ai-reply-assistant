@@ -179,6 +179,7 @@ export default function SettingsPage() {
   const [prompt, setPrompt] = useState(DEFAULT_AI_PROMPT);
   const [tone, setTone] = useState("Professional");
   const [postType, setPostType] = useState<PostType>("auto");
+  const [showAutoConfirm, setShowAutoConfirm] = useState(false);
   const [settingsError, setSettingsError] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
   const [savedSettings, setSavedSettings] = useState(false);
@@ -855,17 +856,17 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-[#040404]">Workspace Settings</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold text-[#040404]">{language === "ar" ? "إعدادات مساحة العمل" : "Workspace Settings"}</h1>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-3">
           {[
-            { key: "profile", label: "Profile" },
-            { key: "ai", label: "AI Replies" },
-            { key: "google", label: "Google Business" },
-            { key: "team", label: "Team" },
-            { key: "billing", label: "Billing" },
+            { key: "profile", label: language === "ar" ? "الملف الشخصي" : "Profile" },
+            { key: "ai", label: language === "ar" ? "ردود الذكاء الاصطناعي" : "AI Replies" },
+            { key: "google", label: language === "ar" ? "Google Business" : "Google Business" },
+            { key: "team", label: language === "ar" ? "الفريق" : "Team" },
+            { key: "billing", label: language === "ar" ? "الفوترة" : "Billing" },
             { key: "workspace", label: language === "ar" ? "مساحة العمل" : "Workspace" },
           ].map((tab) => {
             const isActive = currentTab === tab.key;
@@ -888,11 +889,11 @@ export default function SettingsPage() {
 
         {currentTab === "profile" && (
           <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
-            <h2 className="text-xl font-semibold text-[#040404]">Profile</h2>
-            <p className="text-sm text-[#6A6A82] mt-1">Manage your personal information and account settings.</p>
+            <h2 className="text-xl font-semibold text-[#040404]">{language === "ar" ? "الملف الشخصي" : "Profile"}</h2>
+            <p className="text-sm text-[#6A6A82] mt-1">{language === "ar" ? "إدارة معلوماتك الشخصية وإعدادات الحساب." : "Manage your personal information and account settings."}</p>
 
             {loadingProfile && (
-              <div className="mt-5 text-sm text-[#6B6487]">Loading profile…</div>
+              <div className="mt-5 text-sm text-[#6B6487]">{language === "ar" ? "جارٍ تحميل الملف الشخصي…" : "Loading profile…"}</div>
             )}
 
             {profileError && (
@@ -917,40 +918,40 @@ export default function SettingsPage() {
                 {/* Personal Information */}
                 <div>
                   <h3 className="text-base font-medium text-[#040404] mb-5 pb-3 border-b border-[#E6E1FA]">
-                    Personal Information
+                    {language === "ar" ? "المعلومات الشخصية" : "Personal Information"}
                   </h3>
                   <form onSubmit={handleProfileSave} className="space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm text-[#6A6A82] mb-1.5">First Name</label>
+                        <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "الاسم الأول" : "First Name"}</label>
                         <input type="text" required className={INPUT} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-sm text-[#6A6A82] mb-1.5">Last Name</label>
+                        <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "اسم العائلة" : "Last Name"}</label>
                         <input type="text" required className={INPUT} value={lastName} onChange={(e) => setLastName(e.target.value)} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm text-[#6A6A82] mb-1.5">Email Address</label>
+                      <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "البريد الإلكتروني" : "Email Address"}</label>
                       <input type="email" required className={INPUT} value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} />
                     </div>
                     <div>
-                      <label className="block text-sm text-[#6A6A82] mb-1.5">Phone Number <span className="text-gray-600">(optional)</span></label>
+                      <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "رقم الهاتف" : "Phone Number"} <span className="text-gray-600">{language === "ar" ? "(اختياري)" : "(optional)"}</span></label>
                       <input type="tel" className={INPUT} placeholder="+1 (555) 000-0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm text-[#6A6A82] mb-1.5">Company <span className="text-gray-600">(optional)</span></label>
-                        <input type="text" className={INPUT} placeholder="Your business name" value={company} onChange={(e) => setCompany(e.target.value)} />
+                        <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "الشركة" : "Company"} <span className="text-gray-600">{language === "ar" ? "(اختياري)" : "(optional)"}</span></label>
+                        <input type="text" className={INPUT} placeholder={language === "ar" ? "اسم نشاطك التجاري" : "Your business name"} value={company} onChange={(e) => setCompany(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-sm text-[#6A6A82] mb-1.5">Website <span className="text-gray-600">(optional)</span></label>
+                        <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "الموقع الإلكتروني" : "Website"} <span className="text-gray-600">{language === "ar" ? "(اختياري)" : "(optional)"}</span></label>
                         <input type="url" className={INPUT} placeholder="https://yourbusiness.com" value={website} onChange={(e) => setWebsite(e.target.value)} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm text-[#6A6A82] mb-1.5">Bio <span className="text-gray-600">(optional)</span></label>
-                      <textarea rows={3} className={INPUT} placeholder="A short description about yourself or your business…" value={bio} onChange={(e) => setBio(e.target.value)} />
+                      <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "نبذة" : "Bio"} <span className="text-gray-600">{language === "ar" ? "(اختياري)" : "(optional)"}</span></label>
+                      <textarea rows={3} className={INPUT} placeholder={language === "ar" ? "وصف مختصر عنك أو عن نشاطك التجاري…" : "A short description about yourself or your business…"} value={bio} onChange={(e) => setBio(e.target.value)} />
                     </div>
                     <div className="flex items-center gap-4 pt-1">
                       <button type="submit" disabled={savingProfile}
@@ -960,16 +961,16 @@ export default function SettingsPage() {
                             <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                             </svg>
-                            Saving…
+                            {language === "ar" ? "جارٍ الحفظ…" : "Saving…"}
                           </>
-                        ) : "Save Profile"}
+                        ) : (language === "ar" ? "حفظ الملف الشخصي" : "Save Profile")}
                       </button>
                       {savedProfile && (
                         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-600 text-sm">
                           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M20 6 9 17l-5-5" />
                           </svg>
-                          Profile updated
+                          {language === "ar" ? "تم تحديث الملف الشخصي" : "Profile updated"}
                         </div>
                       )}
                     </div>
@@ -979,7 +980,7 @@ export default function SettingsPage() {
                 {/* Language */}
                 <div>
                   <h3 className="text-base font-medium text-[#040404] mb-5 pb-3 border-b border-[#E6E1FA]">
-                    Language
+                    {language === "ar" ? "اللغة" : "Language"}
                   </h3>
                   <div className="max-w-sm">
                     <div className="relative">
@@ -990,14 +991,14 @@ export default function SettingsPage() {
                         className="w-full rounded-2xl border border-[#E6E9F8] bg-white px-4 py-3 pr-10 text-sm text-[#4F4F63] font-medium outline-none appearance-none cursor-pointer transition-all focus:border-[#5F30EB]/35 focus:ring-2 focus:ring-[#5F30EB]/12 disabled:opacity-60"
                       >
                         <option value="en" className="bg-[#F6F4FF] text-[#4F4F63]">English</option>
-                        <option value="ar" className="bg-[#F6F4FF] text-[#4F4F63]">Arabic</option>
+                        <option value="ar" className="bg-[#F6F4FF] text-[#4F4F63]">العربية</option>
                       </select>
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5F30EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
                         <path d="m6 9 6 6 6-6" />
                       </svg>
                     </div>
                     <p className="text-xs text-[#6B6487] mt-2">
-                      Current language: <span className="font-medium text-[#040404]">{language === "ar" ? "Arabic" : "English"}</span>
+                      {language === "ar" ? "اللغة الحالية:" : "Current language:"} <span className="font-medium text-[#040404]">{language === "ar" ? "العربية" : "English"}</span>
                     </p>
                   </div>
                 </div>
@@ -1005,13 +1006,13 @@ export default function SettingsPage() {
                 {/* Change Password */}
                 <div>
                   <h3 className="text-base font-medium text-[#040404] mb-5 pb-3 border-b border-[#E6E1FA]">
-                    Change Password
+                    {language === "ar" ? "تغيير كلمة المرور" : "Change Password"}
                   </h3>
                   <form onSubmit={handlePasswordSave} className="space-y-5">
                     <div>
-                      <label className="block text-sm text-[#6A6A82] mb-1.5">Current Password</label>
+                      <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "كلمة المرور الحالية" : "Current Password"}</label>
                       <div className="relative">
-                        <input type={showCurrent ? "text" : "password"} required className={`${INPUT} pr-11`} placeholder="Enter current password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} />
+                        <input type={showCurrent ? "text" : "password"} required className={`${INPUT} pr-11`} placeholder={language === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"} value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} />
                         <button type="button" onClick={() => setShowCurrent((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#3E3E52] cursor-pointer transition-colors" aria-label={showCurrent ? "Hide password" : "Show password"}>
                           {showCurrent ? (
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1030,9 +1031,9 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm text-[#6A6A82] mb-1.5">New Password</label>
+                      <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "كلمة المرور الجديدة" : "New Password"}</label>
                       <div className="relative">
-                        <input type={showNew ? "text" : "password"} required className={`${INPUT} pr-11`} placeholder="Min. 8 characters" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+                        <input type={showNew ? "text" : "password"} required className={`${INPUT} pr-11`} placeholder={language === "ar" ? "٨ أحرف على الأقل" : "Min. 8 characters"} value={newPw} onChange={(e) => setNewPw(e.target.value)} />
                         <button type="button" onClick={() => setShowNew((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#3E3E52] cursor-pointer transition-colors" aria-label={showNew ? "Hide password" : "Show password"}>
                           {showNew ? (
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1065,15 +1066,17 @@ export default function SettingsPage() {
                             })}
                           </div>
                           <p className="text-xs text-[#8A8AA0]">
-                            {newPw.length < 8 ? "Too short" : newPw.length < 10 ? "Weak" : /[A-Z]/.test(newPw) && /[0-9]/.test(newPw) && newPw.length >= 12 ? "Strong" : "Good"}
+                            {language === "ar"
+                              ? (newPw.length < 8 ? "قصيرة جداً" : newPw.length < 10 ? "ضعيفة" : /[A-Z]/.test(newPw) && /[0-9]/.test(newPw) && newPw.length >= 12 ? "قوية" : "جيدة")
+                              : (newPw.length < 8 ? "Too short" : newPw.length < 10 ? "Weak" : /[A-Z]/.test(newPw) && /[0-9]/.test(newPw) && newPw.length >= 12 ? "Strong" : "Good")}
                           </p>
                         </div>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm text-[#6A6A82] mb-1.5">Confirm New Password</label>
+                      <label className="block text-sm text-[#6A6A82] mb-1.5">{language === "ar" ? "تأكيد كلمة المرور الجديدة" : "Confirm New Password"}</label>
                       <div className="relative">
-                        <input type={showConfirm ? "text" : "password"} required className={`${INPUT} pr-11`} placeholder="Re-enter new password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
+                        <input type={showConfirm ? "text" : "password"} required className={`${INPUT} pr-11`} placeholder={language === "ar" ? "أعد إدخال كلمة المرور الجديدة" : "Re-enter new password"} value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
                         <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A6A82] hover:text-[#3E3E52] cursor-pointer transition-colors" aria-label={showConfirm ? "Hide password" : "Show password"}>
                           {showConfirm ? (
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1092,7 +1095,9 @@ export default function SettingsPage() {
                       </div>
                       {confirmPw.length > 0 && (
                         <p className={`text-xs mt-1.5 ${newPw === confirmPw ? "text-green-400" : "text-red-400"}`}>
-                          {newPw === confirmPw ? "✓ Passwords match" : "✗ Passwords do not match"}
+                          {newPw === confirmPw
+                            ? (language === "ar" ? "✓ كلمتا المرور متطابقتان" : "✓ Passwords match")
+                            : (language === "ar" ? "✗ كلمتا المرور غير متطابقتين" : "✗ Passwords do not match")}
                         </p>
                       )}
                     </div>
@@ -1107,16 +1112,16 @@ export default function SettingsPage() {
                             <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                             </svg>
-                            Updating…
+                            {language === "ar" ? "جارٍ التحديث…" : "Updating…"}
                           </>
-                        ) : "Update Password"}
+                        ) : (language === "ar" ? "تحديث كلمة المرور" : "Update Password")}
                       </button>
                       {savedPassword && (
                         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-600 text-sm">
                           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M20 6 9 17l-5-5" />
                           </svg>
-                          Password updated
+                          {language === "ar" ? "تم تحديث كلمة المرور" : "Password updated"}
                         </div>
                       )}
                     </div>
@@ -1125,13 +1130,13 @@ export default function SettingsPage() {
 
                 {/* Danger Zone */}
                 <div>
-                  <h3 className="text-base font-medium text-red-500 mb-5 pb-3 border-b border-red-100">Danger Zone</h3>
-                  <div className="flex items-start justify-between gap-4 p-4 rounded-2xl border border-red-100 bg-red-50">
+                  <h3 className="text-base font-medium text-red-500 mb-5 pb-3 border-b border-red-100">{language === "ar" ? "منطقة الخطر" : "Danger Zone"}</h3>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 p-4 rounded-2xl border border-red-100 bg-red-50">
                     <div>
-                      <p className="text-sm font-medium text-[#040404]">Delete Account</p>
-                      <p className="text-xs text-[#6B6487] mt-0.5">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                      <p className="text-sm font-medium text-[#040404]">{language === "ar" ? "حذف الحساب" : "Delete Account"}</p>
+                      <p className="text-xs text-[#6B6487] mt-0.5">{language === "ar" ? "حذف حسابك وجميع البيانات المرتبطة به بشكل نهائي. لا يمكن التراجع عن هذا الإجراء." : "Permanently delete your account and all associated data. This action cannot be undone."}</p>
                     </div>
-                    <button type="button" className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium text-red-500 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer">Delete Account</button>
+                    <button type="button" className="self-start sm:self-auto shrink-0 px-4 py-2 rounded-xl text-sm font-medium text-red-500 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer">{language === "ar" ? "حذف الحساب" : "Delete Account"}</button>
                   </div>
                 </div>
               </div>
@@ -1141,37 +1146,69 @@ export default function SettingsPage() {
 
         {currentTab === "ai" && (
           <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
-            <h2 className="text-xl font-semibold text-[#040404]">AI Reply Settings</h2>
+            <h2 className="text-xl font-semibold text-[#040404]">{language === "ar" ? "إعدادات الرد بالذكاء الاصطناعي" : "AI Reply Settings"}</h2>
             {settingsError && <p className="mt-4 text-sm text-red-500">{settingsError}</p>}
-            <form onSubmit={saveSettings} className="mt-5 grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+            <form onSubmit={saveSettings} className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-[#4F4F63]">Prompt</label>
-                  <span className="text-xs text-[#8A8AA0]">{prompt.length} chars</span>
+                  <label className="text-sm font-medium text-[#4F4F63]">{language === "ar" ? "البرومبت" : "Prompt"}</label>
+                  <span className="text-xs text-[#8A8AA0]">{prompt.length} {language === "ar" ? "حرف" : "chars"}</span>
                 </div>
                 <textarea rows={11} value={prompt} onChange={(e) => setPrompt(e.target.value)} className={`${INPUT} min-h-[300px] resize-y`} />
               </div>
               <div className="space-y-5">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#4F4F63]">Tone</label>
+                  <label className="mb-2 block text-sm font-medium text-[#4F4F63]">{language === "ar" ? "النبرة" : "Tone"}</label>
                   <select value={tone} onChange={(e) => setTone(e.target.value)} className={INPUT}>
                     {TONE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#4F4F63]">Posting mode</label>
+                  <label className="mb-2 block text-sm font-medium text-[#4F4F63]">{language === "ar" ? "وضع النشر" : "Posting mode"}</label>
                   <div className="grid gap-3">
-                    <label className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 text-sm text-[#4F4F63]"><input type="radio" className="mr-2 accent-[#5F30EB]" checked={postType === "auto"} onChange={() => setPostType("auto")} />Auto post replies</label>
-                    <label className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 text-sm text-[#4F4F63]"><input type="radio" className="mr-2 accent-[#5F30EB]" checked={postType === "review"} onChange={() => setPostType("review")} />Review before publish</label>
+                    <label className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 text-sm text-[#4F4F63]"><input type="radio" className="mr-2 accent-[#5F30EB]" checked={postType === "auto"} onChange={() => { if (postType !== "auto") setShowAutoConfirm(true); }} />{language === "ar" ? "نشر الردود تلقائيًا" : "Auto post replies"}</label>
+                    <label className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 text-sm text-[#4F4F63]"><input type="radio" className="mr-2 accent-[#5F30EB]" checked={postType === "review"} onChange={() => setPostType("review")} />{language === "ar" ? "مراجعة قبل النشر" : "Review before publish"}</label>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={() => setPrompt(DEFAULT_AI_PROMPT)} className="rounded-full border border-[#E6E9F8] px-4 py-2 text-sm text-[#6A6A82] cursor-pointer">Reset</button>
-                  <button type="submit" disabled={savingSettings} className="rounded-full bg-[#5F30EB] px-5 py-2.5 text-sm font-semibold text-white cursor-pointer disabled:opacity-60">{savingSettings ? "Saving..." : "Save"}</button>
-                  {savedSettings && <span className="rounded-full bg-green-500/10 px-4 py-2 text-sm text-green-600">Saved</span>}
+                  <button type="button" onClick={() => setPrompt(DEFAULT_AI_PROMPT)} className="rounded-full border border-[#E6E9F8] px-4 py-2 text-sm text-[#6A6A82] cursor-pointer">{language === "ar" ? "إعادة تعيين" : "Reset"}</button>
+                  <button type="submit" disabled={savingSettings} className="rounded-full bg-[#5F30EB] px-5 py-2.5 text-sm font-semibold text-white cursor-pointer disabled:opacity-60">{savingSettings ? (language === "ar" ? "جارٍ الحفظ..." : "Saving...") : (language === "ar" ? "حفظ" : "Save")}</button>
+                  {savedSettings && <span className="rounded-full bg-green-500/10 px-4 py-2 text-sm text-green-600">{language === "ar" ? "تم الحفظ" : "Saved"}</span>}
                 </div>
               </div>
             </form>
+
+            {/* Auto-post confirmation modal */}
+            {showAutoConfirm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div className="mx-4 w-full max-w-sm rounded-3xl border border-[#E6E9F8] bg-white p-6 shadow-2xl">
+                  <h3 className="text-base font-semibold text-[#040404]">
+                    {language === "ar" ? "تأكيد النشر التلقائي" : "Enable auto-post?"}
+                  </h3>
+                  <p className="mt-2 text-sm text-[#6A6A82]">
+                    {language === "ar"
+                      ? "سيتم نشر الردود مباشرةً على ملف Google Business الخاص بك دون مراجعة. هل تريد المتابعة؟"
+                      : "Replies will be posted directly to your Google Business Profile without review. Continue?"}
+                  </p>
+                  <div className="mt-5 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAutoConfirm(false)}
+                      className="flex-1 rounded-full border border-[#E6E9F8] py-2 text-sm font-medium text-[#6A6A82] cursor-pointer"
+                    >
+                      {language === "ar" ? "إلغاء" : "Cancel"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPostType("auto"); setShowAutoConfirm(false); }}
+                      className="flex-1 rounded-full bg-[#5F30EB] py-2 text-sm font-semibold text-white cursor-pointer"
+                    >
+                      {language === "ar" ? "نعم، فعّل" : "Yes, enable"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -1180,7 +1217,7 @@ export default function SettingsPage() {
             {/* Header */}
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <h2 className="text-xl font-semibold text-[#040404]">Google Business</h2>
-              <Link href="/dashboard/review-link" className="text-sm font-medium text-[#5F30EB] hover:underline self-start md:self-auto">Open Review Link</Link>
+              <Link href="/dashboard/review-link" className="text-sm font-medium text-[#5F30EB] hover:underline self-start md:self-auto">{language === "ar" ? "فتح رابط التقييم" : "Open Review Link"}</Link>
             </div>
 
             {/* Messages */}
@@ -1193,7 +1230,7 @@ export default function SettingsPage() {
             {/* Location picker (shown while picking a new location to connect) */}
             {availableLocations && availableLocations.length > 1 && (
               <div className="mt-6 rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4 space-y-3">
-                <p className="text-sm font-medium text-[#040404]">Select a location to connect:</p>
+                <p className="text-sm font-medium text-[#040404]">{language === "ar" ? "اختر موقعاً للربط:" : "Select a location to connect:"}</p>
                 <select
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
@@ -1209,13 +1246,13 @@ export default function SettingsPage() {
                     disabled={connectingGoogle}
                     className="rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
                   >
-                    {connectingGoogle ? "Connecting..." : "Connect Selected Location"}
+                    {connectingGoogle ? (language === "ar" ? "جارٍ الربط..." : "Connecting...") : (language === "ar" ? "ربط الموقع المحدد" : "Connect Selected Location")}
                   </button>
                   <button
                     onClick={() => setAvailableLocations(null)}
                     className="rounded-2xl border border-[#E6E9F8] px-5 py-3 text-sm font-medium text-[#4F4F63] cursor-pointer"
                   >
-                    Cancel
+                    {language === "ar" ? "إلغاء" : "Cancel"}
                   </button>
                 </div>
               </div>
@@ -1225,7 +1262,7 @@ export default function SettingsPage() {
             {!availableLocations && (
               <div className="mt-6 space-y-3">
                 {connectedProfiles.length === 0 && !connected && (
-                  <p className="text-sm text-[#6A6A82]">Connect your Google Business Profile to start syncing reviews and generating AI replies.</p>
+                  <p className="text-sm text-[#6A6A82]">{language === "ar" ? "اربط ملف Google Business الخاص بك لبدء مزامنة التقييمات وتوليد الردود بالذكاء الاصطناعي." : "Connect your Google Business Profile to start syncing reviews and generating AI replies."}</p>
                 )}
 
                 {connectedProfiles.map((profile) => {
@@ -1237,7 +1274,9 @@ export default function SettingsPage() {
                       {isConfirmingDisconnect ? (
                         <div className="space-y-3">
                           <p className="text-sm text-[#040404]">
-                            Disconnect <strong>{profile.name}</strong>? Review syncing will stop until you reconnect.
+                            {language === "ar"
+                              ? <>{" "}<strong>{profile.name}</strong> — هل تريد قطع الاتصال؟ ستتوقف المزامنة حتى إعادة الربط.</>
+                              : <>Disconnect <strong>{profile.name}</strong>? Review syncing will stop until you reconnect.</>}
                           </p>
                           <div className="flex gap-3">
                             <button
@@ -1245,13 +1284,13 @@ export default function SettingsPage() {
                               disabled={disconnectingGoogle}
                               className="rounded-2xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
                             >
-                              {disconnectingGoogle ? "Disconnecting..." : "Yes, Disconnect"}
+                              {disconnectingGoogle ? (language === "ar" ? "جارٍ قطع الاتصال..." : "Disconnecting...") : (language === "ar" ? "نعم، قطع الاتصال" : "Yes, Disconnect")}
                             </button>
                             <button
                               onClick={() => setShowDisconnectConfirm(null)}
                               className="rounded-2xl border border-[#E6E9F8] px-5 py-2.5 text-sm font-medium text-[#4F4F63] cursor-pointer"
                             >
-                              Cancel
+                              {language === "ar" ? "إلغاء" : "Cancel"}
                             </button>
                           </div>
                         </div>
@@ -1261,7 +1300,7 @@ export default function SettingsPage() {
                             <span className="flex h-2 w-2 rounded-full bg-green-500 shrink-0" />
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-[#040404] truncate">{profile.name}</p>
-                              <p className="text-xs text-[#8A8AA0]">{profile.syncedReviewCount} reviews synced</p>
+                              <p className="text-xs text-[#8A8AA0]">{profile.syncedReviewCount} {language === "ar" ? "تقييم تمت مزامنته" : "reviews synced"}</p>
                             </div>
                           </div>
                           <div className="flex gap-2 shrink-0">
@@ -1270,13 +1309,13 @@ export default function SettingsPage() {
                               disabled={!!syncingReviews}
                               className="rounded-2xl bg-[#5F30EB] px-4 py-2 text-xs font-semibold text-white disabled:opacity-60 cursor-pointer"
                             >
-                              {isSyncing ? "Syncing..." : "Sync"}
+                              {isSyncing ? (language === "ar" ? "جارٍ المزامنة..." : "Syncing...") : (language === "ar" ? "مزامنة" : "Sync")}
                             </button>
                             <button
                               onClick={() => setShowDisconnectConfirm(profile.id)}
                               className="rounded-2xl border border-red-500/20 px-4 py-2 text-xs font-medium text-red-500 cursor-pointer"
                             >
-                              Disconnect
+                              {language === "ar" ? "قطع الاتصال" : "Disconnect"}
                             </button>
                           </div>
                         </div>
@@ -1294,7 +1333,7 @@ export default function SettingsPage() {
                         disabled={connectingGoogle}
                         className="rounded-2xl bg-[#5F30EB] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 cursor-pointer"
                       >
-                        {connectingGoogle ? "Connecting..." : "Connect Business Profile"}
+                        {connectingGoogle ? (language === "ar" ? "جارٍ الربط..." : "Connecting...") : (language === "ar" ? "ربط ملف الأعمال" : "Connect Business Profile")}
                       </button>
                     ) : (
                       typeof googleStatus?.connectedAccounts === "number" &&
@@ -1308,7 +1347,7 @@ export default function SettingsPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M5 12h14" /><path d="M12 5v14" />
                           </svg>
-                          {connectingGoogle ? "Loading..." : "Add Business Profile"}
+                          {connectingGoogle ? (language === "ar" ? "جارٍ التحميل..." : "Loading...") : (language === "ar" ? "إضافة ملف أعمال" : "Add Business Profile")}
                         </button>
                       )
                     )}
@@ -1321,26 +1360,26 @@ export default function SettingsPage() {
 
         {currentTab === "team" && (
           <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
-            <h2 className="text-xl font-semibold text-[#040404]">Team Access</h2>
+            <h2 className="text-xl font-semibold text-[#040404]">{language === "ar" ? "صلاحيات الفريق" : "Team Access"}</h2>
             {teamSuccess && <p className="mt-4 text-sm text-green-600">{teamSuccess}</p>}
             {teamError && <p className="mt-4 text-sm text-red-500">{teamError}</p>}
-            <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
               <form onSubmit={sendInvite} className="space-y-4 rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-5">
                 <input required type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="team@example.com" className={INPUT} />
                 <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Role)} className={INPUT}>
-                  <option value="VIEWER">Viewer</option>
-                  <option value="EDITOR">Editor</option>
-                  <option value="MANAGER">Manager</option>
+                  <option value="VIEWER">{language === "ar" ? "مشاهد" : "Viewer"}</option>
+                  <option value="EDITOR">{language === "ar" ? "محرر" : "Editor"}</option>
+                  <option value="MANAGER">{language === "ar" ? "مدير" : "Manager"}</option>
                 </select>
                 <div className="rounded-2xl border border-[#E6E9F8] bg-white p-4">
-                  <p className="text-sm font-medium text-[#040404]">Profile access</p>
+                  <p className="text-sm font-medium text-[#040404]">{language === "ar" ? "صلاحية الوصول للملفات" : "Profile access"}</p>
                   <div className="mt-3 flex gap-2">
-                    <button type="button" onClick={() => { setInviteAccessMode("all"); setInviteBusinessIds([]); }} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${inviteAccessMode === "all" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>All profiles</button>
-                    <button type="button" onClick={() => setInviteAccessMode("selected")} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${inviteAccessMode === "selected" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>Selected profiles</button>
+                    <button type="button" onClick={() => { setInviteAccessMode("all"); setInviteBusinessIds([]); }} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${inviteAccessMode === "all" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>{language === "ar" ? "جميع الملفات" : "All profiles"}</button>
+                    <button type="button" onClick={() => setInviteAccessMode("selected")} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${inviteAccessMode === "selected" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>{language === "ar" ? "ملفات محددة" : "Selected profiles"}</button>
                   </div>
                   {inviteAccessMode === "selected" && (
                     <div className="mt-3 space-y-2">
-                      {businesses.length === 0 ? <p className="text-xs text-[#8A8AA0]">No profiles available yet.</p> : businesses.map((item) => (
+                      {businesses.length === 0 ? <p className="text-xs text-[#8A8AA0]">{language === "ar" ? "لا توجد ملفات متاحة بعد." : "No profiles available yet."}</p> : businesses.map((item) => (
                         <label key={item.id} className="flex items-center gap-2 text-sm text-[#4F4F63]">
                           <input type="checkbox" checked={inviteBusinessIds.includes(item.id)} onChange={() => toggleInviteBusiness(item.id)} className="accent-[#5F30EB]" />
                           <span>{item.name}</span>
@@ -1349,38 +1388,38 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
-                <button type="submit" disabled={sendingInvite} className="w-full rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white cursor-pointer disabled:opacity-60">{sendingInvite ? "Sending..." : "Send Invitation"}</button>
+                <button type="submit" disabled={sendingInvite} className="w-full rounded-2xl bg-[#5F30EB] px-5 py-3 text-sm font-semibold text-white cursor-pointer disabled:opacity-60">{sendingInvite ? (language === "ar" ? "جارٍ الإرسال..." : "Sending...") : (language === "ar" ? "إرسال الدعوة" : "Send Invitation")}</button>
               </form>
               <div className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-[#040404]">Members</h3>
-                  <span className="text-sm text-[#8A8AA0]">{members.length} total</span>
+                  <h3 className="text-lg font-semibold text-[#040404]">{language === "ar" ? "الأعضاء" : "Members"}</h3>
+                  <span className="text-sm text-[#8A8AA0]">{members.length} {language === "ar" ? "عضو" : "total"}</span>
                 </div>
                 <div className="mt-4 space-y-3">
-                  {members.length === 0 ? <p className="text-sm text-[#6A6A82]">No team members yet.</p> : members.slice(0, 6).map((member) => (
+                  {members.length === 0 ? <p className="text-sm text-[#6A6A82]">{language === "ar" ? "لا يوجد أعضاء في الفريق بعد." : "No team members yet."}</p> : members.slice(0, 6).map((member) => (
                     <div key={`${member.kind}:${member.id}`} className={`rounded-2xl border border-[#E6E9F8] bg-white p-4 ${removingId === member.id ? "opacity-50" : ""}`}>
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="text-sm font-medium text-[#040404]">{member.email}</p>
                           <p className="text-xs text-[#8A8AA0]">{member.business} - {member.joinedAt}</p>
-                          <p className="mt-1 text-xs text-[#6A6A82]">{member.accessMode === "all" ? "Access: All profiles" : `Access: ${getBusinessNames(member.assignedBusinessIds)}`}</p>
+                          <p className="mt-1 text-xs text-[#6A6A82]">{member.accessMode === "all" ? (language === "ar" ? "الوصول: جميع الملفات" : "Access: All profiles") : `${language === "ar" ? "الوصول:" : "Access:"} ${getBusinessNames(member.assignedBusinessIds)}`}</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_COLORS[member.status]}`}>{member.status}</span>
                           <select value={member.role} disabled={!member.canEditRole} onChange={(e) => changeMemberRole(member, e.target.value as Role)} className={`appearance-none rounded-full border px-3 py-1.5 text-xs font-medium cursor-pointer disabled:opacity-50 ${ROLE_COLORS[member.role]}`}>
-                            <option value="VIEWER">Viewer</option>
-                            <option value="EDITOR">Editor</option>
-                            <option value="MANAGER">Manager</option>
+                            <option value="VIEWER">{language === "ar" ? "مشاهد" : "Viewer"}</option>
+                            <option value="EDITOR">{language === "ar" ? "محرر" : "Editor"}</option>
+                            <option value="MANAGER">{language === "ar" ? "مدير" : "Manager"}</option>
                           </select>
                           <button onClick={() => removeMember(member)} disabled={!member.canRemove || removingId === member.id} className="rounded-full border border-red-500/15 px-3 py-1.5 text-xs font-medium text-red-500 cursor-pointer disabled:opacity-50">
-                            Remove
+                            {language === "ar" ? "إزالة" : "Remove"}
                           </button>
                         </div>
                       </div>
                       <div className="mt-4 rounded-2xl border border-[#F0F2FA] bg-[#FBFBFF] p-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <button type="button" disabled={!member.canEditAccess || updatingAccessId === member.id} onClick={() => void changeMemberAccess(member, "all", [])} className={`rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${member.accessMode === "all" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>All profiles</button>
-                          <button type="button" disabled={!member.canEditAccess || updatingAccessId === member.id} onClick={() => void changeMemberAccess(member, "selected", member.assignedBusinessIds)} className={`rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${member.accessMode === "selected" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>Selected profiles</button>
+                          <button type="button" disabled={!member.canEditAccess || updatingAccessId === member.id} onClick={() => void changeMemberAccess(member, "all", [])} className={`rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${member.accessMode === "all" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>{language === "ar" ? "جميع الملفات" : "All profiles"}</button>
+                          <button type="button" disabled={!member.canEditAccess || updatingAccessId === member.id} onClick={() => void changeMemberAccess(member, "selected", member.assignedBusinessIds)} className={`rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${member.accessMode === "selected" ? "border-[#5F30EB]/30 bg-[#5F30EB]/10 text-[#5F30EB]" : "border-[#E6E9F8] text-[#6A6A82]"}`}>{language === "ar" ? "ملفات محددة" : "Selected profiles"}</button>
                         </div>
                         {member.accessMode === "selected" && (
                           <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -1428,7 +1467,7 @@ export default function SettingsPage() {
                 <h3 className="text-base font-medium text-[#040404] mb-4 pb-3 border-b border-[#E6E1FA]">
                   {language === "ar" ? "اسم مساحة العمل" : "Workspace Name"}
                 </h3>
-                <form onSubmit={handleWorkspaceNameSave} className="flex items-end gap-4">
+                <form onSubmit={handleWorkspaceNameSave} className="flex flex-col sm:flex-row sm:items-end gap-3">
                   <div className="flex-1">
                     <label className="block text-sm text-[#6A6A82] mb-1.5">
                       {language === "ar" ? "الاسم" : "Name"}
@@ -1540,10 +1579,10 @@ export default function SettingsPage() {
           <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-[#040404]">Billing And Plan</h2>
-                <p className="text-sm text-[#6A6A82] mt-1">Current plan, usage, and upgrades.</p>
+                <h2 className="text-xl font-semibold text-[#040404]">{language === "ar" ? "الفوترة والخطة" : "Billing And Plan"}</h2>
+                <p className="text-sm text-[#6A6A82] mt-1">{language === "ar" ? "الخطة الحالية والاستخدام والترقيات." : "Current plan, usage, and upgrades."}</p>
               </div>
-              <Link href="/pricing" className="text-sm font-medium text-[#5F30EB] hover:underline">Compare all plans</Link>
+              <Link href="/pricing" className="text-sm font-medium text-[#5F30EB] hover:underline">{language === "ar" ? "مقارنة جميع الخطط" : "Compare all plans"}</Link>
             </div>
             {billingNotice && <p className="mt-4 text-sm text-green-600">{billingNotice}</p>}
             {billingError && <p className="mt-4 text-sm text-red-500">{billingError}</p>}
@@ -1553,10 +1592,10 @@ export default function SettingsPage() {
               <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-orange-700">
-                    Subscription ends on {subscription.nextBillingAt}
+                    {language === "ar" ? `تنتهي الاشتراك في ${subscription.nextBillingAt}` : `Subscription ends on ${subscription.nextBillingAt}`}
                   </p>
                   <p className="mt-0.5 text-xs text-orange-600">
-                    Full access continues until then. You can re-subscribe any time.
+                    {language === "ar" ? "يستمر الوصول الكامل حتى ذلك الحين. يمكنك إعادة الاشتراك في أي وقت." : "Full access continues until then. You can re-subscribe any time."}
                   </p>
                 </div>
                 <button
@@ -1564,7 +1603,7 @@ export default function SettingsPage() {
                   disabled={subscription.plan === "free" || !!upgrading}
                   className="shrink-0 rounded-xl bg-orange-600 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
                 >
-                  Re-subscribe
+                  {language === "ar" ? "إعادة الاشتراك" : "Re-subscribe"}
                 </button>
               </div>
             )}
@@ -1573,33 +1612,33 @@ export default function SettingsPage() {
             {subscription.scheduledDowngradePlan && (
               <div className="mt-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
                 <p className="text-sm font-semibold text-yellow-800">
-                  Downgrading to {subscription.scheduledDowngradePlan} on {subscription.nextBillingAt}
+                  {language === "ar" ? `سيتم التخفيض إلى ${subscription.scheduledDowngradePlan} في ${subscription.nextBillingAt}` : `Downgrading to ${subscription.scheduledDowngradePlan} on ${subscription.nextBillingAt}`}
                 </p>
                 <p className="mt-0.5 text-xs text-yellow-700">
-                  You&apos;ll receive an email when your current period ends to complete your new {subscription.scheduledDowngradePlan} subscription.
+                  {language === "ar" ? `ستتلقى بريداً إلكترونياً عند انتهاء فترتك الحالية لإتمام اشتراك ${subscription.scheduledDowngradePlan} الجديد.` : `You'll receive an email when your current period ends to complete your new ${subscription.scheduledDowngradePlan} subscription.`}
                 </p>
               </div>
             )}
 
             {/* Current plan stats */}
-            <div className="mt-5 grid gap-4 lg:grid-cols-4">
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {(
                 [
-                  { label: "Plan", value: subscription.plan === "free" ? "Free" : subscription.plan },
-                  { label: "Status", value: subscription.status },
+                  { label: language === "ar" ? "الخطة" : "Plan", value: subscription.plan === "free" ? (language === "ar" ? "مجاني" : "Free") : subscription.plan },
+                  { label: language === "ar" ? "الحالة" : "Status", value: subscription.status },
                   {
-                    label: "Price",
+                    label: language === "ar" ? "السعر" : "Price",
                     value: subscription.plan === "free" ? (
-                      "Free"
+                      language === "ar" ? "مجاني" : "Free"
                     ) : (
                       <span className="flex items-center gap-1">
                         <SarIcon className="h-3.5 w-auto flex-shrink-0" />
                         {subscription.price}
-                        {subscription.billingInterval === "yearly" ? "/year" : "/month"}
+                        {subscription.billingInterval === "yearly" ? (language === "ar" ? "/سنة" : "/year") : (language === "ar" ? "/شهر" : "/month")}
                       </span>
                     ),
                   },
-                  { label: "Next Billing", value: subscription.nextBillingAt },
+                  { label: language === "ar" ? "الفوترة التالية" : "Next Billing", value: subscription.nextBillingAt },
                 ] as { label: string; value: React.ReactNode }[]
               ).map((item) => (
                 <div key={item.label} className="rounded-2xl border border-[#E6E9F8] bg-[#FBFBFF] p-4">
@@ -1621,7 +1660,7 @@ export default function SettingsPage() {
                       : "text-[#5E5876] hover:text-[#5F30EB]"
                   }`}
                 >
-                  Monthly
+                  {language === "ar" ? "شهري" : "Monthly"}
                 </button>
                 <button
                   type="button"
@@ -1632,16 +1671,16 @@ export default function SettingsPage() {
                       : "text-[#5E5876] hover:text-[#5F30EB]"
                   }`}
                 >
-                  Yearly
+                  {language === "ar" ? "سنوي" : "Yearly"}
                 </button>
               </div>
               {selectedInterval === "yearly" && (
-                <p className="text-xs font-semibold text-green-600">Save 2 months — get 12 months for the price of 10</p>
+                <p className="text-xs font-semibold text-green-600">{language === "ar" ? "وفّر شهرين — احصل على 12 شهراً بسعر 10" : "Save 2 months — get 12 months for the price of 10"}</p>
               )}
             </div>
 
             {/* Plan cards */}
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {PLANS.map((plan) => {
                 const isCurrent =
                   subscription.plan === plan.name &&
@@ -1666,18 +1705,18 @@ export default function SettingsPage() {
                       <p className="text-sm font-semibold text-[#040404]">{plan.name}</p>
                       {selectedInterval === "yearly" && (
                         <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
-                          Save 2 months
+                          {language === "ar" ? "وفّر شهرين" : "Save 2 months"}
                         </span>
                       )}
                     </div>
                     <p className="mt-2 text-2xl font-semibold text-[#5F30EB] flex items-center gap-1">
                       <SarIcon className="h-5 w-auto flex-shrink-0" />
                       {displayPrice}
-                      <span className="text-sm text-[#8A8AA0]">/mo</span>
+                      <span className="text-sm text-[#8A8AA0]">{language === "ar" ? "/شهر" : "/mo"}</span>
                     </p>
                     {selectedInterval === "yearly" && (
                       <p className="mt-0.5 text-xs text-[#8A8AA0] flex items-center gap-0.5">
-                        Billed as <SarIcon className="h-2.5 w-auto" />{plan.yearlyPrice}/year
+                        {language === "ar" ? "يُفوتر بـ" : "Billed as"} <SarIcon className="h-2.5 w-auto" />{plan.yearlyPrice}{language === "ar" ? "/سنة" : "/year"}
                       </p>
                     )}
                     <p className="mt-2 text-sm text-[#6A6A82]">{plan.accounts}</p>
@@ -1700,12 +1739,12 @@ export default function SettingsPage() {
                       } disabled:opacity-60`}
                     >
                       {upgrading === plan.name
-                        ? "Processing..."
+                        ? (language === "ar" ? "جارٍ المعالجة..." : "Processing...")
                         : isCurrent
-                        ? "Active Plan"
+                        ? (language === "ar" ? "الخطة الحالية" : "Active Plan")
                         : isDowngrade
-                        ? "Downgrade"
-                        : "Upgrade"}
+                        ? (language === "ar" ? "تخفيض الخطة" : "Downgrade")
+                        : (language === "ar" ? "ترقية" : "Upgrade")}
                     </button>
                     {isCurrent &&
                       (subscription.status === "active" || subscription.status === "past_due") &&
@@ -1716,7 +1755,7 @@ export default function SettingsPage() {
                           onClick={() => setShowCancelDialog(true)}
                           className="mt-3 w-full text-xs font-medium text-red-500 hover:underline"
                         >
-                          Cancel subscription
+                          {language === "ar" ? "إلغاء الاشتراك" : "Cancel subscription"}
                         </button>
                       )}
                   </div>
@@ -1734,14 +1773,14 @@ export default function SettingsPage() {
                   className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <h3 className="text-lg font-semibold text-[#040404]">Cancel your subscription?</h3>
+                  <h3 className="text-lg font-semibold text-[#040404]">{language === "ar" ? "إلغاء اشتراكك؟" : "Cancel your subscription?"}</h3>
                   <p className="mt-3 text-sm text-[#6A6A82]">
-                    You&apos;ll keep full access to {subscription.plan} until{" "}
-                    <span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>.
-                    After that, AI reply generation and Google Business management will be disabled.
+                    {language === "ar"
+                      ? <>{`ستحتفظ بالوصول الكامل إلى ${subscription.plan} حتى `}<span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>{`. بعد ذلك، سيتم تعطيل توليد الردود بالذكاء الاصطناعي وإدارة Google Business.`}</>
+                      : <>You&apos;ll keep full access to {subscription.plan} until{" "}<span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>. After that, AI reply generation and Google Business management will be disabled.</>}
                   </p>
                   <p className="mt-3 text-sm text-[#6A6A82]">
-                    No further charges will be made. You can re-subscribe any time.
+                    {language === "ar" ? "لن تُجرى أي رسوم إضافية. يمكنك إعادة الاشتراك في أي وقت." : "No further charges will be made. You can re-subscribe any time."}
                   </p>
                   <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
                     <button
@@ -1749,14 +1788,14 @@ export default function SettingsPage() {
                       disabled={cancelling}
                       className="rounded-2xl border border-[#E6E9F8] px-4 py-2.5 text-sm font-semibold text-[#040404] hover:bg-[#FBFBFF] disabled:opacity-60"
                     >
-                      Keep subscription
+                      {language === "ar" ? "الاحتفاظ بالاشتراك" : "Keep subscription"}
                     </button>
                     <button
                       onClick={handleConfirmCancel}
                       disabled={cancelling}
                       className="rounded-2xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
                     >
-                      {cancelling ? "Cancelling..." : "Cancel at period end"}
+                      {cancelling ? (language === "ar" ? "جارٍ الإلغاء..." : "Cancelling...") : (language === "ar" ? "إلغاء في نهاية الفترة" : "Cancel at period end")}
                     </button>
                   </div>
                 </div>
@@ -1774,16 +1813,16 @@ export default function SettingsPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <h3 className="text-lg font-semibold text-[#040404]">
-                    Downgrade to {downgradeTarget}?
+                    {language === "ar" ? `التخفيض إلى ${downgradeTarget}؟` : `Downgrade to ${downgradeTarget}?`}
                   </h3>
                   <p className="mt-3 text-sm text-[#6A6A82]">
-                    Your current {subscription.plan} access continues until{" "}
-                    <span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>.
-                    After that, you&apos;ll receive an email to set up your {downgradeTarget} subscription.
+                    {language === "ar"
+                      ? <>{`يستمر وصولك إلى ${subscription.plan} الحالي حتى `}<span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>{`. بعد ذلك، ستتلقى بريداً إلكترونياً لإعداد اشتراك ${downgradeTarget} الجديد.`}</>
+                      : <>Your current {subscription.plan} access continues until{" "}<span className="font-semibold text-[#040404]">{subscription.nextBillingAt}</span>. After that, you&apos;ll receive an email to set up your {downgradeTarget} subscription.</>}
                   </p>
                   {downgradeWarning && (
                     <div className="mt-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-3">
-                      <p className="text-xs font-semibold text-yellow-800">⚠ Account limit notice</p>
+                      <p className="text-xs font-semibold text-yellow-800">⚠ {language === "ar" ? "تنبيه حد الحسابات" : "Account limit notice"}</p>
                       <p className="mt-1 text-xs text-yellow-700">{downgradeWarning}</p>
                     </div>
                   )}
@@ -1793,14 +1832,14 @@ export default function SettingsPage() {
                       disabled={downgrading}
                       className="rounded-2xl border border-[#E6E9F8] px-4 py-2.5 text-sm font-semibold text-[#040404] hover:bg-[#FBFBFF] disabled:opacity-60"
                     >
-                      Keep current plan
+                      {language === "ar" ? "الاحتفاظ بالخطة الحالية" : "Keep current plan"}
                     </button>
                     <button
                       onClick={handleConfirmDowngrade}
                       disabled={downgrading}
                       className="rounded-2xl bg-[#5F30EB] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
                     >
-                      {downgrading ? "Scheduling..." : "Schedule downgrade"}
+                      {downgrading ? (language === "ar" ? "جارٍ الجدولة..." : "Scheduling...") : (language === "ar" ? "جدولة التخفيض" : "Schedule downgrade")}
                     </button>
                   </div>
                 </div>

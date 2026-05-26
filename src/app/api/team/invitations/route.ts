@@ -9,7 +9,7 @@ import {
   validateBusinessIdsForWorkspace,
 } from "@/lib/business-access";
 import { db } from "@/lib/db";
-import { businesses, teamInvitations, workspaceMembers, workspaces } from "@/lib/db/schema";
+import { businesses, teamInvitations, userProfiles, workspaceMembers, workspaces } from "@/lib/db/schema";
 import { sendTeamInvitationEmail, TeamInvitationEmailError } from "@/lib/team-invitations";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -163,6 +163,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const inviterProfile = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.userId, session.user.id),
+  });
+
   try {
     await sendTeamInvitationEmail({
       token,
@@ -171,6 +175,7 @@ export async function POST(req: NextRequest) {
       workspaceName: workspace?.name ?? "Primary Workspace",
       businessName: trimmedBusinessName,
       roleLabel: toRoleLabel(parsed.data.role),
+      lang: inviterProfile?.language === "ar" ? "ar" : "en",
     });
   } catch (error) {
     await db

@@ -64,3 +64,10 @@ export type GeideaCallback = {
   tokenId?: string | null;
   paymentMethod?: GeideaCallbackOrder["paymentMethod"];
 };
+
+export type GeideaApiEnvelope = {
+  responseCode?: string;
+  responseMessage?: string;
+  detailedResponseMessage?: string;
+  detailedResponseCode?: string;
+};

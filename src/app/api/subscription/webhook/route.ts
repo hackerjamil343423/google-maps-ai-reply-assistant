@@ -100,6 +100,7 @@ async function sendFailureEmail(workspaceId: string) {
       workspaceName: dbSchema.workspaces.name,
       ownerEmail: dbSchema.user.email,
       ownerName: dbSchema.user.name,
+      ownerLanguage: dbSchema.userProfiles.language,
     })
     .from(dbSchema.subscriptions)
     .innerJoin(
@@ -109,6 +110,10 @@ async function sendFailureEmail(workspaceId: string) {
     .innerJoin(
       dbSchema.user,
       eq(dbSchema.user.id, dbSchema.workspaces.ownerUserId)
+    )
+    .leftJoin(
+      dbSchema.userProfiles,
+      eq(dbSchema.userProfiles.userId, dbSchema.workspaces.ownerUserId)
     )
     .where(eq(dbSchema.subscriptions.workspaceId, workspaceId))
     .limit(1);
@@ -121,6 +126,7 @@ async function sendFailureEmail(workspaceId: string) {
     name: row.ownerName ?? row.ownerEmail,
     workspaceName: row.workspaceName,
     plan: row.plan,
+    lang: row.ownerLanguage === "ar" ? "ar" : "en",
   });
 }
 
@@ -148,15 +154,18 @@ export async function POST(req: NextRequest) {
   if (!db) {
     return NextResponse.json({ error: "Database not configured" }, { status: 500 });
   }
-  if (!geideaSubscriptionId) {
+  const oneTimeCheckout = req.nextUrl.searchParams.get("mode") === "one_time";
+  if (!geideaSubscriptionId && !oneTimeCheckout) {
     return NextResponse.json({ received: true });
   }
 
-  let sub = await db.query.subscriptions.findFirst({
-    where: eq(dbSchema.subscriptions.geideaSubscriptionId, geideaSubscriptionId),
-  });
+  let sub = geideaSubscriptionId
+    ? await db.query.subscriptions.findFirst({
+        where: eq(dbSchema.subscriptions.geideaSubscriptionId, geideaSubscriptionId),
+      })
+    : null;
 
-  if (!sub && isPaid(payload)) {
+  if (!sub && (isPaid(payload) || oneTimeCheckout)) {
     const workspaceId = getMerchantReferenceId(payload);
     if (workspaceId) {
       sub = await db.query.subscriptions.findFirst({
@@ -166,11 +175,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (!sub) {
-    console.warn(`[geidea] no local subscription for ${geideaSubscriptionId}`);
+    console.warn(`[geidea] no local subscription for ${geideaSubscriptionId ?? "one-time payment"}`);
     return NextResponse.json({ received: true });
   }
 
-  if (isCanceledSubscription(payload)) {
+  if (geideaSubscriptionId && isCanceledSubscription(payload)) {
     await db
       .update(dbSchema.subscriptions)
       .set({
@@ -183,7 +192,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  if (isFailed(payload)) {
+  if (geideaSubscriptionId && isFailed(payload)) {
     if (sub.status !== "past_due") {
       await db
         .update(dbSchema.subscriptions)
@@ -213,7 +222,7 @@ export async function POST(req: NextRequest) {
       parseDate(payload.subscription?.nextOccurrenceDate) ??
       parseDate(payload.order?.subscription?.nextOccurrenceDate);
 
-    if (!nextOccurrenceDate) {
+    if (!nextOccurrenceDate && geideaSubscriptionId) {
       try {
         const remoteSub = await getSubscription(geideaSubscriptionId);
         nextOccurrenceDate = parseDate(remoteSub.nextOccurrenceDate);
@@ -229,7 +238,7 @@ export async function POST(req: NextRequest) {
         status: "active",
         billingInterval,
         currentPeriodEnd: nextOccurrenceDate ?? fallbackPeriodEnd(billingInterval),
-        geideaSubscriptionId,
+        ...(geideaSubscriptionId ? { geideaSubscriptionId } : {}),
         geideaAgreementId: getAgreementId(payload) ?? sub.geideaAgreementId,
         geideaTokenId: getTokenId(payload) ?? sub.geideaTokenId,
         cancelAtPeriodEnd: false,
@@ -237,8 +246,14 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       })
       .where(eq(dbSchema.subscriptions.workspaceId, sub.workspaceId));
-    invalidateCache(`geidea-sub:${geideaSubscriptionId}`);
-    if (previousGeideaSubscriptionId && previousGeideaSubscriptionId !== geideaSubscriptionId) {
+    if (geideaSubscriptionId) {
+      invalidateCache(`geidea-sub:${geideaSubscriptionId}`);
+    }
+    if (
+      geideaSubscriptionId &&
+      previousGeideaSubscriptionId &&
+      previousGeideaSubscriptionId !== geideaSubscriptionId
+    ) {
       invalidateCache(`geidea-sub:${previousGeideaSubscriptionId}`);
       try {
         await cancelSubscription(previousGeideaSubscriptionId);

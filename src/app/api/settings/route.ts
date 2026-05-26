@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNull, notExists } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -9,7 +9,8 @@ import {
 } from "@/lib/ai/default-settings";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
-import { aiSettings } from "@/lib/db/schema";
+import { aiSettings, businesses, reviewReplies, reviews } from "@/lib/db/schema";
+import { enqueueJob } from "@/lib/jobs/queue";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const toneValues = TONE_OPTIONS.map((item) => item.value);
@@ -100,6 +101,13 @@ export async function PUT(req: NextRequest) {
   }
 
   const data = parsed.data;
+
+  // Read previous mode so we can detect a review→auto transition
+  const previous = await db.query.aiSettings.findFirst({
+    where: eq(aiSettings.workspaceId, workspaceId),
+    columns: { approvalMode: true },
+  });
+
   await db
     .insert(aiSettings)
     .values({
@@ -117,6 +125,50 @@ export async function PUT(req: NextRequest) {
         updatedAt: new Date(),
       },
     });
+
+  // When switching from review → auto, enqueue generate_reply for all
+  // pending reviews that have no draft/posted reply yet.
+  const switchingToAuto =
+    data.postType === "auto" &&
+    (previous?.approvalMode === "review" || !previous);
+
+  if (switchingToAuto) {
+    const activeBusinesses = await db.query.businesses.findMany({
+      where: and(
+        eq(businesses.workspaceId, workspaceId),
+        eq(businesses.status, "active")
+      ),
+      columns: { id: true },
+    });
+
+    if (activeBusinesses.length > 0) {
+      const businessIds = activeBusinesses.map((b) => b.id);
+
+      // Find reviews with no reply at all
+      const pendingReviews = await db
+        .select({ id: reviews.id })
+        .from(reviews)
+        .where(
+          and(
+            inArray(reviews.businessId, businessIds),
+            notExists(
+              db
+                .select({ id: reviewReplies.id })
+                .from(reviewReplies)
+                .where(eq(reviewReplies.reviewId, reviews.id))
+            )
+          )
+        );
+
+      for (const review of pendingReviews) {
+        await enqueueJob({
+          workspaceId,
+          type: "generate_reply",
+          payload: { reviewId: review.id },
+        });
+      }
+    }
+  }
 
   return NextResponse.json({
     prompt: data.prompt,

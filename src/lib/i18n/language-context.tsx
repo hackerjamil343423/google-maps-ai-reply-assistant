@@ -24,14 +24,14 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 function detectBrowserLanguage(): AppLanguage {
-  if (typeof window === "undefined") return "en";
+  if (typeof window === "undefined") return "ar";
   const fromNavigator =
-    window.navigator.languages?.[0] || window.navigator.language || "en";
+    window.navigator.languages?.[0] || window.navigator.language || "ar";
   return normalizeLanguage(fromNavigator);
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<AppLanguage>("en");
+  const [language, setLanguageState] = useState<AppLanguage>("ar");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       ? normalizeLanguage(stored)
       : fromDom
       ? normalizeLanguage(fromDom)
-      : detectBrowserLanguage();
+      : "ar";
 
     let cancelled = false;
     queueMicrotask(() => {
@@ -60,6 +60,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(APP_LANGUAGE_STORAGE_KEY, language);
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+    fetch("/api/profile/language", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language }),
+    }).catch(() => {});
   }, [language, ready]);
 
   const value = useMemo<LanguageContextValue>(

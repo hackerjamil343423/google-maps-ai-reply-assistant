@@ -123,6 +123,7 @@ export const userProfiles = pgTable("user_profiles", {
   website: text("website"),
   bio: text("bio"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  language: text("language").default("en"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -499,7 +500,7 @@ export const reviewAnalysisReports = pgTable(
   ]
 );
 
-export const jobTypeEnum = pgEnum("job_type", ["sync_reviews", "post_reply"]);
+export const jobTypeEnum = pgEnum("job_type", ["sync_reviews", "post_reply", "generate_reply"]);
 export const jobStatusEnum = pgEnum("job_status", [
   "pending",
   "running",

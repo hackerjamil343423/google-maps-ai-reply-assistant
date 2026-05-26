@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
       workspaceName: dbSchema.workspaces.name,
       ownerEmail: dbSchema.user.email,
       ownerName: dbSchema.user.name,
+      ownerLanguage: dbSchema.userProfiles.language,
     })
     .from(dbSchema.subscriptions)
     .innerJoin(
@@ -46,6 +47,10 @@ export async function GET(req: NextRequest) {
     .innerJoin(
       dbSchema.user,
       eq(dbSchema.user.id, dbSchema.workspaces.ownerUserId)
+    )
+    .leftJoin(
+      dbSchema.userProfiles,
+      eq(dbSchema.userProfiles.userId, dbSchema.workspaces.ownerUserId)
     )
     .where(
       and(
@@ -66,6 +71,7 @@ export async function GET(req: NextRequest) {
         name: row.ownerName ?? row.ownerEmail,
         workspaceName: row.workspaceName,
         trialEndsAt: row.trialEndsAt,
+        lang: (row.ownerLanguage === "ar" ? "ar" : "en"),
       });
       results.push({ workspaceId: row.workspaceId, sent: true });
     } catch (err) {

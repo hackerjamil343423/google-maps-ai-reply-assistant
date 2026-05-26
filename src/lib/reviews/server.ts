@@ -67,7 +67,7 @@ export async function saveDraftReplyForReview(args: {
   reviewId: string;
   content: string;
   source: "ai" | "manual";
-  userId: string;
+  userId: string | null;
 }) {
   if (!db) {
     throw new Error("DATABASE_URL is not configured.");
@@ -89,7 +89,7 @@ export async function saveDraftReplyForReview(args: {
         content: args.content,
         source: args.source,
         status: "draft",
-        createdBy: args.userId,
+        createdBy: args.userId ?? null,
         updatedAt: new Date(),
       })
       .where(eq(reviewReplies.id, existingDraft.id))
@@ -109,7 +109,7 @@ export async function saveDraftReplyForReview(args: {
       content: args.content,
       source: args.source,
       status: "draft",
-      createdBy: args.userId,
+      createdBy: args.userId ?? null,
     })
     .returning({
       id: reviewReplies.id,

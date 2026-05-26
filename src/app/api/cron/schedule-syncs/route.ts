@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
@@ -26,20 +26,27 @@ export async function GET(req: NextRequest) {
     ...new Set(activeBusinesses.map((b) => b.workspaceId)),
   ];
 
-  let enqueued = 0;
+  if (uniqueWorkspaceIds.length === 0) {
+    return NextResponse.json({ total: 0, enqueued: 0, skipped: 0 });
+  }
 
-  for (const workspaceId of uniqueWorkspaceIds) {
-    // Skip if a pending sync job already exists for this workspace
-    const existing = await db.query.backgroundJobs.findFirst({
-      where: and(
-        eq(backgroundJobs.workspaceId, workspaceId),
+  // Single query to find all workspace IDs that already have a pending sync job
+  const alreadyPending = await db
+    .select({ workspaceId: backgroundJobs.workspaceId })
+    .from(backgroundJobs)
+    .where(
+      and(
+        inArray(backgroundJobs.workspaceId, uniqueWorkspaceIds),
         eq(backgroundJobs.type, "sync_reviews"),
         eq(backgroundJobs.status, "pending")
-      ),
-      columns: { id: true },
-    });
+      )
+    );
 
-    if (!existing) {
+  const alreadyPendingIds = new Set(alreadyPending.map((j) => j.workspaceId));
+
+  let enqueued = 0;
+  for (const workspaceId of uniqueWorkspaceIds) {
+    if (!alreadyPendingIds.has(workspaceId)) {
       await enqueueJob({ workspaceId, type: "sync_reviews" });
       enqueued++;
     }

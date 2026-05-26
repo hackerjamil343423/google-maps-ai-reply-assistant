@@ -1,13 +1,17 @@
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { generateReviewReply } from "@/lib/ai/generate-review-reply";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
+import { aiSettings, businesses } from "@/lib/db/schema";
 import { postGoogleReviewReply } from "@/lib/google/business-profile";
 import {
   getLatestReplyForReview,
   getWorkspaceReviewById,
   markReplyPosted,
+  saveDraftReplyForReview,
 } from "@/lib/reviews/server";
 import { getWorkspaceAccess, incrementUsageCounter } from "@/lib/subscription/server";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
@@ -68,6 +72,14 @@ export async function POST(req: NextRequest) {
     )
   );
 
+  // Load AI settings once for auto-generation of missing drafts
+  const workspaceSettings = db
+    ? await db.query.aiSettings.findFirst({
+        where: eq(aiSettings.workspaceId, workspaceId),
+        columns: { prompt: true, tone: true },
+      })
+    : null;
+
   let approved = 0;
   const failed: Array<{ reviewId: string; error: string }> = [];
 
@@ -87,11 +99,46 @@ export async function POST(req: NextRequest) {
     }
 
     const latestReply = await getLatestReplyForReview(reviewId);
-    const content = latestReply?.content?.trim() || "";
-    const source = latestReply?.source ?? "manual";
+
+    let content = latestReply?.content?.trim() || "";
+    let source: "ai" | "manual" = latestReply?.source ?? "manual";
+
+    // Auto-generate a draft if none exists
+    if (!content) {
+      try {
+        const businessRow = db
+          ? await db.query.businesses.findFirst({
+              where: eq(businesses.id, review.businessId),
+              columns: { name: true },
+            })
+          : null;
+
+        const generated = await generateReviewReply({
+          review: review.text,
+          reviewerName: review.authorName,
+          starRating: review.rating,
+          businessName: businessRow?.name ?? review.businessName,
+          tone: workspaceSettings?.tone,
+          customPrompt: workspaceSettings?.prompt,
+        });
+
+        await saveDraftReplyForReview({
+          reviewId,
+          content: generated.reply,
+          source: "ai",
+          userId: session.user.id,
+        });
+
+        content = generated.reply;
+        source = "ai";
+      } catch {
+        failed.push({ reviewId, error: "Failed to generate reply." });
+        continue;
+      }
+    }
 
     if (!content) {
-      failed.push({ reviewId, error: "No draft reply to approve." });
+      failed.push({ reviewId, error: "No reply content available." });
       continue;
     }
 

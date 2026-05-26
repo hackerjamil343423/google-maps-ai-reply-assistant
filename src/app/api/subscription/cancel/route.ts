@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
-import { subscriptions, workspaces } from "@/lib/db/schema";
+import { subscriptions, userProfiles, workspaces } from "@/lib/db/schema";
 import { sendCancellationScheduledEmail } from "@/lib/emails";
 import { cancelSubscription } from "@/lib/geidea/client";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
@@ -41,13 +41,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!sub.geideaSubscriptionId) {
-    return NextResponse.json(
-      { error: "No Geidea subscription linked. Please contact support." },
-      { status: 400 }
-    );
-  }
-
   // Idempotent: already scheduled to cancel
   if (sub.cancelAtPeriodEnd) {
     return NextResponse.json({
@@ -64,7 +57,9 @@ export async function POST(req: NextRequest) {
     .where(eq(subscriptions.workspaceId, workspaceId));
 
   try {
-    await cancelSubscription(sub.geideaSubscriptionId);
+    if (sub.geideaSubscriptionId) {
+      await cancelSubscription(sub.geideaSubscriptionId);
+    }
   } catch (err) {
     console.error("[cancel] Geidea cancelSubscription error:", err);
     await db
@@ -80,9 +75,10 @@ export async function POST(req: NextRequest) {
 
   // Send confirmation email (non-blocking)
   try {
-    const ws = await db.query.workspaces.findFirst({
-      where: eq(workspaces.id, workspaceId),
-    });
+    const [ws, profile] = await Promise.all([
+      db.query.workspaces.findFirst({ where: eq(workspaces.id, workspaceId) }),
+      db.query.userProfiles.findFirst({ where: eq(userProfiles.userId, session.user.id) }),
+    ]);
 
     await sendCancellationScheduledEmail({
       toEmail: session.user.email,
@@ -90,6 +86,7 @@ export async function POST(req: NextRequest) {
       workspaceName: ws?.name ?? "your workspace",
       plan: sub.plan,
       accessUntil: sub.currentPeriodEnd,
+      lang: profile?.language === "ar" ? "ar" : "en",
     });
   } catch (err) {
     console.error("[cancel] failed to send cancellation email:", err);

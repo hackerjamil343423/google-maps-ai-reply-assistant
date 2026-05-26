@@ -78,13 +78,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!sub.geideaSubscriptionId) {
-    return NextResponse.json(
-      { error: "No Geidea subscription linked. Please contact support." },
-      { status: 400 }
-    );
-  }
-
   // Check for account limit warning
   const countResult = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -116,7 +109,9 @@ export async function POST(req: NextRequest) {
 
   // Cancel in Geidea; roll back the DB flags if the call fails
   try {
-    await cancelSubscription(sub.geideaSubscriptionId);
+    if (sub.geideaSubscriptionId) {
+      await cancelSubscription(sub.geideaSubscriptionId);
+    }
   } catch (err) {
     console.error("[downgrade] Geidea cancelSubscription error:", err);
     await db

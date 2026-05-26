@@ -113,7 +113,7 @@ function ReviewCard({
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState(review.reply?.content ?? "");
-  const [loadingAction, setLoadingAction] = useState<"generate" | "save" | "post" | "dismiss" | null>(null);
+  const [loadingAction, setLoadingAction] = useState<"generate" | "save" | "post" | "dismiss" | "retry" | null>(null);
 
   useEffect(() => {
     setReplyText(review.reply?.content ?? "");
@@ -196,7 +196,28 @@ function ReviewCard({
     }
   }
 
+  async function handleRetryPost() {
+    if (!review.reply?.content) return;
+    setLoadingAction("retry");
+    try {
+      const res = await fetch(`/api/reviews/${review.id}/reply/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: review.reply.content,
+          source: review.reply.source,
+        }),
+      });
+      if (res.ok) {
+        await onRefresh();
+      }
+    } finally {
+      setLoadingAction(null);
+    }
+  }
+
   const busy = loadingAction !== null;
+  const hasFailed = review.reply?.status === "failed";
 
   return (
     <div
@@ -225,10 +246,16 @@ function ReviewCard({
       <p className="text-[#4F4F63] text-sm leading-relaxed mt-4">{review.text}</p>
 
       {review.reply && !replyOpen && (
-        <div className="mt-4 pl-4 border-l-2 border-[#5F30EB40]">
-          <p className="text-xs text-[#5F30EB] font-medium mb-1">
-            {review.reply.status === "posted" ? "Posted reply" : "Draft reply"}
-          </p>
+        <div className={`mt-4 pl-4 border-l-2 ${hasFailed ? "border-red-400/40" : "border-[#5F30EB40]"}`}>
+          <div className="flex items-center gap-2 mb-1">
+            {hasFailed ? (
+              <span className="text-xs font-medium text-red-500">Auto-post failed</span>
+            ) : (
+              <p className="text-xs text-[#5F30EB] font-medium">
+                {review.reply.status === "posted" ? "Posted reply" : "Draft reply"}
+              </p>
+            )}
+          </div>
           <p className="text-[#6A6A82] text-sm leading-relaxed">{review.reply.content}</p>
         </div>
       )}
@@ -267,6 +294,16 @@ function ReviewCard({
         >
           {loadingAction === "generate" ? "Generating..." : "AI Generate"}
         </button>
+
+        {hasFailed && (
+          <button
+            onClick={handleRetryPost}
+            disabled={busy}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-500/25 bg-red-500/5 text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {loadingAction === "retry" ? "Retrying..." : "Retry post"}
+          </button>
+        )}
       </div>
 
       {replyOpen && (

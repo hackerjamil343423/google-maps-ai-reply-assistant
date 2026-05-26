@@ -10,8 +10,10 @@ import {
   getGoogleAccessTokenForWorkspace,
   postGoogleReviewReplyWithToken,
 } from "@/lib/google/business-profile";
+import { computeBackoff, enqueueJob } from "@/lib/jobs/queue";
 import {
   getWorkspaceReviewById,
+  markReplyFailed,
   markReplyPosted,
   saveDraftReplyForReview,
 } from "@/lib/reviews/server";
@@ -120,7 +122,8 @@ export async function POST(
   });
 
   // Auto-post if the workspace has auto approval mode enabled
-  const approvalMode = savedSettings?.approvalMode ?? "review";
+  // Fall back to "auto" to match the schema default and getDefaultSettings()
+  const approvalMode = savedSettings?.approvalMode ?? "auto";
   if (approvalMode === "auto" && review.googleReviewId) {
     try {
       const accessToken = await getGoogleAccessTokenForWorkspace(workspaceId);
@@ -156,7 +159,24 @@ export async function POST(
         });
       }
     } catch {
-      // Auto-post failed — reply stays as draft, user can post manually
+      // Auto-post failed — mark the reply as failed and enqueue a retry
+      await markReplyFailed(draft.id);
+      await enqueueJob({
+        workspaceId,
+        type: "post_reply",
+        payload: { reviewId, replyId: draft.id },
+        runAt: computeBackoff(1),
+        maxAttempts: 3,
+      });
+      return NextResponse.json({
+        reply: draft.content,
+        source: generated.source,
+        replySource: draft.source,
+        status: "failed",
+        replyId: draft.id,
+        autoPosted: false,
+        autoPostError: "Auto-post failed. A retry has been queued.",
+      });
     }
   }
 

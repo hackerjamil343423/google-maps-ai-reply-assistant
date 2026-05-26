@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { backgroundJobs } from "@/lib/db/schema";
 import { claimNextJob, computeBackoff } from "./queue";
+import { handleGenerateReply, type GenerateReplyPayload } from "./handlers/generate-reply";
 import { handleSyncReviews } from "./handlers/sync-reviews";
 import { handlePostReply, type PostReplyPayload } from "./handlers/post-reply";
 
@@ -21,6 +22,8 @@ export async function runNextJob(): Promise<{
       await handleSyncReviews(job.workspaceId);
     } else if (job.type === "post_reply") {
       await handlePostReply(job.workspaceId, payload as unknown as PostReplyPayload);
+    } else if (job.type === "generate_reply") {
+      await handleGenerateReply(job.workspaceId, payload as unknown as GenerateReplyPayload);
     }
 
     if (db) {

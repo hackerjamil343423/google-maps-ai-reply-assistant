@@ -1,5 +1,5 @@
+import { type EmailLang, sendInvitationEmail } from "@/lib/emails";
 import { env } from "@/lib/env";
-import { sendInvitationEmail } from "@/lib/emails";
 
 export class TeamInvitationEmailError extends Error {
   constructor(message = "Team invitation email is not configured.") {
@@ -23,6 +23,7 @@ export async function sendTeamInvitationEmail(input: {
   workspaceName: string;
   businessName?: string | null;
   roleLabel: "Viewer" | "Editor" | "Manager";
+  lang?: EmailLang;
 }) {
   if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) {
     throw new TeamInvitationEmailError();
@@ -35,5 +36,6 @@ export async function sendTeamInvitationEmail(input: {
     roleLabel: input.roleLabel,
     businessName: input.businessName,
     token: input.token,
+    lang: input.lang,
   });
 }

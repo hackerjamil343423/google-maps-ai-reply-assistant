@@ -1,6 +1,7 @@
 import crypto from "crypto";
 
 import type {
+  GeideaApiEnvelope,
   GeideaCallback,
   GeideaSession,
   GeideaSubscription,
@@ -29,6 +30,26 @@ function authHeaders(): HeadersInit {
   };
 }
 
+export class GeideaProviderError extends Error {
+  responseCode?: string;
+  detailedResponseCode?: string;
+
+  constructor(message: string, envelope: GeideaApiEnvelope = {}) {
+    super(message);
+    this.name = "GeideaProviderError";
+    this.responseCode = envelope.responseCode;
+    this.detailedResponseCode = envelope.detailedResponseCode;
+  }
+}
+
+export function isGeideaSubscriptionNotEnabledError(error: unknown) {
+  return (
+    error instanceof GeideaProviderError &&
+    error.responseCode === "710" &&
+    error.detailedResponseCode === "009"
+  );
+}
+
 function hmacBase64(message: string, secret: string) {
   return crypto.createHmac("sha256", secret).update(message).digest("base64");
 }
@@ -46,13 +67,19 @@ export function generateSignature(input: {
   timestamp: string;
 }) {
   const { publicKey, apiPassword } = getCredentials();
-  const amount = input.amount == null ? "" : String(input.amount);
+  const amount = formatAmountForSignature(input.amount);
   const currency = input.currency ?? "";
   const merchantReferenceId = input.merchantReferenceId ?? "";
   return hmacBase64(
     `${publicKey}${amount}${currency}${merchantReferenceId}${input.timestamp}`,
     apiPassword
   );
+}
+
+function formatAmountForSignature(value: number | string | null | undefined) {
+  if (value == null || value === "") return "";
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric.toFixed(2) : String(value);
 }
 
 export function validateCallbackSignature(callback: GeideaCallback) {
@@ -63,7 +90,8 @@ export function validateCallbackSignature(callback: GeideaCallback) {
   const secret = process.env.GEIDEA_CALLBACK_SECRET ?? apiPassword;
   const timestamp = callback.timeStamp ?? callback.timestamp ?? "";
   const order = callback.order;
-  const amount = order?.amount == null ? "" : String(order.amount);
+  const rawAmount = order?.amount == null ? "" : String(order.amount);
+  const signedAmount = formatAmountForSignature(order?.amount);
   const currency = order?.currency ?? "";
   const merchantReferenceId =
     callback.merchantReferenceId ?? order?.merchantReferenceId ?? "";
@@ -72,7 +100,7 @@ export function validateCallbackSignature(callback: GeideaCallback) {
       ?.recurringPaymentAmount ??
     (order?.subscription as { recurringPaymentAmount?: number | string } | undefined)
       ?.recurringPaymentAmount ??
-    amount;
+    rawAmount;
   const subscriptionId =
     callback.subscriptionId ??
     callback.subscription?.subscriptionId ??
@@ -82,10 +110,12 @@ export function validateCallbackSignature(callback: GeideaCallback) {
     callback.subscription?.status ?? order?.subscription?.status ?? callback.status ?? order?.status ?? "";
 
   const candidates = [
-    `${publicKey}${amount}${currency}${merchantReferenceId}${timestamp}`,
+    `${publicKey}${rawAmount}${currency}${merchantReferenceId}${timestamp}`,
+    `${publicKey}${signedAmount}${currency}${merchantReferenceId}${timestamp}`,
     `${publicKey}${callback.orderId ?? order?.orderId ?? order?.id ?? ""}${timestamp}`,
     `${publicKey}${subscriptionId}${subscriptionStatus}${timestamp}`,
     `${publicKey}${subscriptionAmount}${subscriptionId}${subscriptionStatus}`,
+    `${publicKey}${formatAmountForSignature(subscriptionAmount)}${subscriptionId}${subscriptionStatus}`,
   ].map((message) => hmacBase64(message, secret));
 
   return candidates.some((candidate) => timingSafeEqualText(candidate, signature));
@@ -112,6 +142,21 @@ async function geideaFetch<T>(path: string, init: RequestInit = {}): Promise<T> 
 
   if (!res.ok) {
     throw new Error(`Geidea API failed: ${res.status} ${text}`);
+  }
+
+  if (
+    json &&
+    typeof json === "object" &&
+    "responseCode" in json &&
+    (json as GeideaApiEnvelope).responseCode !== "000"
+  ) {
+    const envelope = json as GeideaApiEnvelope;
+    throw new GeideaProviderError(
+      envelope.detailedResponseMessage ||
+        envelope.responseMessage ||
+        `Geidea provider rejected the request (${envelope.responseCode})`,
+      envelope
+    );
   }
 
   return json as T;
@@ -199,6 +244,48 @@ export async function createSession(input: {
     (GeideaSession & { sessionId?: string }) | { session: GeideaSession & { sessionId?: string } }
   >(
     "/payment-intent/api/v2/direct/session-subscription",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  );
+
+  const session = "session" in data ? data.session : data;
+
+  return {
+    ...session,
+    id: session.id ?? session.sessionId ?? "",
+  };
+}
+
+export async function createPaymentSession(input: {
+  amount: number;
+  currency: string;
+  merchantReferenceId: string;
+  callbackUrl: string;
+  returnUrl?: string;
+}): Promise<GeideaSession> {
+  const timestamp = new Date().toISOString();
+  const body = {
+    amount: input.amount,
+    currency: input.currency,
+    merchantReferenceId: input.merchantReferenceId,
+    callbackUrl: input.callbackUrl,
+    returnUrl: input.returnUrl,
+    paymentOperation: "Pay",
+    timeStamp: timestamp,
+    signature: generateSignature({
+      amount: input.amount,
+      currency: input.currency,
+      merchantReferenceId: input.merchantReferenceId,
+      timestamp,
+    }),
+  };
+
+  const data = await geideaFetch<
+    (GeideaSession & { sessionId?: string }) | { session: GeideaSession & { sessionId?: string } }
+  >(
+    "/payment-intent/api/v2/direct/session",
     {
       method: "POST",
       body: JSON.stringify(body),

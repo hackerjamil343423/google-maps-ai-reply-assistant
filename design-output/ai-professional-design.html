@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كيف تستخدم الذكاء الاصطناعي باحترافية</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #e8e7e3;
+    font-family: 'Cairo', sans-serif;
+  }
+
+  .canvas {
+    width: 1620px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    background: #FAF9F6;
+  }
+
+  /* Subtle grid overlay */
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(17,17,17,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(17,17,17,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Lime radial glow — top */
+  .lime-glow {
+    position: absolute;
+    top: -200px;
+    right: -100px;
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle at top right, rgba(212,246,87,0.10), transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Content container */
+  .content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 100px 140px;
+    padding-right: 160px;
+  }
+
+  /* Eyebrow tag */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #EDFBBF;
+    color: #111;
+    font-size: 26px;
+    font-weight: 700;
+    padding: 10px 28px;
+    border-radius: 100px;
+    margin-bottom: 48px;
+    letter-spacing: 0.01em;
+  }
+
+  .eyebrow .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #D4F657;
+    flex-shrink: 0;
+  }
+
+  /* Headline */
+  .headline {
+    font-size: 110px;
+    font-weight: 800;
+    color: #111111;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    text-align: right;
+    direction: rtl;
+    margin-bottom: 44px;
+    max-width: 1100px;
+  }
+
+  .headline .lime-word {
+    color: #111;
+    position: relative;
+    display: inline-block;
+  }
+
+  .headline .lime-word::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: -8px;
+    right: -8px;
+    height: 28px;
+    background: rgba(212,246,87,0.45);
+    border-radius: 6px;
+    z-index: -1;
+  }
+
+  /* Subtext */
+  .subtext {
+    font-size: 36px;
+    font-weight: 500;
+    color: #555555;
+    text-align: right;
+    direction: rtl;
+    line-height: 1.5;
+    max-width: 800px;
+    margin-bottom: 60px;
+  }
+
+  /* Decorative line illustration — left side */
+  .illustration {
+    position: absolute;
+    left: 80px;
+    bottom: 140px;
+    width: 420px;
+    height: 420px;
+    z-index: 2;
+    opacity: 0.55;
+  }
+
+  .illustration svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Floating lime dot cluster — decorative */
+  .dot-cluster {
+    position: absolute;
+    z-index: 2;
+  }
+
+  .dot-cluster .d1 {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #D4F657;
+    top: 180px;
+    left: 260px;
+  }
+
+  .dot-cluster .d2 {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #D4F657;
+    top: 220px;
+    left: 310px;
+    opacity: 0.5;
+  }
+
+  .dot-cluster .d3 {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #D4F657;
+    top: 200px;
+    left: 340px;
+    opacity: 0.3;
+  }
+
+  /* Logo — bottom right */
+  .logo {
+    position: absolute;
+    bottom: 70px;
+    right: 100px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 10;
+    direction: ltr;
+  }
+
+  .logo .mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #D4F657;
+    flex-shrink: 0;
+  }
+
+  .logo .wordmark {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .logo .wordmark .oto {
+    font-family: 'Cairo', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #111;
+    letter-spacing: -0.02em;
+  }
+
+  .logo .wordmark .reach {
+    font-family: 'Cairo', sans-serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #888;
+    letter-spacing: -0.01em;
+  }
+
+  /* Thin accent line */
+  .accent-line {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 320px;
+    height: 5px;
+    background: #D4F657;
+    z-index: 5;
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+  <!-- Background textures -->
+  <div class="grid-overlay"></div>
+  <div class="lime-glow"></div>
+
+  <!-- Decorative dots -->
+  <div class="dot-cluster">
+    <div class="d1"></div>
+    <div class="d2"></div>
+    <div class="d3"></div>
+  </div>
+
+  <!-- Main content -->
+  <div class="content">
+    <!-- Eyebrow -->
+    <div class="eyebrow">
+      <span class="dot"></span>
+      دليل احترافي
+    </div>
+
+    <!-- Headline -->
+    <h1 class="headline">
+      كيف تستخدم<br>
+      <span class="lime-word">الذكاء الاصطناعي</span><br>
+      باحترافية
+    </h1>
+
+    <!-- Subtext -->
+    <p class="subtext">
+      استفد من قوة الذكاء الاصطناعي لتطوير أعمالك<br>
+      وتحقيق نتائج ملموسة في وقت أقل
+    </p>
+  </div>
+
+  <!-- Line illustration — brain/AI concept -->
+  <div class="illustration">
+    <svg viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Brain outline — loose sketch style -->
+      <path d="M210 80 C160 80, 120 110, 110 160 C90 170, 80 200, 90 230 C70 250, 75 290, 100 310 C100 340, 130 360, 160 350 C180 370, 220 375, 250 360 C280 380, 320 360, 330 330 C360 320, 370 290, 350 260 C370 240, 365 200, 340 180 C350 150, 330 120, 300 110 C280 90, 250 80, 210 80Z"
+        stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+      <!-- Circuit lines inside -->
+      <path d="M180 160 L210 180 L240 160" stroke="#111" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M210 180 L210 240" stroke="#111" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M170 210 L210 240 L250 210" stroke="#111" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M160 260 L210 240 L260 260" stroke="#111" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+      <!-- Connection dots -->
+      <circle cx="210" cy="180" r="5" fill="#D4F657"/>
+      <circle cx="210" cy="240" r="5" fill="#111"/>
+      <circle cx="180" cy="160" r="3" fill="#111"/>
+      <circle cx="240" cy="160" r="3" fill="#111"/>
+      <circle cx="170" cy="210" r="3" fill="#111"/>
+      <circle cx="250" cy="210" r="3" fill="#111"/>
+      <circle cx="160" cy="260" r="3" fill="#111"/>
+      <circle cx="260" cy="260" r="3" fill="#111"/>
+
+      <!-- Spark lines radiating out -->
+      <path d="M310 140 L340 120" stroke="#111" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+      <path d="M320 170 L350 165" stroke="#111" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+      <path d="M100 140 L70 120" stroke="#111" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+      <path d="M90 180 L60 180" stroke="#111" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+      <!-- Small spark dots -->
+      <circle cx="345" cy="117" r="3" fill="#D4F657"/>
+      <circle cx="355" cy="162" r="2.5" fill="#111"/>
+      <circle cx="65" cy="117" r="2.5" fill="#111"/>
+      <circle cx="55" cy="180" r="3" fill="#D4F657"/>
+
+      <!-- Floating data nodes -->
+      <path d="M140 310 L120 350" stroke="#111" stroke-width="1.2" stroke-linecap="round" fill="none" stroke-dasharray="4 4"/>
+      <path d="M280 310 L300 350" stroke="#111" stroke-width="1.2" stroke-linecap="round" fill="none" stroke-dasharray="4 4"/>
+      <rect x="105" y="355" width="30" height="30" rx="6" stroke="#111" stroke-width="1.2" fill="none"/>
+      <rect x="285" y="355" width="30" height="30" rx="6" stroke="#111" stroke-width="1.2" fill="none"/>
+
+      <!-- Tiny lime accent in one box -->
+      <circle cx="120" cy="370" r="4" fill="#D4F657"/>
+      <line x1="293" y1="365" x2="307" y2="365" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="293" y1="373" x2="302" y2="373" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- Logo -->
+  <div class="logo">
+    <div class="mark"></div>
+    <div class="wordmark">
+      <span class="oto">OTO</span>
+      <span class="reach">Reach</span>
+    </div>
+  </div>
+
+  <!-- Accent line bottom-right -->
+  <div class="accent-line"></div>
+</div>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -78,6 +78,7 @@ export interface GoogleLocationOption {
 export interface SyncWorkspaceReviewsResult {
   business: GoogleBusinessConnection;
   synced: number;
+  newReviewIds: string[];
 }
 
 export interface WorkspaceReviewLinkResult {
@@ -134,6 +135,22 @@ function mapStarRating(value: string | undefined) {
   if (value === "FOUR") return 4;
   if (value === "FIVE") return 5;
   return 5;
+}
+
+function extractOriginalReviewText(comment: string | undefined): string {
+  if (!comment) return "";
+  const text = comment.trim();
+  // Google prepends "(Translated by Google) ...\n\n(Original)\n<original text>"
+  const originalMarker = /(^|\n)\(Original\)\n/;
+  const match = originalMarker.exec(text);
+  if (match) {
+    return text.slice(match.index + match[0].length).trim();
+  }
+  // If only the translated prefix exists with no "(Original)" block, strip the prefix
+  if (text.startsWith("(Translated by Google)")) {
+    return text.replace(/^\(Translated by Google\)\s*/, "").trim();
+  }
+  return text;
 }
 
 function toDate(value: string | undefined) {
@@ -436,6 +453,7 @@ export async function syncWorkspaceReviewsFromAccessToken(
   });
 
   let synced = 0;
+  const allNewReviewIds: string[] = [];
   let pageToken: string | undefined;
   let totalPages = 0;
   const MAX_PAGES = 20; // Safety limit: 20 pages × 50 = 1000 reviews max
@@ -454,76 +472,96 @@ export async function syncWorkspaceReviewsFromAccessToken(
     pageToken = reviewsRes.nextPageToken;
     totalPages += 1;
 
-    for (const remoteReview of remoteReviews) {
-      const reviewName = normalizeGoogleReviewName(
-        connectedBusiness.googleLocationId,
-        remoteReview
-      );
+    // Filter to reviews with a valid Google review ID
+    const validReviews = remoteReviews
+      .map((r) => ({
+        raw: r,
+        name: normalizeGoogleReviewName(connectedBusiness.googleLocationId, r),
+      }))
+      .filter((r): r is { raw: typeof r.raw; name: string } => r.name !== null);
 
-      if (!reviewName) {
-        continue;
-      }
+    if (validReviews.length === 0) {
+      continue;
+    }
 
-      const [savedReview] = await db
-        .insert(reviews)
-        .values({
+    // Batch upsert all reviews in this page — 1 query instead of N
+    // xmax = 0 means the row was newly inserted (not an update conflict)
+    const savedReviews = await db
+      .insert(reviews)
+      .values(
+        validReviews.map(({ raw, name }) => ({
           businessId: connectedBusiness.businessId,
-          googleReviewId: reviewName,
-          authorName: remoteReview.reviewer?.displayName?.trim() || "Anonymous",
-          rating: mapStarRating(remoteReview.starRating),
-          text: remoteReview.comment?.trim() || "",
-          reviewedAt: toDate(remoteReview.updateTime ?? remoteReview.createTime),
+          googleReviewId: name,
+          authorName: raw.reviewer?.displayName?.trim() || "Anonymous",
+          rating: mapStarRating(raw.starRating),
+          text: extractOriginalReviewText(raw.comment),
+          reviewedAt: toDate(raw.updateTime ?? raw.createTime),
           syncedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: reviews.googleReviewId,
-          set: {
-            authorName: remoteReview.reviewer?.displayName?.trim() || "Anonymous",
-            rating: mapStarRating(remoteReview.starRating),
-            text: remoteReview.comment?.trim() || "",
-            reviewedAt: toDate(remoteReview.updateTime ?? remoteReview.createTime),
-            syncedAt: new Date(),
-            updatedAt: new Date(),
-          },
-        })
-        .returning({ id: reviews.id });
-
-      if (!savedReview?.id) {
-        continue;
-      }
-
-      synced += 1;
-
-      const remoteReplyText = remoteReview.reviewReply?.comment?.trim();
-      if (!remoteReplyText) {
-        continue;
-      }
-
-      const existingReply = await db.query.reviewReplies.findFirst({
-        where: eq(reviewReplies.reviewId, savedReview.id),
-        columns: { id: true },
-        orderBy: [desc(reviewReplies.createdAt)],
+        }))
+      )
+      .onConflictDoUpdate({
+        target: reviews.googleReviewId,
+        set: {
+          authorName: sql`excluded.author_name`,
+          rating: sql`excluded.rating`,
+          text: sql`excluded.text`,
+          reviewedAt: sql`excluded.reviewed_at`,
+          syncedAt: sql`excluded.synced_at`,
+          updatedAt: sql`now()`,
+        },
+      })
+      .returning({
+        id: reviews.id,
+        googleReviewId: reviews.googleReviewId,
+        isNew: sql<boolean>`(xmax = 0)`,
       });
 
-      if (existingReply?.id) {
-        await db
-          .update(reviewReplies)
-          .set({
-            content: remoteReplyText,
-            source: "manual",
-            status: "posted",
-            postedAt: toDate(remoteReview.reviewReply?.updateTime),
-            updatedAt: new Date(),
-          })
-          .where(eq(reviewReplies.id, existingReply.id));
-      } else {
-        await db.insert(reviewReplies).values({
-          reviewId: savedReview.id,
-          content: remoteReplyText,
-          source: "manual",
-          status: "posted",
-          postedAt: toDate(remoteReview.reviewReply?.updateTime),
-        });
+    synced += savedReviews.length;
+    allNewReviewIds.push(
+      ...savedReviews.filter((r) => r.isNew).map((r) => r.id)
+    );
+
+    // Collect reviews that have a remote reply attached
+    const idByReviewName = new Map(savedReviews.map((r) => [r.googleReviewId, r.id]));
+    const reviewsWithReplies = validReviews
+      .map(({ raw, name }) => ({
+        savedId: idByReviewName.get(name),
+        replyText: raw.reviewReply?.comment?.trim(),
+        replyPostedAt: toDate(raw.reviewReply?.updateTime),
+      }))
+      .filter(
+        (r): r is { savedId: string; replyText: string; replyPostedAt: Date } =>
+          !!r.savedId && !!r.replyText
+      );
+
+    if (reviewsWithReplies.length > 0) {
+      const reviewIds = reviewsWithReplies.map((r) => r.savedId);
+
+      // Single query to find all existing replies for this batch
+      const existingReplies = await db
+        .select({ id: reviewReplies.id, reviewId: reviewReplies.reviewId })
+        .from(reviewReplies)
+        .where(inArray(reviewReplies.reviewId, reviewIds));
+
+      const existingByReviewId = new Map(existingReplies.map((r) => [r.reviewId, r.id]));
+
+      const toInsert: (typeof reviewReplies.$inferInsert)[] = [];
+
+      for (const { savedId, replyText, replyPostedAt } of reviewsWithReplies) {
+        const existingId = existingByReviewId.get(savedId);
+        if (existingId) {
+          await db
+            .update(reviewReplies)
+            .set({ content: replyText, source: "manual", status: "posted", postedAt: replyPostedAt, updatedAt: new Date() })
+            .where(eq(reviewReplies.id, existingId));
+        } else {
+          toInsert.push({ reviewId: savedId, content: replyText, source: "manual", status: "posted", postedAt: replyPostedAt });
+        }
+      }
+
+      // Batch insert all new replies — 1 query instead of N
+      if (toInsert.length > 0) {
+        await db.insert(reviewReplies).values(toInsert);
       }
     }
 
@@ -536,6 +574,7 @@ export async function syncWorkspaceReviewsFromAccessToken(
   return {
     business: connectedBusiness,
     synced,
+    newReviewIds: allNewReviewIds,
   };
 }
 

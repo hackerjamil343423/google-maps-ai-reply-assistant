@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
+import { requeueStalledJobs } from "@/lib/jobs/queue";
 import { runNextJob } from "@/lib/jobs/worker";
 
 // Maximum jobs to process per invocation to stay within function timeout
@@ -11,6 +12,9 @@ export async function GET(req: NextRequest) {
   if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Recover any jobs orphaned by crashed workers before processing new ones
+  await requeueStalledJobs();
 
   const results: { jobId?: string; error?: string }[] = [];
 
