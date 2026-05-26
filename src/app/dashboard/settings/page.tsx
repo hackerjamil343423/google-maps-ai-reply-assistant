@@ -446,14 +446,15 @@ export default function SettingsPage() {
     if (handledBillingParams.current) return;
     handledBillingParams.current = true;
     if (searchParams.get("success") === "true") {
-      setBillingNotice("Your subscription has been activated.");
+      setBillingNotice("Payment received. Your billing status is updating.");
+      void loadAll();
       router.replace("/dashboard/settings?section=billing");
     }
     if (searchParams.get("error") === "payment_failed") {
       setBillingError("Payment failed or was cancelled. Please try again.");
       router.replace("/dashboard/settings?section=billing");
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, loadAll]);
 
   // Auto-launch checkout when user arrives via the downgrade-ready email.
   useEffect(() => {

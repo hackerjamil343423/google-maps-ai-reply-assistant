@@ -51,9 +51,14 @@ export type GeideaCallbackOrder = {
 export type GeideaCallback = {
   order?: GeideaCallbackOrder;
   orderId?: string;
+  amount?: number;
+  currency?: string;
   subscriptionId?: string;
   subscription?: GeideaCallbackOrder["subscription"];
   responseCode?: string;
+  responseMessage?: string;
+  detailedResponseCode?: string;
+  detailedResponseMessage?: string;
   detailedStatus?: string;
   status?: string;
   signature?: string;

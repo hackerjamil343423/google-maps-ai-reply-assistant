@@ -63,11 +63,18 @@ function getTokenId(payload: GeideaCallback) {
 
 function isPaid(payload: GeideaCallback) {
   const responseCode = payload.responseCode ?? payload.order?.responseCode;
+  const detailedResponseCode = payload.detailedResponseCode;
+  const responseMessage = payload.responseMessage;
+  const detailedResponseMessage = payload.detailedResponseMessage;
   const detailedStatus = payload.detailedStatus ?? payload.order?.detailedStatus;
   const status = payload.status ?? payload.order?.status;
 
   return (
-    responseCode === "000" ||
+    (responseCode === "000" &&
+      (!responseMessage || responseMessage.toLowerCase() === "success") &&
+      (!detailedResponseCode || detailedResponseCode === "000" || detailedResponseCode.startsWith("000.")) &&
+      (!detailedResponseMessage ||
+        detailedResponseMessage.toLowerCase().includes("successful"))) ||
     detailedStatus?.toLowerCase() === "paid" ||
     status?.toLowerCase() === "paid" ||
     status?.toLowerCase() === "success"

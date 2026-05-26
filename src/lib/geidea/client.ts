@@ -90,9 +90,12 @@ export function validateCallbackSignature(callback: GeideaCallback) {
   const secret = process.env.GEIDEA_CALLBACK_SECRET ?? apiPassword;
   const timestamp = callback.timeStamp ?? callback.timestamp ?? "";
   const order = callback.order;
-  const rawAmount = order?.amount == null ? "" : String(order.amount);
-  const signedAmount = formatAmountForSignature(order?.amount);
-  const currency = order?.currency ?? "";
+  const amount = callback.amount ?? order?.amount;
+  const rawAmount = amount == null ? "" : String(amount);
+  const signedAmount = formatAmountForSignature(amount);
+  const currency = callback.currency ?? order?.currency ?? "";
+  const orderId = callback.orderId ?? order?.orderId ?? order?.id ?? "";
+  const status = callback.status ?? order?.status ?? callback.detailedStatus ?? order?.detailedStatus ?? "";
   const merchantReferenceId =
     callback.merchantReferenceId ?? order?.merchantReferenceId ?? "";
   const subscriptionAmount =
@@ -110,9 +113,11 @@ export function validateCallbackSignature(callback: GeideaCallback) {
     callback.subscription?.status ?? order?.subscription?.status ?? callback.status ?? order?.status ?? "";
 
   const candidates = [
+    `${publicKey}${rawAmount}${currency}${orderId}${status}${merchantReferenceId}${timestamp}`,
+    `${publicKey}${signedAmount}${currency}${orderId}${status}${merchantReferenceId}${timestamp}`,
     `${publicKey}${rawAmount}${currency}${merchantReferenceId}${timestamp}`,
     `${publicKey}${signedAmount}${currency}${merchantReferenceId}${timestamp}`,
-    `${publicKey}${callback.orderId ?? order?.orderId ?? order?.id ?? ""}${timestamp}`,
+    `${publicKey}${orderId}${timestamp}`,
     `${publicKey}${subscriptionId}${subscriptionStatus}${timestamp}`,
     `${publicKey}${subscriptionAmount}${subscriptionId}${subscriptionStatus}`,
     `${publicKey}${formatAmountForSignature(subscriptionAmount)}${subscriptionId}${subscriptionStatus}`,
