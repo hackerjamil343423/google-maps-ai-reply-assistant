@@ -369,6 +369,8 @@ export const subscriptions = pgTable("subscriptions", {
   geideaAgreementId: text("geidea_agreement_id"),
   geideaTokenId: text("geidea_token_id"),
   billingInterval: text("billing_interval").default("monthly"),
+  billingAmount: integer("billing_amount"),
+  billingCurrency: text("billing_currency").default("SAR"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),

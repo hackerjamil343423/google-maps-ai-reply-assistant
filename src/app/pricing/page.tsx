@@ -104,7 +104,7 @@ export default function PricingPage() {
     setOpenFaq((prev) => (prev === i ? null : i));
   }
 
-  async function handlePlanClick(planName: string) {
+  async function handlePlanClick(planName: string, billingInterval: "monthly" | "yearly") {
     if (!isAuthenticated) {
       router.push("/GetStarted?mode=signup");
       return;
@@ -120,7 +120,7 @@ export default function PricingPage() {
       const res = await fetch("/api/subscription/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planName }),
+        body: JSON.stringify({ plan: planName, billingInterval }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Failed to start checkout.");
@@ -300,7 +300,7 @@ export default function PricingPage() {
           )}
 
           <PricingCards
-            onPlanClick={(name) => void handlePlanClick(name)}
+            onPlanClick={(name, interval) => void handlePlanClick(name, interval)}
             checkingOut={checkingOut}
             isAuthenticated={isAuthenticated}
           />

@@ -9,9 +9,9 @@ import { ensureWorkspaceForUser } from "@/lib/workspace";
 import { getCached, setCached } from "@/lib/subscription/cache";
 import {
   isKnownPlan,
-  PLAN_LIMITS,
   type PlanName,
 } from "@/lib/subscription/plans";
+import { getEffectivePlanCatalog } from "@/lib/subscription/pricing";
 
 function getCurrentMonthKey() {
   const now = new Date();
@@ -89,7 +89,8 @@ export async function GET(req: NextRequest) {
   const planName = isKnownPlan(subscription?.plan ?? "")
     ? (subscription?.plan as PlanName)
     : "free";
-  const planInfo = PLAN_LIMITS[planName];
+  const planCatalog = await getEffectivePlanCatalog();
+  const planInfo = planCatalog[planName];
 
   const connectedResult = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -111,10 +112,14 @@ export async function GET(req: NextRequest) {
   });
 
   const billingInterval = subscription?.billingInterval ?? "monthly";
-  const price =
+  const catalogPrice =
     billingInterval === "yearly"
-      ? formatSar(planInfo.yearlyPrice)
-      : formatSar(planInfo.monthlyPrice);
+      ? planInfo.yearlyPrice
+      : planInfo.monthlyPrice;
+  const price =
+    subscription?.billingAmount && subscription.billingAmount > 0
+      ? formatSar(subscription.billingAmount)
+      : formatSar(catalogPrice);
   let nextBillingAt = subscription?.currentPeriodEnd ?? null;
 
   if (subscription?.geideaSubscriptionId) {

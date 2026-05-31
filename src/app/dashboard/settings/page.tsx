@@ -104,11 +104,20 @@ const STATUS_COLORS: Record<TeamMember["status"], string> = {
   pending: "text-orange-500 bg-orange-500/10 border-orange-500/20",
 };
 
-const PLANS = [
+const DEFAULT_PLANS = [
   { name: "Local Business", monthlyPrice: "149", yearlyPrice: "1,430", yearlyMonthly: "119", accounts: "Up to 1 account" },
   { name: "Multi-Location", monthlyPrice: "349", yearlyPrice: "3,350", yearlyMonthly: "279", accounts: "Up to 5 accounts" },
   { name: "Agency Max", monthlyPrice: "999", yearlyPrice: "9,590", yearlyMonthly: "799", accounts: "Up to 60 accounts" },
 ] as const;
+
+type PaidPlanName = (typeof DEFAULT_PLANS)[number]["name"];
+type BillingPlan = {
+  name: PaidPlanName;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  yearlyMonthly: string;
+  accounts: string;
+};
 
 const FALLBACK_SUBSCRIPTION: SubscriptionState = {
   plan: "free",
@@ -223,6 +232,7 @@ export default function SettingsPage() {
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   const [downgrading, setDowngrading] = useState(false);
   const handledAutoCheckout = useRef(false);
+  const [plans, setPlans] = useState<BillingPlan[]>([...DEFAULT_PLANS]);
 
   /* ── Workspace state ── */
   const [workspaceName, setWorkspaceName] = useState("");
@@ -318,6 +328,31 @@ export default function SettingsPage() {
       setSubscription({ ...FALLBACK_SUBSCRIPTION, ...billingJson });
     } else {
       setBillingError(billingJson?.error || "Failed to load billing.");
+    }
+
+    const pricingRes = await fetch("/api/pricing/plans", { cache: "no-store" });
+    const pricingJson = await pricingRes.json().catch(() => null);
+    if (pricingRes.ok && Array.isArray(pricingJson?.plans)) {
+      setPlans((current) =>
+        current.map((plan) => {
+          const updated = pricingJson.plans.find((item: { name?: string }) => item.name === plan.name);
+          if (
+            !updated ||
+            !Number.isFinite(updated.monthlyPrice) ||
+            !Number.isFinite(updated.yearlyPrice) ||
+            !Number.isFinite(updated.yearlyMonthlyEquivalent)
+          ) {
+            return plan;
+          }
+
+          return {
+            ...plan,
+            monthlyPrice: updated.monthlyPrice.toLocaleString("en-US"),
+            yearlyPrice: updated.yearlyPrice.toLocaleString("en-US"),
+            yearlyMonthly: updated.yearlyMonthlyEquivalent.toLocaleString("en-US"),
+          };
+        })
+      );
     }
 
     const workspaceRes = await fetch("/api/workspace", { cache: "no-store" });
@@ -466,7 +501,7 @@ export default function SettingsPage() {
     handledAutoCheckout.current = true;
     router.replace("/dashboard/settings?section=billing");
     setTimeout(() => {
-      void startUpgrade(autoCheckout as (typeof PLANS)[number]["name"]);
+      void startUpgrade(autoCheckout as PaidPlanName);
     }, 400);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -637,7 +672,7 @@ export default function SettingsPage() {
     setUpdatingAccessId(null);
   }
 
-  async function startUpgrade(planName: (typeof PLANS)[number]["name"]) {
+  async function startUpgrade(planName: PaidPlanName) {
     if (!checkoutReady || !window.GeideaCheckout) {
       setBillingError("Payment checkout is still loading. Please try again in a moment.");
       return;
@@ -1682,7 +1717,7 @@ export default function SettingsPage() {
 
             {/* Plan cards */}
             <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {PLANS.map((plan) => {
+              {plans.map((plan) => {
                 const isCurrent =
                   subscription.plan === plan.name &&
                   subscription.billingInterval === selectedInterval;

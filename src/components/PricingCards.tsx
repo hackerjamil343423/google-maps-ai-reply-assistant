@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import SarIcon from "./SarIcon";
 
-const PRICING_PLANS = [
+const DEFAULT_PRICING_PLANS = [
   {
     name: "Local Business",
     tagline:
@@ -68,7 +68,7 @@ const PRICING_PLANS = [
 ];
 
 interface PricingCardsProps {
-  onPlanClick?: (planName: string) => void;
+  onPlanClick?: (planName: string, billingInterval: "monthly" | "yearly") => void;
   checkingOut?: string | null;
   isAuthenticated?: boolean;
 }
@@ -79,6 +79,43 @@ export default function PricingCards({
   isAuthenticated,
 }: PricingCardsProps) {
   const [interval, setInterval] = useState<"monthly" | "yearly">("monthly");
+  const [pricingPlans, setPricingPlans] = useState(DEFAULT_PRICING_PLANS);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void fetch("/api/pricing/plans", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!mounted || !Array.isArray(data?.plans)) return;
+
+        setPricingPlans((current) =>
+          current.map((plan) => {
+            const updated = data.plans.find((item: { name?: string }) => item.name === plan.name);
+            if (
+              !updated ||
+              !Number.isFinite(updated.monthlyPrice) ||
+              !Number.isFinite(updated.yearlyPrice) ||
+              !Number.isFinite(updated.yearlyMonthlyEquivalent)
+            ) {
+              return plan;
+            }
+
+            return {
+              ...plan,
+              monthlyPrice: updated.monthlyPrice,
+              yearlyTotal: updated.yearlyPrice,
+              yearlyMonthlyEquivalent: updated.yearlyMonthlyEquivalent,
+            };
+          })
+        );
+      })
+      .catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="w-full">
@@ -121,7 +158,7 @@ export default function PricingCards({
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-        {PRICING_PLANS.map((plan) => {
+        {pricingPlans.map((plan) => {
           const isLoadingThis = checkingOut === plan.name;
           const displayPrice =
             interval === "yearly"
@@ -189,7 +226,7 @@ export default function PricingCards({
               {onPlanClick ? (
                 <button
                   type="button"
-                  onClick={() => onPlanClick(plan.name)}
+                  onClick={() => onPlanClick(plan.name, interval)}
                   disabled={!!checkingOut}
                   className={`block w-full text-center py-3 rounded-full font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                     plan.highlighted

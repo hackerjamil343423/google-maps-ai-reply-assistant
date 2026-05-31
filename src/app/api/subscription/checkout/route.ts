@@ -12,7 +12,7 @@ import {
   cancelSubscription,
   isGeideaSubscriptionNotEnabledError,
 } from "@/lib/geidea/client";
-import { getPlanGeideaConfig } from "@/lib/subscription/plans";
+import { getEffectivePlanGeideaConfig } from "@/lib/subscription/pricing";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const checkoutSchema = z.object({
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { plan, billingInterval } = parsed.data;
-  const planConfig = getPlanGeideaConfig(plan, billingInterval);
+  const planConfig = await getEffectivePlanGeideaConfig(plan, billingInterval);
   if (!planConfig) {
     return NextResponse.json(
       { error: "Payment is not configured for this plan. Please contact support." },
