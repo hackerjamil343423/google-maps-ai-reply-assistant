@@ -116,10 +116,7 @@ export async function GET(req: NextRequest) {
     billingInterval === "yearly"
       ? planInfo.yearlyPrice
       : planInfo.monthlyPrice;
-  const price =
-    subscription?.billingAmount && subscription.billingAmount > 0
-      ? formatSar(subscription.billingAmount)
-      : formatSar(catalogPrice);
+  const price = formatSar(catalogPrice);
   let nextBillingAt = subscription?.currentPeriodEnd ?? null;
 
   if (subscription?.geideaSubscriptionId) {

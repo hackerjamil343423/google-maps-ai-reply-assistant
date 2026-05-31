@@ -18,13 +18,6 @@ function fallbackPeriodEnd(interval: string | null | undefined): Date {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 }
 
-function getPaidAmount(payload: GeideaCallback) {
-  const amount = payload.amount ?? payload.order?.amount;
-  if (amount == null) return null;
-  const numeric = Number(amount);
-  return Number.isFinite(numeric) && numeric > 0 ? Math.round(numeric) : null;
-}
-
 function parseDate(value: string | null | undefined) {
   if (!value) return null;
   const parsed = new Date(value);
@@ -251,8 +244,6 @@ export async function POST(req: NextRequest) {
         plan,
         status: "active",
         billingInterval,
-        billingAmount: getPaidAmount(payload) ?? sub.billingAmount,
-        billingCurrency: payload.currency ?? payload.order?.currency ?? sub.billingCurrency ?? "SAR",
         currentPeriodEnd: nextOccurrenceDate ?? fallbackPeriodEnd(billingInterval),
         ...(geideaSubscriptionId ? { geideaSubscriptionId } : {}),
         geideaAgreementId: getAgreementId(payload) ?? sub.geideaAgreementId,
