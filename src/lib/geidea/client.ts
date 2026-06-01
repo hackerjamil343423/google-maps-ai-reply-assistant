@@ -50,6 +50,14 @@ export function isGeideaSubscriptionNotEnabledError(error: unknown) {
   );
 }
 
+export function isGeideaDuplicateCustomerError(error: unknown) {
+  return (
+    error instanceof GeideaProviderError &&
+    error.responseCode === "250" &&
+    error.detailedResponseCode === "006"
+  );
+}
+
 function hmacBase64(message: string, secret: string) {
   return crypto.createHmac("sha256", secret).update(message).digest("base64");
 }
@@ -186,11 +194,13 @@ export async function createSubscription(input: {
   currency: string;
   cycleInterval: "month" | "year";
   cycleFrequency: number;
-  customer: {
+  customerId?: string | null;
+  customer?: {
     name: string;
     email?: string | null;
     phoneCountryCode?: string | null;
     phone?: string | null;
+    number?: string | null;
   };
   merchantReferenceId: string;
 }): Promise<GeideaSubscription> {
@@ -204,7 +214,9 @@ export async function createSubscription(input: {
     isFirstPmtPBL: false,
     AmountVariability: "FIXED",
     merchantReferenceId: input.merchantReferenceId,
-    customerRequest: input.customer,
+    ...(input.customerId
+      ? { customerId: input.customerId }
+      : { customerRequest: input.customer }),
     timestamp,
     signature: generateSubscriptionSignature({
       amount: input.amount,

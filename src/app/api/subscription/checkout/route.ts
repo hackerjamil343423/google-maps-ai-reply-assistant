@@ -10,6 +10,7 @@ import {
   createSession,
   createSubscription,
   cancelSubscription,
+  isGeideaDuplicateCustomerError,
   isGeideaSubscriptionNotEnabledError,
 } from "@/lib/geidea/client";
 import { getEffectivePlanGeideaConfig } from "@/lib/subscription/pricing";
@@ -90,10 +91,14 @@ export async function POST(req: NextRequest) {
       cycleInterval: planConfig.cycleInterval,
       cycleFrequency: planConfig.cycleFrequency,
       merchantReferenceId: workspaceId,
-      customer: {
-        name: session.user.name,
-        email: session.user.email,
-      },
+      customerId: sub.geideaCustomerId,
+      customer: sub.geideaCustomerId
+        ? undefined
+        : {
+            name: session.user.name,
+            email: session.user.email,
+            number: workspaceId,
+          },
     });
   } catch (err) {
     console.error("[checkout] createSubscription failed:", err);
@@ -127,6 +132,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (isGeideaDuplicateCustomerError(err)) {
+      return NextResponse.json(
+        {
+          error:
+            "Geidea already has a customer with this email. Please contact support to link the existing Geidea customer ID, then try again.",
+          code: "geidea_duplicate_customer",
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to initialize payment provider subscription. Please try again." },
       { status: 502 }
@@ -139,6 +155,16 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
+
+  await db
+    .update(subscriptions)
+    .set({
+      geideaCustomerId: geideaSubscription.customerId ?? sub.geideaCustomerId,
+      geideaSubscriptionId: geideaSubscription.subscriptionId,
+      billingInterval,
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptions.workspaceId, workspaceId));
 
   let checkoutSession;
   try {
