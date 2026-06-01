@@ -1,2 +1,2 @@
 ALTER TABLE "subscriptions"
-ADD COLUMN "billing_interval" text DEFAULT 'monthly';
+ADD COLUMN IF NOT EXISTS "billing_interval" text DEFAULT 'monthly';

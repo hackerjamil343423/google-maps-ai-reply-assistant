@@ -28,6 +28,8 @@ export const user = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    isAdmin: boolean("is_admin").notNull().default(false),
+    suspended: boolean("suspended").notNull().default(false),
   },
   (table) => [uniqueIndex("user_email_unique").on(table.email)]
 );
@@ -586,6 +588,48 @@ export const replyAnalyticsEvents = pgTable(
 );
 
 export type WorkspaceRole = (typeof memberRoleEnum.enumValues)[number];
+
+export const adminApiKeys = pgTable(
+  "admin_api_keys",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    keyHash: text("key_hash").notNull(),
+    keyPrefix: text("key_prefix").notNull(),
+    permissions: text("permissions").notNull().default("read"),
+    createdBy: text("created_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("admin_api_keys_key_hash_idx").on(table.keyHash)]
+);
+
+export const adminAuditLogs = pgTable(
+  "admin_audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    adminUserId: text("admin_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    metaJson: text("meta_json"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("admin_audit_logs_admin_user_id_idx").on(table.adminUserId),
+    index("admin_audit_logs_action_idx").on(table.action),
+    index("admin_audit_logs_created_at_idx").on(table.createdAt),
+  ]
+);
 
 /**
  * Blog tables

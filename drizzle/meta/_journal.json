@@ -64,6 +64,20 @@
       "when": 1778630400000,
       "tag": "0008_geidea_subscription_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1779964800000,
+      "tag": "0009_editable_plan_prices",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780315200000,
+      "tag": "0010_reconcile_app_schema",
+      "breakpoints": true
     }
   ]
 }
