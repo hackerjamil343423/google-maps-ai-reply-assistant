@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { desc, eq, and, sql, ilike, count } from "drizzle-orm";
+import { desc, eq, and, sql, count } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { blogPosts, blogCategories } from "@/lib/db/schema";
@@ -281,7 +281,11 @@ async function BlogContent({ searchParams }: { searchParams: SearchParams }) {
       {/* Search & Filters */}
       <div className="mb-10 md:mb-14">
         <Suspense>
-          <SearchBar categories={categories} />
+          <SearchBar
+            categories={categories}
+            initialQuery={q ?? ""}
+            initialCategory={category ?? ""}
+          />
         </Suspense>
       </div>
 

@@ -76,6 +76,20 @@ export function generateSignature(input: {
   );
 }
 
+function generateSubscriptionSignature(input: {
+  amount?: number | string | null;
+  currency?: string | null;
+  timestamp: string;
+}) {
+  const { publicKey, apiPassword } = getCredentials();
+  const amount = formatAmountForSignature(input.amount);
+  const currency = input.currency ?? "";
+  return hmacBase64(
+    `${publicKey}${amount}${currency}${input.timestamp}`,
+    apiPassword
+  );
+}
+
 function formatAmountForSignature(value: number | string | null | undefined) {
   if (value == null || value === "") return "";
   const numeric = typeof value === "number" ? value : Number(value);
@@ -191,11 +205,10 @@ export async function createSubscription(input: {
     AmountVariability: "FIXED",
     merchantReferenceId: input.merchantReferenceId,
     customerRequest: input.customer,
-    timeStamp: timestamp,
-    signature: generateSignature({
+    timestamp,
+    signature: generateSubscriptionSignature({
       amount: input.amount,
       currency: input.currency,
-      merchantReferenceId: input.merchantReferenceId,
       timestamp,
     }),
   };

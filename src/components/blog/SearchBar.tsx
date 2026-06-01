@@ -1,30 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 type Category = { id: string; name: string; slug: string };
 
 export default function SearchBar({
   categories,
+  initialQuery = "",
+  initialCategory = "",
 }: {
   categories: Category[];
+  initialQuery?: string;
+  initialCategory?: string;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const initialQ = searchParams.get("q") ?? "";
-  const initialCat = searchParams.get("category") ?? "";
-  const [query, setQuery] = useState(initialQ);
-  const [activeCategory, setActiveCategory] = useState(initialCat);
+  const [query, setQuery] = useState(initialQuery);
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    setQuery(searchParams.get("q") ?? "");
-    setActiveCategory(searchParams.get("category") ?? "");
-  }, [searchParams]);
 
   function buildUrl(q: string, category: string) {
     const params = new URLSearchParams();
