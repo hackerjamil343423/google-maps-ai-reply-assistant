@@ -21,6 +21,33 @@ const checkoutSchema = z.object({
   billingInterval: z.enum(["monthly", "yearly"]).default("monthly"),
 });
 
+function buildCustomerRequest(input: {
+  name: string;
+  email?: string | null;
+  workspaceId: string;
+  useRecoveryAlias?: boolean;
+}) {
+  return {
+    name: input.name,
+    email: input.useRecoveryAlias
+      ? buildRecoveryEmail(input.email, input.workspaceId)
+      : input.email,
+    number: input.workspaceId,
+  };
+}
+
+function buildRecoveryEmail(email: string | null | undefined, workspaceId: string) {
+  if (!email) return email;
+
+  const atIndex = email.indexOf("@");
+  if (atIndex <= 0) return email;
+
+  const local = email.slice(0, atIndex);
+  const domain = email.slice(atIndex + 1);
+  const suffix = workspaceId.replace(/-/g, "").slice(0, 10);
+  return `${local}+${suffix}@${domain}`;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getRequestSession(req);
   if (!session) {
@@ -94,14 +121,42 @@ export async function POST(req: NextRequest) {
       customerId: sub.geideaCustomerId,
       customer: sub.geideaCustomerId
         ? undefined
-        : {
+        : buildCustomerRequest({
             name: session.user.name,
             email: session.user.email,
-            number: workspaceId,
-          },
+            workspaceId,
+          }),
     });
   } catch (err) {
     console.error("[checkout] createSubscription failed:", err);
+    if (isGeideaDuplicateCustomerError(err) && !sub.geideaCustomerId) {
+      try {
+        geideaSubscription = await createSubscription({
+          amount: planConfig.amount,
+          currency: planConfig.currency,
+          cycleInterval: planConfig.cycleInterval,
+          cycleFrequency: planConfig.cycleFrequency,
+          merchantReferenceId: workspaceId,
+          customer: buildCustomerRequest({
+            name: session.user.name,
+            email: session.user.email,
+            workspaceId,
+            useRecoveryAlias: true,
+          }),
+        });
+      } catch (retryErr) {
+        console.error("[checkout] createSubscription recovery failed:", retryErr);
+        return NextResponse.json(
+          {
+            error:
+              "Geidea already has this customer, but automatic recovery failed. Please contact support to link the existing Geidea customer ID.",
+            code: "geidea_duplicate_customer",
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     if (isGeideaSubscriptionNotEnabledError(err)) {
       try {
         const checkoutSession = await createPaymentSession({
@@ -132,7 +187,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (isGeideaDuplicateCustomerError(err)) {
+    if (!geideaSubscription && isGeideaDuplicateCustomerError(err)) {
       return NextResponse.json(
         {
           error:
@@ -143,10 +198,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Failed to initialize payment provider subscription. Please try again." },
-      { status: 502 }
-    );
+    if (!geideaSubscription) {
+      return NextResponse.json(
+        { error: "Failed to initialize payment provider subscription. Please try again." },
+        { status: 502 }
+      );
+    }
   }
 
   if (!geideaSubscription.subscriptionId) {
