@@ -10,9 +10,11 @@ import {
   createSession,
   createSubscription,
   cancelSubscription,
+  isGeideaCustomerNotFoundError,
   isGeideaDuplicateCustomerError,
   isGeideaSubscriptionNotEnabledError,
 } from "@/lib/geidea/client";
+import type { GeideaSubscription } from "@/lib/geidea/types";
 import { getEffectivePlanGeideaConfig } from "@/lib/subscription/pricing";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -46,6 +48,76 @@ function buildRecoveryEmail(email: string | null | undefined, workspaceId: strin
   const domain = email.slice(atIndex + 1);
   const suffix = workspaceId.replace(/-/g, "").slice(0, 10);
   return `${local}+${suffix}@${domain}`;
+}
+
+async function createRecoverableSubscription(input: {
+  amount: number;
+  currency: string;
+  cycleInterval: "month" | "year";
+  cycleFrequency: number;
+  workspaceId: string;
+  savedCustomerId?: string | null;
+  customerName: string;
+  customerEmail?: string | null;
+}): Promise<{ subscription: GeideaSubscription; clearSavedCustomerId: boolean }> {
+  const base = {
+    amount: input.amount,
+    currency: input.currency,
+    cycleInterval: input.cycleInterval,
+    cycleFrequency: input.cycleFrequency,
+    merchantReferenceId: input.workspaceId,
+  };
+
+  if (input.savedCustomerId) {
+    try {
+      return {
+        subscription: await createSubscription({
+          ...base,
+          customerId: input.savedCustomerId,
+        }),
+        clearSavedCustomerId: false,
+      };
+    } catch (err) {
+      if (!isGeideaCustomerNotFoundError(err)) {
+        throw err;
+      }
+
+      console.warn(
+        `[checkout] saved Geidea customer not found for workspace ${input.workspaceId}; retrying with customerRequest`
+      );
+    }
+  }
+
+  try {
+    return {
+      subscription: await createSubscription({
+        ...base,
+        customer: buildCustomerRequest({
+          name: input.customerName,
+          email: input.customerEmail,
+          workspaceId: input.workspaceId,
+        }),
+      }),
+      clearSavedCustomerId: Boolean(input.savedCustomerId),
+    };
+  } catch (err) {
+    if (!isGeideaDuplicateCustomerError(err)) {
+      throw err;
+    }
+
+    return {
+      subscription: await createSubscription({
+        ...base,
+        customer: buildCustomerRequest({
+          name: input.customerName,
+          email: input.customerEmail,
+          workspaceId: input.workspaceId,
+          useRecoveryAlias: true,
+        }),
+      }),
+      clearSavedCustomerId: Boolean(input.savedCustomerId),
+    };
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -111,52 +183,22 @@ export async function POST(req: NextRequest) {
   const returnUrl = `${appUrl}/dashboard/settings?section=billing`;
 
   let geideaSubscription;
+  let clearSavedCustomerId = false;
   try {
-    geideaSubscription = await createSubscription({
+    const result = await createRecoverableSubscription({
       amount: planConfig.amount,
       currency: planConfig.currency,
       cycleInterval: planConfig.cycleInterval,
       cycleFrequency: planConfig.cycleFrequency,
-      merchantReferenceId: workspaceId,
-      customerId: sub.geideaCustomerId,
-      customer: sub.geideaCustomerId
-        ? undefined
-        : buildCustomerRequest({
-            name: session.user.name,
-            email: session.user.email,
-            workspaceId,
-          }),
+      workspaceId,
+      savedCustomerId: sub.geideaCustomerId,
+      customerName: session.user.name,
+      customerEmail: session.user.email,
     });
+    geideaSubscription = result.subscription;
+    clearSavedCustomerId = result.clearSavedCustomerId;
   } catch (err) {
     console.error("[checkout] createSubscription failed:", err);
-    if (isGeideaDuplicateCustomerError(err) && !sub.geideaCustomerId) {
-      try {
-        geideaSubscription = await createSubscription({
-          amount: planConfig.amount,
-          currency: planConfig.currency,
-          cycleInterval: planConfig.cycleInterval,
-          cycleFrequency: planConfig.cycleFrequency,
-          merchantReferenceId: workspaceId,
-          customer: buildCustomerRequest({
-            name: session.user.name,
-            email: session.user.email,
-            workspaceId,
-            useRecoveryAlias: true,
-          }),
-        });
-      } catch (retryErr) {
-        console.error("[checkout] createSubscription recovery failed:", retryErr);
-        return NextResponse.json(
-          {
-            error:
-              "Geidea already has this customer, but automatic recovery failed. Please contact support to link the existing Geidea customer ID.",
-            code: "geidea_duplicate_customer",
-          },
-          { status: 409 }
-        );
-      }
-    }
-
     if (isGeideaSubscriptionNotEnabledError(err)) {
       try {
         const checkoutSession = await createPaymentSession({
@@ -198,6 +240,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!geideaSubscription && isGeideaCustomerNotFoundError(err)) {
+      await db
+        .update(subscriptions)
+        .set({
+          geideaCustomerId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(subscriptions.workspaceId, workspaceId));
+
+      return NextResponse.json(
+        {
+          error:
+            "The saved Geidea customer could not be found. Please retry checkout so a new payment customer can be created.",
+          code: "geidea_customer_not_found",
+        },
+        { status: 409 }
+      );
+    }
+
     if (!geideaSubscription) {
       return NextResponse.json(
         { error: "Failed to initialize payment provider subscription. Please try again." },
@@ -216,7 +277,9 @@ export async function POST(req: NextRequest) {
   await db
     .update(subscriptions)
     .set({
-      geideaCustomerId: geideaSubscription.customerId ?? sub.geideaCustomerId,
+      geideaCustomerId:
+        geideaSubscription.customerId ??
+        (clearSavedCustomerId ? null : sub.geideaCustomerId),
       geideaSubscriptionId: geideaSubscription.subscriptionId,
       billingInterval,
       updatedAt: new Date(),

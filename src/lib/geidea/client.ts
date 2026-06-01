@@ -58,6 +58,14 @@ export function isGeideaDuplicateCustomerError(error: unknown) {
   );
 }
 
+export function isGeideaCustomerNotFoundError(error: unknown) {
+  return (
+    error instanceof GeideaProviderError &&
+    error.responseCode === "250" &&
+    error.detailedResponseCode === "002"
+  );
+}
+
 function hmacBase64(message: string, secret: string) {
   return crypto.createHmac("sha256", secret).update(message).digest("base64");
 }
