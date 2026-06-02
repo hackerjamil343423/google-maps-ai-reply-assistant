@@ -118,42 +118,21 @@ export function validateCallbackSignature(callback: GeideaCallback) {
 
   const { publicKey, apiPassword } = getCredentials();
   const secret = process.env.GEIDEA_CALLBACK_SECRET ?? apiPassword;
-  const timestamp = callback.timeStamp ?? callback.timestamp ?? "";
   const order = callback.order;
   const amount = callback.amount ?? order?.amount;
-  const rawAmount = amount == null ? "" : String(amount);
-  const signedAmount = formatAmountForSignature(amount);
   const currency = callback.currency ?? order?.currency ?? "";
   const orderId = callback.orderId ?? order?.orderId ?? order?.id ?? "";
-  const status = callback.status ?? order?.status ?? callback.detailedStatus ?? order?.detailedStatus ?? "";
-  const merchantReferenceId =
-    callback.merchantReferenceId ?? order?.merchantReferenceId ?? "";
-  const subscriptionAmount =
-    (callback.subscription as { recurringPaymentAmount?: number | string } | undefined)
-      ?.recurringPaymentAmount ??
-    (order?.subscription as { recurringPaymentAmount?: number | string } | undefined)
-      ?.recurringPaymentAmount ??
-    rawAmount;
-  const subscriptionId =
-    callback.subscriptionId ??
-    callback.subscription?.subscriptionId ??
-    order?.subscription?.subscriptionId ??
-    "";
-  const subscriptionStatus =
-    callback.subscription?.status ?? order?.subscription?.status ?? callback.status ?? order?.status ?? "";
+  const status = callback.status ?? order?.status ?? "";
+  const merchantReferenceId = callback.merchantReferenceId ?? order?.merchantReferenceId ?? "";
+  const timeStamp = callback.timeStamp ?? callback.timestamp ?? "";
 
-  const candidates = [
-    `${publicKey}${rawAmount}${currency}${orderId}${status}${merchantReferenceId}${timestamp}`,
-    `${publicKey}${signedAmount}${currency}${orderId}${status}${merchantReferenceId}${timestamp}`,
-    `${publicKey}${rawAmount}${currency}${merchantReferenceId}${timestamp}`,
-    `${publicKey}${signedAmount}${currency}${merchantReferenceId}${timestamp}`,
-    `${publicKey}${orderId}${timestamp}`,
-    `${publicKey}${subscriptionId}${subscriptionStatus}${timestamp}`,
-    `${publicKey}${subscriptionAmount}${subscriptionId}${subscriptionStatus}`,
-    `${publicKey}${formatAmountForSignature(subscriptionAmount)}${subscriptionId}${subscriptionStatus}`,
-  ].map((message) => hmacBase64(message, secret));
+  // Documented formula: publicKey + amount + currency + orderId + status + merchantReferenceId + timeStamp
+  // Two candidates to handle raw vs 2-decimal amount format ambiguity
+  const candidates = [String(amount ?? ""), formatAmountForSignature(amount)].map((amt) =>
+    hmacBase64(`${publicKey}${amt}${currency}${orderId}${status}${merchantReferenceId}${timeStamp}`, secret)
+  );
 
-  return candidates.some((candidate) => timingSafeEqualText(candidate, signature));
+  return candidates.some((c) => timingSafeEqualText(c, signature));
 }
 
 async function geideaFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -269,7 +248,7 @@ export async function createSession(input: {
     returnUrl: input.returnUrl,
     paymentOperation: "Pay",
     cardOnFile: true,
-    timeStamp: timestamp,
+    timestamp: timestamp,
     signature: generateSignature({
       amount: input.amount,
       currency: input.currency,
@@ -281,7 +260,7 @@ export async function createSession(input: {
   const data = await geideaFetch<
     (GeideaSession & { sessionId?: string }) | { session: GeideaSession & { sessionId?: string } }
   >(
-    "/payment-intent/api/v2/direct/session-subscription",
+    "/payment-intent/api/v2/direct/session",
     {
       method: "POST",
       body: JSON.stringify(body),
@@ -311,7 +290,7 @@ export async function createPaymentSession(input: {
     callbackUrl: input.callbackUrl,
     returnUrl: input.returnUrl,
     paymentOperation: "Pay",
-    timeStamp: timestamp,
+    timestamp: timestamp,
     signature: generateSignature({
       amount: input.amount,
       currency: input.currency,
@@ -352,11 +331,13 @@ export async function getSubscription(
 }
 
 export async function cancelSubscription(subscriptionId: string): Promise<void> {
+  const { publicKey, apiPassword } = getCredentials();
+  const signature = hmacBase64(`${publicKey}${subscriptionId}`, apiPassword);
   await geideaFetch(
     `/subscriptions/api/v1/direct/subscription/${encodeURIComponent(subscriptionId)}/cancel`,
     {
       method: "POST",
-      body: JSON.stringify({}),
+      body: JSON.stringify({ signature }),
     }
   );
 }
