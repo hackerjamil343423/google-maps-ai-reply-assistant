@@ -5,7 +5,7 @@ import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { subscriptions, userProfiles, workspaces } from "@/lib/db/schema";
 import { sendCancellationScheduledEmail } from "@/lib/emails";
-import { cancelSubscription } from "@/lib/geidea/client";
+import { stripe } from "@/lib/stripe/client";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 export async function POST(req: NextRequest) {
@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Idempotent: already scheduled to cancel
   if (sub.cancelAtPeriodEnd) {
     return NextResponse.json({
       success: true,
@@ -50,30 +49,32 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Mark locally BEFORE calling Geidea so a callback can see the flag.
-  await db
-    .update(subscriptions)
-    .set({ cancelAtPeriodEnd: true, updatedAt: new Date() })
-    .where(eq(subscriptions.workspaceId, workspaceId));
+  if (!stripe || !sub.stripeSubscriptionId) {
+    return NextResponse.json(
+      { error: "Payment provider not configured or no active subscription." },
+      { status: 503 }
+    );
+  }
 
   try {
-    if (sub.geideaSubscriptionId) {
-      await cancelSubscription(sub.geideaSubscriptionId);
-    }
+    await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
   } catch (err) {
-    console.error("[cancel] Geidea cancelSubscription error:", err);
-    await db
-      .update(subscriptions)
-      .set({ cancelAtPeriodEnd: false, updatedAt: new Date() })
-      .where(eq(subscriptions.workspaceId, workspaceId));
-
+    console.error("[cancel] Stripe update error:", err);
     return NextResponse.json(
       { error: "Failed to cancel subscription. Please try again or contact support." },
       { status: 502 }
     );
   }
 
-  // Send confirmation email (non-blocking)
+  // The webhook will set cancelAtPeriodEnd=true when it arrives; set it locally
+  // now for immediate UI feedback.
+  await db
+    .update(subscriptions)
+    .set({ cancelAtPeriodEnd: true, updatedAt: new Date() })
+    .where(eq(subscriptions.workspaceId, workspaceId));
+
   try {
     const [ws, profile] = await Promise.all([
       db.query.workspaces.findFirst({ where: eq(workspaces.id, workspaceId) }),

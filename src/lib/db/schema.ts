@@ -365,15 +365,13 @@ export const subscriptions = pgTable("subscriptions", {
     .references(() => workspaces.id, { onDelete: "cascade" }),
   plan: text("plan").notNull().default("free"),
   status: subscriptionStatusEnum("status").notNull().default("trialing"),
-  geideaCustomerId: text("geidea_customer_id"),
-  geideaSubscriptionId: text("geidea_subscription_id"),
-  geideaAgreementId: text("geidea_agreement_id"),
-  geideaTokenId: text("geidea_token_id"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripePriceId: text("stripe_price_id"),
   billingInterval: text("billing_interval").default("monthly"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
-  scheduledDowngradePlan: text("scheduled_downgrade_plan"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -72,16 +71,6 @@ type SubscriptionState = {
   cancelAtPeriodEnd: boolean;
   scheduledDowngradePlan: string | null;
 };
-
-declare global {
-  interface Window {
-    GeideaCheckout?: new (
-      onSuccess: () => void,
-      onError: (error?: unknown) => void,
-      onCancel: () => void
-    ) => { startPayment: (sessionId: string) => void };
-  }
-}
 
 const PLAN_RANK: Record<string, number> = {
   free: 0,
@@ -223,7 +212,6 @@ export default function SettingsPage() {
   const [billingError, setBillingError] = useState("");
   const [billingNotice, setBillingNotice] = useState("");
   const [upgrading, setUpgrading] = useState<string | null>(null);
-  const [checkoutReady, setCheckoutReady] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<"monthly" | "yearly">("monthly");
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -673,43 +661,40 @@ export default function SettingsPage() {
   }
 
   async function startUpgrade(planName: PaidPlanName) {
-    if (!checkoutReady || !window.GeideaCheckout) {
-      setBillingError("Payment checkout is still loading. Please try again in a moment.");
-      return;
-    }
-
     setUpgrading(planName);
     setBillingError("");
-    const res = await fetch("/api/subscription/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: planName, billingInterval: selectedInterval }),
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok || !json?.sessionId) {
-      setBillingError(json?.error || "Failed to start checkout.");
-      setUpgrading(null);
-      return;
-    }
-
-    const payment = new window.GeideaCheckout(
-      () => {
+    try {
+      const res = await fetch("/api/subscription/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planName, billingInterval: selectedInterval }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.url) {
+        setBillingError(json?.error || "Failed to start checkout.");
         setUpgrading(null);
-        router.push("/dashboard/settings?section=billing&success=true");
-      },
-      () => {
-        setUpgrading(null);
-        setBillingError("Payment failed. Please try again.");
-        router.push("/dashboard/settings?section=billing&error=payment_failed");
-      },
-      () => {
-        setUpgrading(null);
-        setBillingError("Payment was cancelled.");
-        router.push("/dashboard/settings?section=billing&error=payment_failed");
+        return;
       }
-    );
+      window.location.href = json.url as string;
+    } catch {
+      setBillingError("Failed to start checkout.");
+      setUpgrading(null);
+    }
+  }
 
-    payment.startPayment(json.sessionId as string);
+  async function openBillingPortal() {
+    setBillingError("");
+    try {
+      const res = await fetch("/api/subscription/portal", { method: "POST" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.url) {
+        setBillingError(json?.error || "Failed to open billing portal.");
+        return;
+      }
+      window.location.href = json.url as string;
+    } catch {
+      setBillingError("Failed to open billing portal.");
+    }
   }
 
   async function handleConfirmCancel() {
@@ -883,11 +868,6 @@ export default function SettingsPage() {
 
   return (
     <>
-      <Script
-        src="https://www.ksamerchant.geidea.net/hpp/geideaCheckout.min.js"
-        onLoad={() => setCheckoutReady(true)}
-        onError={() => setBillingError("Payment checkout failed to load. Please refresh and try again.")}
-      />
       <DashboardShell activeHref="/dashboard/settings">
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -1798,6 +1778,18 @@ export default function SettingsPage() {
                 );
               })}
             </div>
+
+            {/* Manage billing via Stripe Customer Portal */}
+            {subscription.status === "active" && subscription.plan !== "free" && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => void openBillingPortal()}
+                  className="text-xs font-medium text-[#5F30EB] hover:underline"
+                >
+                  {language === "ar" ? "إدارة الفوترة" : "Manage billing"}
+                </button>
+              </div>
+            )}
 
             {/* Cancel confirmation dialog */}
             {showCancelDialog && (

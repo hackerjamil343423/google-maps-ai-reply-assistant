@@ -1,27 +1,18 @@
 /**
- * Cron endpoint: two responsibilities.
+ * Cron safety net: mark expired active subscriptions as past_due.
  *
- * 1. Mark expired active subscriptions as past_due (safety net for missed webhooks).
- *    - status="active" AND currentPeriodEnd < now - 2 days (grace period)
- *    - Send renewal failure email
- *
- * 2. Send downgrade activation emails when a scheduled downgrade's paid period
- *    has actually ended.
- *    - status="canceled" AND scheduledDowngradePlan != null AND currentPeriodEnd < now
- *    - Send downgrade ready email with auto-checkout link
- *    - Clear scheduledDowngradePlan so the email is only sent once (idempotency)
- *
- * Call once per day via Vercel Cron or an external scheduler.
+ * Stripe's invoice.payment_failed webhook is the primary signal, but this
+ * cron fires once per day as a backstop for any missed webhooks.
  *
  * Authorization: Bearer ${CRON_SECRET}  (skipped when CRON_SECRET is unset)
  */
 
-import { and, eq, isNotNull, lt } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { db, dbSchema } from "@/lib/db";
 import { env } from "@/lib/env";
-import { sendDowngradeReadyEmail, sendRenewalFailedEmail } from "@/lib/emails";
+import { sendRenewalFailedEmail } from "@/lib/emails";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -33,8 +24,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 500 });
   }
 
-  // 2-day grace period: only expire subscriptions that ended more than 2 days ago.
-  // This gives the Geidea callback time to arrive before we step in.
+  // 2-day grace period: only expire subscriptions that ended more than 2 days
+  // ago. This gives Stripe webhooks time to arrive before we step in.
   const graceDeadline = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
   const expired = await db
@@ -82,7 +73,7 @@ export async function GET(req: NextRequest) {
           name: row.ownerName ?? row.ownerEmail,
           workspaceName: row.workspaceName,
           plan: row.plan,
-          lang: (row.ownerLanguage === "ar" ? "ar" : "en"),
+          lang: row.ownerLanguage === "ar" ? "ar" : "en",
         });
         emailed = true;
       } catch {
@@ -100,95 +91,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // --------------------------------------------------------------------
-  // Downgrade activation emails: when a canceled sub's paid period has ended
-  // and a downgrade was scheduled, email the user to set up the lower plan.
-  // --------------------------------------------------------------------
-  const now = new Date();
-
-  const pendingDowngrades = await db
-    .select({
-      workspaceId: dbSchema.subscriptions.workspaceId,
-      plan: dbSchema.subscriptions.plan,
-      scheduledDowngradePlan: dbSchema.subscriptions.scheduledDowngradePlan,
-      currentPeriodEnd: dbSchema.subscriptions.currentPeriodEnd,
-      workspaceName: dbSchema.workspaces.name,
-      ownerEmail: dbSchema.user.email,
-      ownerName: dbSchema.user.name,
-      ownerLanguage: dbSchema.userProfiles.language,
-    })
-    .from(dbSchema.subscriptions)
-    .innerJoin(
-      dbSchema.workspaces,
-      eq(dbSchema.workspaces.id, dbSchema.subscriptions.workspaceId)
-    )
-    .innerJoin(
-      dbSchema.user,
-      eq(dbSchema.user.id, dbSchema.workspaces.ownerUserId)
-    )
-    .leftJoin(
-      dbSchema.userProfiles,
-      eq(dbSchema.userProfiles.userId, dbSchema.workspaces.ownerUserId)
-    )
-    .where(
-      and(
-        eq(dbSchema.subscriptions.status, "canceled"),
-        isNotNull(dbSchema.subscriptions.scheduledDowngradePlan),
-        lt(dbSchema.subscriptions.currentPeriodEnd, now)
-      )
-    );
-
-  const downgradeResults: {
-    workspaceId: string;
-    emailed: boolean;
-    cleared: boolean;
-    error?: string;
-  }[] = [];
-
-  const appUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-  for (const row of pendingDowngrades) {
-    if (!row.scheduledDowngradePlan) continue;
-    try {
-      const checkoutUrl = `${appUrl}/dashboard/settings?section=billing&autoCheckout=${encodeURIComponent(row.scheduledDowngradePlan)}`;
-
-      let emailed = false;
-      try {
-        await sendDowngradeReadyEmail({
-          toEmail: row.ownerEmail,
-          name: row.ownerName ?? row.ownerEmail,
-          workspaceName: row.workspaceName,
-          fromPlan: row.plan,
-          toPlan: row.scheduledDowngradePlan,
-          accessUntil: row.currentPeriodEnd,
-          checkoutUrl,
-          lang: (row.ownerLanguage === "ar" ? "ar" : "en"),
-        });
-        emailed = true;
-      } catch {
-        // Email failure is non-fatal; still clear the flag so we don't spam retries.
-      }
-
-      // Clear the intent so the email only fires once.
-      await db
-        .update(dbSchema.subscriptions)
-        .set({ scheduledDowngradePlan: null, updatedAt: new Date() })
-        .where(eq(dbSchema.subscriptions.workspaceId, row.workspaceId));
-
-      downgradeResults.push({ workspaceId: row.workspaceId, emailed, cleared: true });
-    } catch (err) {
-      downgradeResults.push({
-        workspaceId: row.workspaceId,
-        emailed: false,
-        cleared: false,
-        error: err instanceof Error ? err.message : "Unknown error",
-      });
-    }
-  }
-
-  return NextResponse.json({
-    processed: results.length,
-    results,
-    downgrades: downgradeResults,
-  });
+  return NextResponse.json({ processed: results.length, results });
 }

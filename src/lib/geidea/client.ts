@@ -7,7 +7,11 @@ import type {
   GeideaSubscription,
 } from "./types";
 
-const GEIDEA_BASE = "https://api.ksamerchant.geidea.net";
+// Defaults to the KSA production gateway. Set GEIDEA_BASE_URL to the Geidea
+// TEST/sandbox base URL (with test merchant credentials) to run test cards —
+// production rejects sandbox test cards at 3D Secure as "not enrolled".
+const GEIDEA_BASE =
+  process.env.GEIDEA_BASE_URL?.replace(/\/$/, "") ?? "https://api.ksamerchant.geidea.net";
 
 function getCredentials() {
   const publicKey = process.env.GEIDEA_MERCHANT_PUBLIC_KEY;

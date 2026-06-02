@@ -41,7 +41,7 @@ export async function getWorkspaceAccess(
 
   if (status === "canceled") {
     // Allow access if still within the paid period (cancel-at-period-end UX).
-    // Geidea cancels future charges immediately; we honor remaining time via currentPeriodEnd.
+    // Honor remaining paid time after cancel_at_period_end via currentPeriodEnd.
     const withinPaidPeriod =
       sub.currentPeriodEnd != null && sub.currentPeriodEnd > new Date();
     if (withinPaidPeriod) {

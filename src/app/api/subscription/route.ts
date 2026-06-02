@@ -4,9 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { businesses, subscriptions, usageCounters } from "@/lib/db/schema";
-import { getSubscription as getGeideaSubscription } from "@/lib/geidea/client";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
-import { getCached, setCached } from "@/lib/subscription/cache";
 import {
   isKnownPlan,
   type PlanName,
@@ -30,12 +28,6 @@ function formatDate(value: Date | null | undefined) {
 
 function formatSar(value: number): string {
   return value.toLocaleString("en-US");
-}
-
-function parseDate(value: string | null | undefined) {
-  if (!value) return null;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export async function GET(req: NextRequest) {
@@ -117,22 +109,6 @@ export async function GET(req: NextRequest) {
       ? planInfo.yearlyPrice
       : planInfo.monthlyPrice;
   const price = formatSar(catalogPrice);
-  let nextBillingAt = subscription?.currentPeriodEnd ?? null;
-
-  if (subscription?.geideaSubscriptionId) {
-    const cacheKey = `geidea-sub:${subscription.geideaSubscriptionId}`;
-    try {
-      let remoteData = getCached<{ nextOccurrenceDate?: string | null }>(cacheKey);
-      if (!remoteData) {
-        const remoteSubscription = await getGeideaSubscription(subscription.geideaSubscriptionId);
-        remoteData = { nextOccurrenceDate: remoteSubscription.nextOccurrenceDate };
-        setCached(cacheKey, remoteData);
-      }
-      nextBillingAt = parseDate(remoteData.nextOccurrenceDate) ?? nextBillingAt;
-    } catch {
-      // Fall back to the local value when Geidea is unavailable.
-    }
-  }
 
   return NextResponse.json({
     plan: planName,
@@ -142,13 +118,13 @@ export async function GET(req: NextRequest) {
     monthlyPrice: formatSar(planInfo.monthlyPrice),
     yearlyPrice: formatSar(planInfo.yearlyPrice),
     trialEndsAt: formatDate(subscription?.trialEndsAt),
-    nextBillingAt: formatDate(nextBillingAt),
+    nextBillingAt: formatDate(subscription?.currentPeriodEnd),
     connectedAccounts,
     maxAccounts: planInfo.maxAccounts,
     aiReplies: usage?.aiRepliesGenerated ?? 0,
     reviewsManaged: usage?.reviewsManaged ?? 0,
     cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
-    scheduledDowngradePlan: subscription?.scheduledDowngradePlan ?? null,
+    scheduledDowngradePlan: null,
   });
 }
 

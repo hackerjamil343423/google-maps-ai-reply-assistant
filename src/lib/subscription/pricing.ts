@@ -6,12 +6,13 @@ import {
   isKnownPlan,
   PLAN_LIMITS,
   type BillingInterval,
-  type PlanGeideaConfig,
   type PlanInfo,
   type PlanName,
 } from "@/lib/subscription/plans";
 
 export const PLAN_PRICE_SETTING_KEY = "billing.plan_prices.v1";
+export const STRIPE_PRICE_IDS_SETTING_KEY = "billing.stripe_price_ids.v1";
+
 export const PAID_PLAN_NAMES = [
   "Local Business",
   "Multi-Location",
@@ -21,6 +22,11 @@ export const PAID_PLAN_NAMES = [
 export type PaidPlanName = (typeof PAID_PLAN_NAMES)[number];
 export type PlanPrice = Pick<PlanInfo, "monthlyPrice" | "yearlyPrice">;
 export type PlanPriceMap = Record<PaidPlanName, PlanPrice>;
+
+export type StripePriceIds = Record<
+  PaidPlanName,
+  { monthly: string; yearly: string }
+>;
 
 export const DEFAULT_PLAN_PRICES: PlanPriceMap = {
   "Local Business": {
@@ -111,23 +117,6 @@ export async function getEffectivePlanInfo(plan: PlanName): Promise<PlanInfo> {
   return catalog[plan];
 }
 
-export async function getEffectivePlanGeideaConfig(
-  plan: string,
-  interval: BillingInterval = "monthly"
-): Promise<PlanGeideaConfig | null> {
-  if (!isKnownPlan(plan) || plan === "free") return null;
-
-  const planInfo = await getEffectivePlanInfo(plan);
-  const amount = interval === "yearly" ? planInfo.yearlyPrice : planInfo.monthlyPrice;
-
-  return {
-    amount,
-    currency: "SAR",
-    cycleInterval: interval === "yearly" ? "year" : "month",
-    cycleFrequency: 1,
-  };
-}
-
 export async function getDisplayPlanPrices() {
   const catalog = await getEffectivePlanCatalog();
   return PAID_PLAN_NAMES.map((name) => ({
@@ -136,4 +125,60 @@ export async function getDisplayPlanPrices() {
     yearlyPrice: catalog[name].yearlyPrice,
     yearlyMonthlyEquivalent: catalog[name].yearlyMonthlyEquivalent,
   }));
+}
+
+/** Read the plan→Stripe Price ID mapping stored in platformSettings. */
+async function readStripePriceIds(): Promise<StripePriceIds | null> {
+  if (!db) return null;
+
+  const [setting] = await db
+    .select({ value: platformSettings.value })
+    .from(platformSettings)
+    .where(eq(platformSettings.key, STRIPE_PRICE_IDS_SETTING_KEY))
+    .limit(1)
+    .catch(() => []);
+
+  if (!setting?.value) return null;
+
+  try {
+    const parsed = JSON.parse(setting.value) as unknown;
+    if (!parsed || typeof parsed !== "object") return null;
+
+    const result = {} as StripePriceIds;
+    for (const plan of PAID_PLAN_NAMES) {
+      const entry = (parsed as Record<string, unknown>)[plan];
+      if (
+        !entry ||
+        typeof entry !== "object" ||
+        typeof (entry as Record<string, unknown>).monthly !== "string" ||
+        typeof (entry as Record<string, unknown>).yearly !== "string"
+      ) {
+        return null;
+      }
+      result[plan] = {
+        monthly: (entry as Record<string, string>).monthly,
+        yearly: (entry as Record<string, string>).yearly,
+      };
+    }
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns the Stripe Price ID for a given plan + interval, or null if not
+ * configured. The mapping is bootstrapped once via scripts/stripe-bootstrap.ts
+ * and stored in platformSettings under STRIPE_PRICE_IDS_SETTING_KEY.
+ */
+export async function getStripePriceId(
+  plan: string,
+  interval: BillingInterval
+): Promise<string | null> {
+  if (!isKnownPlan(plan) || plan === "free") return null;
+
+  const ids = await readStripePriceIds();
+  if (!ids) return null;
+
+  return interval === "yearly" ? ids[plan].yearly : ids[plan].monthly;
 }

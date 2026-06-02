@@ -42,30 +42,6 @@ export const PLAN_LIMITS: Record<string, PlanInfo> = {
 
 export type PlanName = "free" | "Local Business" | "Multi-Location" | "Agency Max";
 
-export type PlanGeideaConfig = {
-  amount: number;
-  currency: "SAR";
-  cycleInterval: "month" | "year";
-  cycleFrequency: number;
-};
-
 export function isKnownPlan(value: string): value is PlanName {
   return value in PLAN_LIMITS;
-}
-
-export function getPlanGeideaConfig(
-  plan: string,
-  interval: BillingInterval = "monthly"
-): PlanGeideaConfig | null {
-  if (!isKnownPlan(plan) || plan === "free") return null;
-
-  const planInfo = PLAN_LIMITS[plan];
-  const amount = interval === "yearly" ? planInfo.yearlyPrice : planInfo.monthlyPrice;
-
-  return {
-    amount,
-    currency: "SAR",
-    cycleInterval: interval === "yearly" ? "year" : "month",
-    cycleFrequency: 1,
-  };
 }

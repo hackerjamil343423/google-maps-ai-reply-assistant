@@ -2,19 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { useRouter } from "next/navigation";
 import PricingCards from "@/components/PricingCards";
-
-declare global {
-  interface Window {
-    GeideaCheckout?: new (
-      onSuccess: () => void,
-      onError: (error?: unknown) => void,
-      onCancel: () => void
-    ) => { startPayment: (sessionId: string) => void };
-  }
-}
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -80,7 +69,6 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState("");
-  const [checkoutReady, setCheckoutReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -109,10 +97,6 @@ export default function PricingPage() {
       router.push("/GetStarted?mode=signup");
       return;
     }
-    if (!checkoutReady || !window.GeideaCheckout) {
-      setCheckoutError("Payment checkout is still loading. Please try again in a moment.");
-      return;
-    }
 
     setCheckingOut(planName);
     setCheckoutError("");
@@ -123,27 +107,8 @@ export default function PricingPage() {
         body: JSON.stringify({ plan: planName, billingInterval }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Failed to start checkout.");
-      const sessionId = data?.sessionId as string | undefined;
-      if (!sessionId) throw new Error("No checkout session returned.");
-      const payment = new window.GeideaCheckout(
-        () => {
-          setCheckingOut(null);
-          router.push("/dashboard/settings?section=billing&success=true");
-        },
-        () => {
-          setCheckingOut(null);
-          setCheckoutError("Payment failed. Please try again.");
-          router.push("/pricing");
-        },
-        () => {
-          setCheckingOut(null);
-          setCheckoutError("Payment was cancelled.");
-          router.push("/pricing");
-        }
-      );
-
-      payment.startPayment(sessionId);
+      if (!res.ok || !data?.url) throw new Error(data?.error || "Failed to start checkout.");
+      window.location.href = data.url as string;
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : "Failed to start checkout.");
       setCheckingOut(null);
@@ -152,11 +117,6 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
-      <Script
-        src="https://www.ksamerchant.geidea.net/hpp/geideaCheckout.min.js"
-        onLoad={() => setCheckoutReady(true)}
-        onError={() => setCheckoutError("Payment checkout failed to load. Please refresh and try again.")}
-      />
       {/* Navbar */}
       <nav
         className="landing-glass-panel fixed left-1/2 top-4 z-50 w-[92vw] max-w-[1120px] -translate-x-1/2 rounded-full px-4 py-3 md:px-6 md:py-4 lg:px-8"

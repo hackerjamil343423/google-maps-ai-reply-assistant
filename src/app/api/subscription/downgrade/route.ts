@@ -5,8 +5,9 @@ import { z } from "zod";
 import { getRequestSession } from "@/lib/api/session";
 import { db } from "@/lib/db";
 import { businesses, subscriptions } from "@/lib/db/schema";
-import { cancelSubscription } from "@/lib/geidea/client";
+import { stripe } from "@/lib/stripe/client";
 import { PLAN_LIMITS } from "@/lib/subscription/plans";
+import { getStripePriceId } from "@/lib/subscription/pricing";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const PLAN_RANK: Record<string, number> = {
@@ -18,6 +19,7 @@ const PLAN_RANK: Record<string, number> = {
 
 const downgradeSchema = z.object({
   targetPlan: z.enum(["Local Business", "Multi-Location"]),
+  billingInterval: z.enum(["monthly", "yearly"]).default("monthly"),
 });
 
 export async function POST(req: NextRequest) {
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid target plan." }, { status: 400 });
   }
 
-  const { targetPlan } = parsed.data;
+  const { targetPlan, billingInterval } = parsed.data;
 
   const workspaceId = await ensureWorkspaceForUser(
     session.user.id,
@@ -61,13 +63,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (sub.cancelAtPeriodEnd || sub.scheduledDowngradePlan) {
-    return NextResponse.json(
-      { error: "A cancellation or downgrade is already scheduled for this subscription." },
-      { status: 400 }
-    );
-  }
-
   const currentRank = PLAN_RANK[sub.plan] ?? 0;
   const targetRank = PLAN_RANK[targetPlan] ?? 0;
 
@@ -78,7 +73,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Check for account limit warning
+  if (!stripe || !sub.stripeSubscriptionId) {
+    return NextResponse.json(
+      { error: "Payment provider not configured or no active subscription." },
+      { status: 503 }
+    );
+  }
+
+  const targetPriceId = await getStripePriceId(targetPlan, billingInterval);
+  if (!targetPriceId) {
+    return NextResponse.json(
+      { error: "Payment is not configured for the target plan. Please contact support." },
+      { status: 503 }
+    );
+  }
+
+  // Check connected accounts vs new plan limit
   const countResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(businesses)
@@ -91,38 +101,26 @@ export async function POST(req: NextRequest) {
   const connectedAccounts = countResult[0]?.count ?? 0;
   const newMaxAccounts = PLAN_LIMITS[targetPlan]?.maxAccounts ?? 1;
   const excessAccounts = connectedAccounts - newMaxAccounts;
-
   const warning =
     excessAccounts > 0
       ? `You have ${connectedAccounts} connected profile(s). The ${targetPlan} plan allows ${newMaxAccounts}. You will need to disconnect ${excessAccounts} profile(s) after the downgrade takes effect.`
       : null;
 
-  // Persist the downgrade intent BEFORE calling Geidea so a callback can see the intent.
-  await db
-    .update(subscriptions)
-    .set({
-      cancelAtPeriodEnd: true,
-      scheduledDowngradePlan: targetPlan,
-      updatedAt: new Date(),
-    })
-    .where(eq(subscriptions.workspaceId, workspaceId));
-
-  // Cancel in Geidea; roll back the DB flags if the call fails
   try {
-    if (sub.geideaSubscriptionId) {
-      await cancelSubscription(sub.geideaSubscriptionId);
+    const stripeSubscription = await stripe.subscriptions.retrieve(
+      sub.stripeSubscriptionId
+    );
+    const currentItemId = stripeSubscription.items.data[0]?.id;
+    if (!currentItemId) {
+      return NextResponse.json({ error: "Unable to find current subscription item." }, { status: 500 });
     }
-  } catch (err) {
-    console.error("[downgrade] Geidea cancelSubscription error:", err);
-    await db
-      .update(subscriptions)
-      .set({
-        cancelAtPeriodEnd: false,
-        scheduledDowngradePlan: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(subscriptions.workspaceId, workspaceId));
 
+    await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+      items: [{ id: currentItemId, price: targetPriceId }],
+      proration_behavior: "create_prorations",
+    });
+  } catch (err) {
+    console.error("[downgrade] Stripe update error:", err);
     return NextResponse.json(
       { error: "Failed to schedule downgrade. Please try again or contact support." },
       { status: 502 }
