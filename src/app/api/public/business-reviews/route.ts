@@ -20,6 +20,9 @@ interface PlacesDetailsResponse {
     text?: {
       text?: string;
     };
+    originalText?: {
+      text?: string;
+    };
     publishTime?: string;
     authorAttribution?: {
       displayName?: string;
@@ -68,7 +71,7 @@ export async function GET(req: NextRequest) {
         headers: {
           "X-Goog-Api-Key": env.GOOGLE_MAPS_API_KEY,
           "X-Goog-FieldMask":
-            "id,displayName,formattedAddress,rating,userRatingCount,reviews.rating,reviews.text,reviews.publishTime,reviews.authorAttribution.displayName",
+            "id,displayName,formattedAddress,rating,userRatingCount,reviews.rating,reviews.text,reviews.originalText,reviews.publishTime,reviews.authorAttribution.displayName",
         },
         cache: "no-store",
       }
@@ -96,7 +99,7 @@ export async function GET(req: NextRequest) {
 
     const reviews = (details.reviews ?? [])
       .map((review, index) => {
-        const text = review.text?.text?.trim() || "";
+        const text = review.originalText?.text?.trim() || review.text?.text?.trim() || "";
         if (!text) return null;
 
         return {

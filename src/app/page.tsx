@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Demo", href: "/demo" },
   { label: "Pricing", href: "/pricing" },
-  { label: "Services", href: "/services" },
 ];
 
 const WHY_CARDS = [
@@ -1006,48 +1005,24 @@ export default function Home() {
                 </a>
               </div>
             </div>
-            <nav className="flex flex-col items-center md:items-end gap-3">
+            <nav className="flex flex-col items-center md:items-end gap-4">
               <div className="flex flex-wrap justify-center gap-6 text-sm text-[#6A6A82]">
-                <Link
-                  href="/"
-                  className="hover:text-[#5F30EB] transition-colors"
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/about"
-                  className="hover:text-[#5F30EB] transition-colors"
-                >
-                  About Us
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="hover:text-[#5F30EB] transition-colors"
-                >
-                  Pricing
-                </Link>
-                <Link
-                  href="/services"
-                  className="hover:text-[#5F30EB] transition-colors"
-                >
-                  Services
-                </Link>
-                <Link
-                  href="/terms"
-                  className="hover:text-[#5F30EB] transition-colors"
-                >
-                  Terms
-                </Link>
-                <Link
-                  href="/privacy"
-                  className="hover:text-[#5F30EB] transition-colors"
-                >
-                  Privacy
-                </Link>
+                <Link href="/" className="hover:text-[#5F30EB] transition-colors">Home</Link>
+                <Link href="/about" className="hover:text-[#5F30EB] transition-colors">About Us</Link>
+                <Link href="/pricing" className="hover:text-[#5F30EB] transition-colors">Pricing</Link>
+                <Link href="/terms" className="hover:text-[#5F30EB] transition-colors">Terms</Link>
+                <Link href="/privacy" className="hover:text-[#5F30EB] transition-colors">Privacy</Link>
               </div>
+              <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 mt-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/assets/brand/visa-logo.png" alt="Visa" className="h-8 w-auto object-contain" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/assets/brand/images.png" alt="Payment method" className="h-8 w-auto object-contain" />
+              </div>
+              <p className="text-[#6A6A82] text-xs" dir="rtl">رقم السجل التجاري: 7053719758</p>
             </nav>
           </div>
-          <div className="text-center mt-10 text-gray-600 text-xs">
+          <div className="mt-10 text-center text-gray-600 text-xs">
             &copy; {new Date().getFullYear()} Wakkelni Stars. All rights reserved.
           </div>
         </div>

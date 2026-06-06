@@ -72,6 +72,7 @@ export async function generateReviewReply(
 
   const systemPrompt = [
     "You write concise, human-sounding Google review replies for businesses.",
+    "CRITICAL: Always reply in the exact same language as the review text. If the review is in Arabic, reply in Arabic. If in French, reply in French. Never translate or switch languages.",
     `Selected tone: ${tone}.`,
     `Tone template: ${toneTemplate}`,
     "Keep responses to 2-4 sentences.",
