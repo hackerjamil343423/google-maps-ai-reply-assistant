@@ -214,6 +214,21 @@ function WorkspaceSelector({
               )}
             </button>
           ))}
+          <div className="border-t border-[#F4F2FC] p-2">
+            <Link
+              href="/workspaces"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5F30EB] transition-colors hover:bg-[#F0EBFF]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+                <path d="M3 3h7v7H3z" />
+                <path d="M14 3h7v7h-7z" />
+                <path d="M14 14h7v7h-7z" />
+                <path d="M3 14h7v7H3z" />
+              </svg>
+              <span>Back to workspaces</span>
+            </Link>
+          </div>
         </div>
       )}
     </div>
