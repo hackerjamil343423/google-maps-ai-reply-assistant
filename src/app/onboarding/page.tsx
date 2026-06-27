@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -120,6 +121,13 @@ type GoogleStatus = {
   maxAccounts?: number;
 };
 
+type WorkspaceEntry = {
+  id: string;
+  name: string;
+  role: string;
+  isActive: boolean;
+};
+
 function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
   if (!status) return null;
   if (status.linkedAccount && status.hasRequiredScopes === false) {
@@ -151,6 +159,12 @@ function OnboardingContent() {
   const searchParams = useSearchParams();
   const handledCallback = useRef(false);
 
+  const [workspaceReady, setWorkspaceReady] = useState(false);
+  const [workspaceLoading, setWorkspaceLoading] = useState(true);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [workspaceError, setWorkspaceError] = useState("");
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false);
+
   // Read initial step from URL (e.g. after Google OAuth redirect)
   const urlStep = Number(searchParams.get("step"));
   const initialStep = urlStep >= 1 && urlStep <= 4 ? urlStep : 1;
@@ -171,8 +185,31 @@ function OnboardingContent() {
   // ── Step 4: Completing ──
   const [completing, setCompleting] = useState(false);
 
-  // Load Google status on mount
   useEffect(() => {
+    let active = true;
+
+    void fetch("/api/workspaces", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{ workspaces: WorkspaceEntry[] }>;
+      })
+      .then((data) => {
+        if (!active) return;
+        setWorkspaceReady((data?.workspaces ?? []).length > 0);
+      })
+      .catch(() => null)
+      .finally(() => {
+        if (active) setWorkspaceLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Load Google status after a workspace exists
+  useEffect(() => {
+    if (!workspaceReady) return;
     void fetch("/api/google/status", { cache: "no-store" })
       .then((r) => r.json())
       .then((data: GoogleStatus) => {
@@ -180,10 +217,11 @@ function OnboardingContent() {
         if (data.connected) setGoogleConnected(true);
       })
       .catch(() => null);
-  }, []);
+  }, [workspaceReady]);
 
-  // Load current AI settings on mount (needed for PUT in step 3)
+  // Load current AI settings after a workspace exists (needed for PUT in step 3)
   useEffect(() => {
+    if (!workspaceReady) return;
     void fetch("/api/settings", { cache: "no-store" })
       .then((r) => r.json())
       .then((data: { prompt?: string; postType?: string }) => {
@@ -193,7 +231,33 @@ function OnboardingContent() {
         });
       })
       .catch(() => null);
-  }, []);
+  }, [workspaceReady]);
+
+  async function handleCreateWorkspace(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = workspaceName.trim();
+    if (!name) return;
+
+    setCreatingWorkspace(true);
+    setWorkspaceError("");
+    try {
+      const res = await fetch("/api/workspaces", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const json = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) throw new Error(json?.error || "Failed to create workspace.");
+      setWorkspaceReady(true);
+      setWorkspaceName("");
+    } catch (err) {
+      setWorkspaceError(
+        err instanceof Error ? err.message : "Failed to create workspace."
+      );
+    } finally {
+      setCreatingWorkspace(false);
+    }
+  }
 
   // Auto-connect when returning from Google OAuth (?google=linked)
   const connectAndSync = useCallback(async () => {
@@ -326,6 +390,94 @@ function OnboardingContent() {
     }
     router.push("/dashboard/analytics");
     router.refresh();
+  }
+
+  if (workspaceLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F7FF]">
+        <svg
+          className="animate-spin text-[#5F30EB]"
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (!workspaceReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F7FF] px-4 py-12">
+        <div className="w-full max-w-md rounded-3xl border border-[#E6E1FA] bg-white px-8 py-8 shadow-[0_8px_40px_rgba(95,48,235,0.08)]">
+          <div className="mb-6 text-center">
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/brand/wakkelni-logo.png"
+                alt="Wakkelni"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
+              <span className="text-lg font-semibold text-[#040404]">
+                Wakkelni
+              </span>
+            </Link>
+          </div>
+
+          <h1 className="text-2xl font-semibold text-[#040404]">
+            Create your workspace
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-[#6B6487]">
+            Your account is ready. Create a workspace to connect Google Business,
+            manage reviews, and invite team members.
+          </p>
+
+          {workspaceError && (
+            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {workspaceError}
+            </div>
+          )}
+
+          <form onSubmit={(event) => void handleCreateWorkspace(event)} className="mt-6">
+            <label className="block">
+              <span className="text-sm font-medium text-[#33384F]">
+                Workspace name
+              </span>
+              <input
+                value={workspaceName}
+                onChange={(event) => setWorkspaceName(event.target.value)}
+                maxLength={100}
+                placeholder="Example: Main Branch"
+                className="mt-2 w-full rounded-2xl border border-[#D8DDE8] px-4 py-3 text-sm outline-none focus:border-[#5F30EB] focus:ring-4 focus:ring-[#5F30EB]/10"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={creatingWorkspace || !workspaceName.trim()}
+              className="mt-4 w-full rounded-2xl bg-[#5F30EB] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {creatingWorkspace ? "Creating..." : "Create workspace"}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => router.push("/workspaces")}
+            className="mt-4 w-full text-sm font-medium text-[#5F30EB]"
+          >
+            View all workspaces
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

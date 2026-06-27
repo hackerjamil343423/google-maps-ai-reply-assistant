@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     const workspaceId = await ensureWorkspaceForUser(session.user.id, session.user.name);
     if (!workspaceId) {
-      return NextResponse.json({ error: "Workspace not found" }, { status: 500 });
+      return NextResponse.json({ businesses: [], noWorkspace: true });
     }
 
     const accessibleBusinessIds = await getAccessibleBusinessIds(

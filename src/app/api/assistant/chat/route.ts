@@ -96,10 +96,13 @@ export async function GET(req: NextRequest) {
     session.user.name
   );
   if (!workspaceId) {
-    return NextResponse.json(
-      { error: "Unable to initialize workspace." },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      authenticated: true,
+      threadId: null,
+      threads: [],
+      messages: [],
+      noWorkspace: true,
+    });
   }
 
   const threadIdParam = req.nextUrl.searchParams.get("threadId");
@@ -186,10 +189,20 @@ export async function POST(req: NextRequest) {
     session.user.name
   );
   if (!workspaceId) {
-    return NextResponse.json(
-      { error: "Unable to initialize workspace." },
-      { status: 500 }
-    );
+    const assistantReply = await generateAssistantReply(
+      message,
+      "The user is signed in but has not created or selected a workspace yet.",
+      []
+    ).catch(() => "Create or select a workspace first, then I can help with account-specific setup.");
+
+    return NextResponse.json({
+      threadId: null,
+      message: {
+        role: "assistant",
+        content: assistantReply,
+      },
+      noWorkspace: true,
+    });
   }
 
   let threadId = parsed.data.threadId || "";

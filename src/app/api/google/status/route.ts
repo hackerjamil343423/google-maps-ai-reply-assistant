@@ -39,10 +39,14 @@ export async function GET(req: NextRequest) {
   );
 
   if (!workspaceId) {
-    return NextResponse.json(
-      { error: "Unable to initialize workspace." },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      configured,
+      linkedAccount: false,
+      connected: false,
+      business: null,
+      requiredScopes: GOOGLE_BUSINESS_SCOPES,
+      noWorkspace: true,
+    });
   }
 
   const access = await getWorkspaceAccess(workspaceId);

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { userProfiles } from "@/lib/db/schema";
+import { getWorkspaceIdForUser } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,11 @@ export default async function DashboardLayout({
 
     if (profile && profile.onboardingCompleted === false) {
       redirect("/onboarding");
+    }
+
+    const workspaceId = await getWorkspaceIdForUser(session.user.id);
+    if (!workspaceId) {
+      redirect("/workspaces");
     }
   }
 

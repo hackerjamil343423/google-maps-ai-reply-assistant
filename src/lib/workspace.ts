@@ -33,9 +33,10 @@ async function readActiveCookieWorkspace(userId: string): Promise<string | null>
 
 export async function ensureWorkspaceForUser(
   userId: string,
-  name?: string | null
+  _name?: string | null
 ): Promise<string | null> {
   if (!db) return null;
+  void _name;
 
   // Honour the active-workspace cookie when the user belongs to multiple workspaces
   const cookieWsId = await readActiveCookieWorkspace(userId);
@@ -51,8 +52,16 @@ export async function ensureWorkspaceForUser(
     return member.workspaceId;
   }
 
-  // No workspace exists — create a personal one
-  const workspaceName = `${name?.trim() || "My"} Workspace`;
+  return null;
+}
+
+export async function createWorkspaceForUser(
+  userId: string,
+  name: string
+): Promise<string | null> {
+  if (!db) return null;
+
+  const workspaceName = name.trim() || "My Workspace";
   const [workspace] = await db
     .insert(workspaces)
     .values({
