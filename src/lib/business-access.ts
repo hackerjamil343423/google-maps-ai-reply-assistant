@@ -81,6 +81,20 @@ export async function userCanAccessBusiness(
   return businessIds.includes(businessId);
 }
 
+export async function userCanAccessBusinesses(
+  workspaceId: string,
+  userId: string,
+  businessIds: string[]
+) {
+  if (businessIds.length === 0) return false;
+
+  const accessibleBusinessIds = new Set(
+    await getAccessibleBusinessIds(workspaceId, userId)
+  );
+
+  return businessIds.every((businessId) => accessibleBusinessIds.has(businessId));
+}
+
 export async function getInvitationAccess(
   invitationId: string
 ): Promise<{ accessMode: BusinessAccessMode; businessIds: string[] }> {

@@ -9,7 +9,10 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    "saas-admin/**",
+    "saas-admin/.next/**",
     "out/**",
+    "saas-admin/out/**",
     "build/**",
     "next-env.d.ts",
   ]),

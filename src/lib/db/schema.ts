@@ -512,6 +512,60 @@ export const reviewAnalysisReports = pgTable(
   ]
 );
 
+export const reviewComparisonReports = pgTable(
+  "review_comparison_reports",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    language: text("language").default("en"),
+    comparisonKey: text("comparison_key").notNull(),
+    businessCount: integer("business_count").notNull(),
+    businessSnapshot: text("business_snapshot").notNull(),
+    reportData: text("report_data").notNull(),
+    reviewCount: integer("review_count").notNull(),
+    periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+    periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+    generatedAt: timestamp("generated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("review_comparison_reports_workspace_id_idx").on(table.workspaceId),
+    index("review_comparison_reports_comparison_key_idx").on(table.comparisonKey),
+    index("review_comparison_reports_generated_at_idx").on(table.generatedAt),
+    index("review_comparison_reports_workspace_key_generated_idx").on(
+      table.workspaceId,
+      table.comparisonKey,
+      table.generatedAt
+    ),
+  ]
+);
+
+export const reviewComparisonReportBusinesses = pgTable(
+  "review_comparison_report_businesses",
+  {
+    reportId: uuid("report_id")
+      .notNull()
+      .references(() => reviewComparisonReports.id, { onDelete: "cascade" }),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    businessName: text("business_name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.reportId, table.businessId] }),
+    index("review_comparison_report_businesses_business_id_idx").on(table.businessId),
+  ]
+);
+
 export const jobTypeEnum = pgEnum("job_type", ["sync_reviews", "post_reply", "generate_reply"]);
 export const jobStatusEnum = pgEnum("job_status", [
   "pending",
