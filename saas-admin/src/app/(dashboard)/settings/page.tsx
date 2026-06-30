@@ -238,7 +238,7 @@ export default function SettingsPage() {
               <div>
                 <h2 className="text-lg font-semibold text-[#040404]">Plan Pricing</h2>
                 <p className="mt-1 text-xs text-[#9490A8]">
-                  Updates affect new checkouts only. Existing Geidea subscriptions keep their current billing amount.
+                  Updates affect new checkouts only. Existing Stripe subscriptions keep their current billing amount.
                 </p>
               </div>
               <button

@@ -28,7 +28,7 @@ export const PATCH = adminGuard(async (req, ctx) => {
     return NextResponse.json({ error: "Database unavailable" }, { status: 500 });
   }
 
-  const allowedFields = ["plan", "status", "billingInterval", "trialEndsAt", "cancelAtPeriodEnd", "scheduledDowngradePlan"] as const;
+  const allowedFields = ["plan", "status", "billingInterval", "trialEndsAt", "cancelAtPeriodEnd"] as const;
   const updates: Record<string, unknown> = {};
   for (const field of allowedFields) {
     if (body[field] !== undefined) updates[field] = body[field];
