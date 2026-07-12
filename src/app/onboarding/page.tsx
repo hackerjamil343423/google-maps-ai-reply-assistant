@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { ChoiceGroup, Onboarding, TipsList } from "@/components/ui/onboarding";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 // ── Feature data for Step 1 ────────────────────────────────────────────────────
 
@@ -128,15 +129,21 @@ type WorkspaceEntry = {
   isActive: boolean;
 };
 
-function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
+function getGoogleConnectBlockMessage(status: GoogleStatus | null, language: "en" | "ar") {
   if (!status) return null;
   if (status.linkedAccount && status.hasRequiredScopes === false) {
-    return "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.";
+    return language === "ar"
+      ? "حساب Google مرتبط، لكن إذن ملف النشاط التجاري مفقود. أعد ربط Google ووافق على صلاحية الوصول."
+      : "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.";
   }
   if (status.subscriptionAllowed === false) {
     return status.subscriptionReason === "trial_expired"
-      ? "Your free trial has expired. Upgrade your plan before connecting Google Business."
-      : "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
+      ? language === "ar"
+        ? "انتهت تجربتك المجانية. رقِّ خطتك قبل ربط نشاط Google."
+        : "Your free trial has expired. Upgrade your plan before connecting Google Business."
+      : language === "ar"
+        ? "اشتراكك غير نشط. جدّد خطتك أو رقِّها قبل ربط نشاط Google."
+        : "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
   }
 
   if (
@@ -146,7 +153,9 @@ function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
     status.connectedAccounts >= status.maxAccounts
   ) {
     const planName = status.plan === "free" ? "Free" : status.plan || "current";
-    return `Your ${planName} plan allows up to ${status.maxAccounts} connected account(s). Upgrade your plan to add more.`;
+    return language === "ar"
+      ? `تسمح خطة ${planName} بربط ${status.maxAccounts} حساب كحد أقصى. رقِّ خطتك لإضافة المزيد.`
+      : `Your ${planName} plan allows up to ${status.maxAccounts} connected account(s). Upgrade your plan to add more.`;
   }
 
   return null;
@@ -157,6 +166,7 @@ function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { language } = useLanguage();
   const handledCallback = useRef(false);
 
   const [workspaceReady, setWorkspaceReady] = useState(false);
@@ -330,7 +340,7 @@ function OnboardingContent() {
       return;
     }
     if (googleStatus.subscriptionAllowed === false) {
-      const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+      const blockedMessage = getGoogleConnectBlockMessage(googleStatus, language);
       setConnectError(blockedMessage || "Google Business connection is not available for this workspace.");
       return;
     }
@@ -338,7 +348,7 @@ function OnboardingContent() {
       await startGoogleLinkFlow();
       return;
     }
-    const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+    const blockedMessage = getGoogleConnectBlockMessage(googleStatus, language);
     if (blockedMessage) {
       setConnectError(blockedMessage);
       return;
@@ -655,9 +665,9 @@ function OnboardingContent() {
 
               {!googleConnected && (
                 <>
-                  {getGoogleConnectBlockMessage(googleStatus) && (
+                  {getGoogleConnectBlockMessage(googleStatus, language) && (
                     <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-[#C05B2D]">
-                      {getGoogleConnectBlockMessage(googleStatus)}
+                      {getGoogleConnectBlockMessage(googleStatus, language)}
                     </div>
                   )}
                   <button

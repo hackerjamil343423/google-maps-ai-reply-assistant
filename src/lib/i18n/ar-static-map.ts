@@ -349,7 +349,6 @@ export const AR_STATIC_MAP: Record<string, string> = {
   Trialing: "تجريبية",
   Active: "نشطة",
   Plan: "الخطة",
-  Price: "السعر",
   "Next Billing": "الفوترة القادمة",
   "Trial Ends": "تنتهي التجربة",
   "Complete Your Free Trial": "أكمل تجربتك المجانية",
@@ -673,7 +672,7 @@ export const AR_STATIC_MAP: Record<string, string> = {
   Share: "مشاركة",
   "Use it in messages": "استخدمها في الرسائل",
   "Send it after a completed visit or delivery when response intent is highest.":
-    "أرسلها بعد زيارة أو تسليم مكتمل عندما يكون intent الاستجابة في أعلى مستوى.",
+    "أرسل الرابط بعد اكتمال الزيارة أو التسليم، عندما يكون العميل أكثر استعدادًا لترك تقييم.",
   "Keep it simple": "اجعلها بسيطة",
   "Ask for feedback directly and use one clear link instead of multiple steps.":
     "اطلب التعليقات مباشرة واستخدم رابطًا واضحًا واحدًا بدلاً من خطوات متعددة.",
@@ -750,4 +749,418 @@ export const AR_STATIC_MAP: Record<string, string> = {
   "Failed to update profile access.": "فشل تحديث صلاحية الوصول إلى الملفات.",
   Access: "الوصول",
   "Access:": "الوصول:",
+
+  // ── Complete frontend coverage audit (2026-07-12) ─────────────────────────
+  // Blog and article pages
+  Blog: "المدونة",
+  Articles: "المقالات",
+  "All Articles": "جميع المقالات",
+  Related: "مقالات ذات صلة",
+  "Copy link": "نسخ الرابط",
+  "Share on Facebook": "مشاركة على فيسبوك",
+  "Share on LinkedIn": "مشاركة على لينكدإن",
+  "Share on X": "مشاركة على إكس",
+  "min read": "دقائق قراءة",
+  "Blog is not available in demo mode.": "المدونة غير متاحة في الوضع التجريبي.",
+  "Blog — Wakkelni Stars": "المدونة — Wakkelni Stars",
+  "Not Found — Wakkelni Stars": "غير موجود — Wakkelni Stars",
+  "Insights, guides, and updates to help you master Google review management and grow your business reputation.":
+    "رؤى وأدلة وتحديثات تساعدك على إتقان إدارة تقييمات Google وتنمية سمعة نشاطك.",
+  "Tips, guides, and updates about Google Business Profile review management and AI-powered customer engagement.":
+    "نصائح وأدلة وتحديثات حول إدارة تقييمات ملف نشاط Google والتفاعل مع العملاء بالذكاء الاصطناعي.",
+  "No articles found": "لم يتم العثور على مقالات",
+  "Read article": "قراءة المقال",
+  "Try adjusting your search or filter to find what you're looking for.":
+    "جرّب تعديل البحث أو عامل التصفية للعثور على ما تبحث عنه.",
+  "Search articles...": "البحث في المقالات...",
+  All: "الكل",
+
+  // Report detail and comparison cards
+  "Back to Reports": "العودة إلى التقارير",
+  Generated: "تم الإنشاء",
+  "Report data is not available.": "بيانات التقرير غير متاحة.",
+  "Report not found": "لم يتم العثور على التقرير",
+  "Comparison not found": "لم يتم العثور على المقارنة",
+  "Comparison report data is not available.": "بيانات تقرير المقارنة غير متاحة.",
+  "reviews across": "تقييمات عبر",
+  Comparison: "مقارنة",
+  "AI Comparison": "مقارنة بالذكاء الاصطناعي",
+  "Avg rating": "متوسط التقييم",
+  "Business Strengths": "نقاط قوة الأنشطة",
+  "Executive Summary": "الملخص التنفيذي",
+  "Metric Leaders": "المتصدرون حسب المؤشر",
+  "Metric Table": "جدول المؤشرات",
+  Negative: "سلبي",
+  Neutral: "محايد",
+  Positive: "إيجابي",
+  "Prioritized Recommendations": "التوصيات حسب الأولوية",
+  "Reply rate": "معدل الرد",
+  "Risks And Weak Spots": "المخاطر ونقاط الضعف",
+  "Shared Themes": "المواضيع المشتركة",
+  Trend: "الاتجاه",
+
+  // Review workflow actions and states
+  "Auto-post failed": "فشل النشر التلقائي",
+  "Retry post": "إعادة محاولة النشر",
+  "Retrying...": "جارٍ إعادة المحاولة...",
+
+  // Settings dialogs, billing, workspace, and Google connection
+  "Account limit notice": "تنبيه حد الحساب",
+  "Add Business Profile": "إضافة ملف نشاط تجاري",
+  "Are you sure?": "هل أنت متأكد؟",
+  "Billed as": "تتم الفوترة كالتالي",
+  "Cancel at period end": "الإلغاء في نهاية الفترة",
+  "Cancel subscription": "إلغاء الاشتراك",
+  "Cancel your subscription?": "هل تريد إلغاء اشتراكك؟",
+  "Cancelling...": "جارٍ الإلغاء...",
+  "Connect Selected Location": "ربط الموقع المحدد",
+  "Connect your Google Business Profile to start syncing reviews and generating AI replies.":
+    "اربط ملف نشاطك التجاري على Google لبدء مزامنة التقييمات وإنشاء ردود بالذكاء الاصطناعي.",
+  Disconnect: "قطع الاتصال",
+  "Disconnecting...": "جارٍ قطع الاتصال...",
+  Downgrade: "تخفيض الخطة",
+  "Enable auto-post?": "هل تريد تفعيل النشر التلقائي؟",
+  "Failed to connect Google Business.": "فشل ربط نشاط Google.",
+  "Failed to disconnect Google Business.": "فشل قطع اتصال نشاط Google.",
+  "Failed to fetch Google locations.": "فشل تحميل مواقع Google.",
+  "Failed to leave workspace.": "فشلت مغادرة مساحة العمل.",
+  "Failed to save workspace name.": "فشل حفظ اسم مساحة العمل.",
+  "Failed to sync reviews.": "فشلت مزامنة التقييمات.",
+  "Full access continues until then. You can re-subscribe any time.":
+    "سيستمر الوصول الكامل حتى ذلك الحين. يمكنك إعادة الاشتراك في أي وقت.",
+  "Keep current plan": "الاحتفاظ بالخطة الحالية",
+  "Keep subscription": "الاحتفاظ بالاشتراك",
+  "Leave Workspace": "مغادرة مساحة العمل",
+  "Leave workspace": "مغادرة مساحة العمل",
+  "Leaving…": "جارٍ المغادرة…",
+  "Manage billing": "إدارة الفوترة",
+  "Manage this workspace's settings and your membership.":
+    "إدارة إعدادات مساحة العمل هذه وعضويتك.",
+  "Manage your personal information and account settings.":
+    "إدارة معلوماتك الشخصية وإعدادات حسابك.",
+  Monthly: "شهري",
+  Name: "الاسم",
+  "No further charges will be made. You can re-subscribe any time.":
+    "لن تُفرض أي رسوم إضافية. يمكنك إعادة الاشتراك في أي وقت.",
+  "Only the workspace owner can rename it.":
+    "يمكن لمالك مساحة العمل فقط تغيير اسمها.",
+  "Re-subscribe": "إعادة الاشتراك",
+  "Replies will be posted directly to your Google Business Profile without review. Continue?":
+    "سيتم نشر الردود مباشرةً على ملف نشاطك التجاري في Google دون مراجعة. هل تريد المتابعة؟",
+  "Save 2 months": "وفّر شهرين",
+  "Save 2 months — get 12 months for the price of 10":
+    "وفّر شهرين — احصل على 12 شهرًا بسعر 10 أشهر",
+  "Schedule downgrade": "جدولة تخفيض الخطة",
+  "Scheduling...": "جارٍ الجدولة...",
+  "Select a location to connect:": "اختر موقعًا لربطه:",
+  Sync: "مزامنة",
+  "Syncing...": "جارٍ المزامنة...",
+  Workspace: "مساحة العمل",
+  "Workspace Name": "اسم مساحة العمل",
+  Yearly: "سنوي",
+  "Yes, Disconnect": "نعم، اقطع الاتصال",
+  "Yes, enable": "نعم، فعّل",
+  "Yes, leave": "نعم، غادر",
+  "You will be removed from this workspace. You can always be re-invited later.":
+    "ستتم إزالتك من مساحة العمل هذه. يمكن دعوتك إليها مجددًا لاحقًا.",
+  "Your Role": "دورك",
+  "Your current": "خطتك الحالية",
+  "access continues until": "سيستمر وصولك حتى",
+  "reviews synced": "تقييمات متزامنة",
+  "subscription.": "الاشتراك.",
+  "? Review syncing will stop until you reconnect.":
+    "؟ ستتوقف مزامنة التقييمات حتى تعيد الاتصال.",
+
+  // Invitations
+  "Accept invitation": "قبول الدعوة",
+  "Accepting...": "جارٍ القبول...",
+  "Create account": "إنشاء حساب",
+  "Failed to accept invitation.": "فشل قبول الدعوة.",
+  "Failed to load invitation.": "فشل تحميل الدعوة.",
+  "Invited by:": "تمت دعوتك بواسطة:",
+  "Loading invitation...": "جارٍ تحميل الدعوة...",
+  "Log in to accept": "سجّل الدخول للقبول",
+  "Team invitation": "دعوة فريق",
+  "This invitation has already been accepted.": "تم قبول هذه الدعوة بالفعل.",
+  "This invitation has expired. Ask your workspace owner to send a new one.":
+    "انتهت صلاحية هذه الدعوة. اطلب من مالك مساحة العمل إرسال دعوة جديدة.",
+  "You are signed in with a different email. Log in with":
+    "أنت مسجّل الدخول ببريد إلكتروني مختلف. سجّل الدخول باستخدام",
+  "You were invited to join": "تمت دعوتك للانضمام إلى",
+  "to accept this invitation.": "لقبول هذه الدعوة.",
+
+  // Onboarding and workspace creation
+  "Connecting…": "جارٍ الاتصال…",
+  "Create workspace": "إنشاء مساحة عمل",
+  "Create your workspace": "أنشئ مساحة عملك",
+  "Creating...": "جارٍ الإنشاء...",
+  "Failed to create workspace.": "فشل إنشاء مساحة العمل.",
+  "Failed to start Google OAuth.": "فشل بدء تسجيل الدخول عبر Google.",
+  "Use the": "استخدم صفحة",
+  "View all workspaces": "عرض جميع مساحات العمل",
+  "Workspace name": "اسم مساحة العمل",
+  "Your account is ready. Create a workspace to connect Google Business, manage reviews, and invite team members.":
+    "حسابك جاهز. أنشئ مساحة عمل لربط نشاط Google وإدارة التقييمات ودعوة أعضاء الفريق.",
+  "page to share a direct link with customers and collect more 5-star reviews.":
+    "لمشاركة رابط مباشر مع العملاء وجمع المزيد من تقييمات الخمس نجوم.",
+  "Active workspace": "مساحة العمل النشطة",
+  "Add a workspace for a new team, business, or location group.":
+    "أضف مساحة عمل لفريق أو نشاط أو مجموعة مواقع جديدة.",
+  "Close create workspace dialog": "إغلاق نافذة إنشاء مساحة العمل",
+  "Create new workspace": "إنشاء مساحة عمل جديدة",
+  "Create your first workspace to start onboarding locations, Google connections, and review automation settings.":
+    "أنشئ مساحة عملك الأولى لبدء إضافة المواقع وربط Google وإعداد أتمتة التقييمات.",
+  "Failed to load workspaces.": "فشل تحميل مساحات العمل.",
+  "Failed to switch workspace.": "فشل تبديل مساحة العمل.",
+  "No workspaces yet": "لا توجد مساحات عمل بعد",
+  "Open dashboard": "فتح لوحة التحكم",
+  "Open or switch between the workspaces connected to your account.":
+    "افتح مساحات العمل المرتبطة بحسابك أو بدّل بينها.",
+  "Opening...": "جارٍ الفتح...",
+  "Owned by you": "مملوكة لك",
+  Refresh: "تحديث",
+  "Select the active workspace, review your access, or create a new workspace when you need another company, team, or location group.":
+    "اختر مساحة العمل النشطة، وراجع صلاحياتك، أو أنشئ مساحة جديدة لشركة أو فريق أو مجموعة مواقع أخرى.",
+  "Switch workspace": "تبديل مساحة العمل",
+  "Total workspaces": "إجمالي مساحات العمل",
+  "Workspace control": "التحكم في مساحة العمل",
+  "Workspace directory": "دليل مساحات العمل",
+  "Workspace name is required.": "اسم مساحة العمل مطلوب.",
+  Workspaces: "مساحات العمل",
+
+  // Shared controls, pricing, and accessibility
+  "Start new chat": "بدء محادثة جديدة",
+  "Language selector": "محدد اللغة",
+  "Payment method": "طريقة الدفع",
+  "20% OFF": "خصم 20٪",
+  "Save 20%": "وفّر 20٪",
+  "QR Code": "رمز QR",
+  Instagram: "إنستغرام",
+  LinkedIn: "لينكدإن",
+  Telegram: "تيليجرام",
+  "All Profiles": "جميع الملفات",
+  "Back to workspaces": "العودة إلى مساحات العمل",
+  Navigation: "التنقل",
+  "Open menu": "فتح القائمة",
+  "Show product tour": "عرض الجولة التعريفية",
+  "Show tour": "عرض الجولة",
+  "Start tour": "بدء الجولة",
+  "Skip for now": "لاحقًا",
+  "Skip tour": "تخطي الجولة",
+  Finish: "إنهاء",
+  "Welcome to Wakkelni Stars": "مرحبًا بك في Wakkelni Stars",
+  "Take a two-minute tour of the tools that help you manage reviews and grow your reputation.":
+    "استكشف في دقيقتين الأدوات التي تساعدك على إدارة التقييمات وتنمية سمعة نشاطك.",
+
+  // Services and homepage categories (English source, deterministic Arabic)
+  Restaurants: "مطاعم",
+  Cafes: "مقاهي",
+  Clinics: "عيادات",
+  Salons: "صالونات",
+  "Beauty Centers": "مراكز تجميل",
+  Workshops: "ورش",
+  "Home Services": "خدمات منزلية",
+  "Commercial Registration No.": "رقم السجل التجاري",
+  "Our Services": "خدماتنا",
+  "Specialized services for": "خدمات متخصصة في",
+  "Google Maps": "خرائط جوجل",
+  "Professional solutions that strengthen your Google Maps presence and protect your Business Profile":
+    "نقدم لك حلولاً احترافية لتعزيز حضورك على خرائط جوجل وحماية ملفك التجاري",
+  "Add and verify your business location on Google Maps":
+    "إضافة وتوثيق موقع نشاطك التجاري في خرائط جوجل",
+  "Strengthen your digital presence and make your location easier for customers to find":
+    "ارفع حضور نشاطك الرقمي وامنح عملاءك وصولاً أسهل لموقعك",
+  "SAR 499": "499 ريال",
+  "Professional business listing setup": "إضافة النشاط التجاري باحترافية",
+  "Address verification": "توثيق العنوان",
+  "Improved local visibility": "تحسين الظهور المحلي",
+  "Approved description and photos": "وصف وصور معتمدة",
+  "Review activation": "تفعيل التقييمات",
+  "Restore a suspended Google Maps Business Profile":
+    "رفع التعليق عن الملف التجاري المعلّق في خرائط جوجل",
+  "Was your Google Maps Business Profile suddenly suspended? We handle the full recovery process.":
+    "هل تم تعليق ملف نشاطك على خرائط جوجل فجأة؟ نحن نتولى المهمة بالكامل.",
+  "Contact us": "تواصل معنا",
+  "Detailed suspension-cause analysis": "تحليل سبب التعليق بدقة",
+  "Business information review": "مراجعة بيانات النشاط",
+  "Technical violation correction": "تصحيح المخالفات الفنية",
+  "Official appeal submission": "تقديم طلب الاستئناف الرسمي",
+  "Follow-up until the profile is restored": "المتابعة حتى استعادة الملف",
+  "Learn more": "اعرف المزيد",
+  "Back to Services": "العودة إلى الخدمات",
+  "Google Maps Service": "خدمة خرائط جوجل",
+  Price: "السعر",
+  "Saudi Riyals": "ريال سعودي",
+  "Strengthen your digital presence and help customers find your location through our official Google Maps listing and verification service.":
+    "ارفع حضور نشاطك الرقمي وامنح عملاءك وصولاً أسهل لموقعك عبر خدمة الإضافة والتوثيق الرسمي على خرائط جوجل.",
+  "Service includes:": "تشمل الخدمة:",
+  "Make sure customers find you in the right place": "اضمن ظهورك في المكان الصحيح",
+  "Contact us to start the verification process.": "تواصل معنا لبدء التوثيق الآن.",
+  "Contact us now": "تواصل معنا الآن",
+  "Detailed suspension analysis (Violation Audit)":
+    "تحليل تفصيلي لسبب التعليق (تدقيق المخالفات)",
+  "Review business information against Google policies":
+    "مراجعة بيانات النشاط ومطابقتها مع سياسات جوجل",
+  "Correct technical violations or non-compliant content":
+    "تصحيح المخالفات الفنية أو المحتوى المخالف",
+  "Prepare the required supporting documents": "تجهيز المستندات الداعمة المطلوبة",
+  "Submit the official appeal to Google": "تقديم طلب الاستئناف الرسمي إلى جوجل",
+  "Follow up until the profile is restored or a final response is issued":
+    "المتابعة حتى استعادة الملف أو صدور رد نهائي",
+  "Professional recommendations to protect the account in the future":
+    "توصيات احترافية لحماية الحساب مستقبلاً",
+  "Conflicting or duplicate information": "تعارض أو تكرار في البيانات",
+  "A sudden name or category change": "تغيير مفاجئ في الاسم أو النشاط",
+  "Use of an ineligible address": "استخدام عنوان غير مؤهل",
+  "Image or content policy violations": "مخالفات في الصور أو المحتوى",
+  "Suspicious reports or reviews": "بلاغات أو مراجعات مشبوهة",
+  "Restore visibility in local search results": "استرجاع الظهور في نتائج البحث المحلية",
+  "Protect your ratings and customer reviews": "حماية تقييماتك ومراجعات عملائك",
+  "Restore calls and visits from Google Maps": "استعادة المكالمات والزيارات عبر خرائط جوجل",
+  "Protect your brand reputation": "حماية سمعة علامتك التجارية",
+  "Companies and organizations": "الشركات والمؤسسات",
+  "Clinics and medical centers": "العيادات والمراكز الطبية",
+  "Shops and restaurants": "المتاجر والمطاعم",
+  "Local service providers": "مقدمي الخدمات المحلية",
+  "Was your Google Maps Business Profile suddenly suspended?":
+    "هل تم تعليق ملف نشاطك على خرائط جوجل فجأة؟",
+  "That can mean lost visibility, lost customers, and damage to your brand's digital trust.":
+    "هذا يعني خسارة ظهور، فقدان عملاء، وضرب الثقة الرقمية للعلامة التجارية.",
+  "We handle the entire process. Our suspension recovery service restores your Business Profile through an official, policy-compliant process as quickly as possible while reducing the risk of another suspension.":
+    "نحن نتولى المهمة بالكامل. خدمة رفع التعليق عن الملف التجاري في خرائط جوجل تهدف إلى استعادة نشاطك التجاري بشكل رسمي ومتوافق مع سياسات جوجل، بأسرع وقت ممكن، وبطريقة احترافية تقلل احتمالية التعليق مرة أخرى.",
+  "What does the service include?": "ماذا تشمل الخدمة؟",
+  "Why are Business Profiles suspended?": "لماذا يتم تعليق الملف التجاري؟",
+  "We identify the real cause instead of guessing.": "نحدد السبب الحقيقي، وليس التخمين.",
+  "Why is this service important?": "لماذا هذه الخدمة مهمة لك؟",
+  "Ideal for:": "مناسبة لـ:",
+  "Important note": "ملاحظة مهمة",
+  "We follow Google policies completely and never offer policy-violating workarounds. Every step is handled through official, professional channels.":
+    "نلتزم بسياسات جوجل 100% ولا نقدم حلولاً مخالفة أو التفافاً على الأنظمة. العمل يتم بطريقة نظامية واحترافية فقط.",
+  "Your Google Maps presence is not optional…": "ملفك على خرائط جوجل ليس خياراً إضافياً…",
+  "It is often your first online sales touchpoint. If your profile is suspended, every hour of delay can mean missed business.":
+    "هو نقطة البيع الأولى لك أونلاين. إذا كان ملفك معلقاً الآن، كل ساعة تأخير تعني خسارة محتملة.",
+  "Start recovery today": "ابدأ الاستعادة اليوم",
+  "Reviews Analysis | Wakkelni": "تحليل التقييمات | Wakkelni",
+  "You'll keep full access to": "سيستمر وصولك الكامل إلى",
+  "Failed to load Google connection.": "فشل تحميل اتصال Google.",
+  "Failed to load team.": "فشل تحميل بيانات الفريق.",
+  "Failed to load billing.": "فشل تحميل بيانات الفوترة.",
+  "Google Business disconnected.": "تم قطع اتصال نشاط Google.",
+  "Payment received. Your billing status is updating.":
+    "تم استلام الدفعة. جارٍ تحديث حالة الفوترة.",
+  "Google OAuth is not configured.": "لم يتم إعداد تسجيل الدخول عبر Google.",
+  "Failed to open billing portal.": "فشل فتح بوابة الفوترة.",
+  "Failed to cancel subscription.": "فشل إلغاء الاشتراك.",
+  "Failed to schedule downgrade.": "فشلت جدولة تخفيض الخطة.",
+
+  // API errors surfaced by frontend forms and dialogs
+  Unauthorized: "غير مصرح لك.",
+  Forbidden: "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
+  "Database not configured": "قاعدة البيانات غير مهيأة.",
+  "Database not configured.": "قاعدة البيانات غير مهيأة.",
+  "DATABASE_URL is not configured.": "اتصال قاعدة البيانات غير مهيأ.",
+  "DB unavailable.": "قاعدة البيانات غير متاحة.",
+  "Workspace not found": "لم يتم العثور على مساحة العمل.",
+  "Workspace not found.": "لم يتم العثور على مساحة العمل.",
+  "No workspace found.": "لم يتم العثور على مساحة عمل.",
+  "Business not found": "لم يتم العثور على النشاط التجاري.",
+  "Business not found.": "لم يتم العثور على النشاط التجاري.",
+  "Business not found or not connected": "النشاط التجاري غير موجود أو غير متصل.",
+  "Failed to load business profiles": "فشل تحميل ملفات الأنشطة التجارية.",
+  "MINIMAX_API_KEY is not configured on the server":
+    "مفتاح MINIMAX_API_KEY غير مهيأ على الخادم.",
+  "businessIds must be an array": "يجب أن تكون معرّفات الأنشطة ضمن قائمة.",
+  "Select each business only once": "اختر كل نشاط مرة واحدة فقط.",
+  "Select 2 or 3 businesses to compare": "اختر نشاطين أو ثلاثة للمقارنة.",
+  "One or more businesses were not found or are not connected":
+    "نشاط واحد أو أكثر غير موجود أو غير متصل.",
+  "Failed to generate AI comparison. Please try again later.":
+    "فشل إنشاء المقارنة بالذكاء الاصطناعي. حاول مرة أخرى لاحقًا.",
+  "businessId is required": "معرّف النشاط التجاري مطلوب.",
+  "Report already generated this month": "تم إنشاء تقرير لهذا الشهر بالفعل.",
+  "No reviews available to analyze for this business":
+    "لا توجد تقييمات متاحة لتحليل هذا النشاط.",
+  "Failed to generate AI report. Please try again later.":
+    "فشل إنشاء التقرير بالذكاء الاصطناعي. حاول مرة أخرى لاحقًا.",
+  "Invalid request payload": "بيانات الطلب غير صالحة.",
+  "Google Business permission is missing. Please reconnect Google and approve Business Profile access.":
+    "إذن نشاط Google مفقود. أعد ربط Google ووافق على صلاحية الوصول إلى ملف النشاط التجاري.",
+  "Google Business APIs are not fully enabled for this Google Cloud project. Enable required APIs and try again.":
+    "واجهات نشاط Google غير مفعلة بالكامل في مشروع Google Cloud. فعّل الواجهات المطلوبة ثم حاول مرة أخرى.",
+  "No Google Business account was found for this Google user. Sign in with the account that owns/manages the Business Profile.":
+    "لم يتم العثور على حساب نشاط Google لهذا المستخدم. سجّل الدخول بالحساب الذي يملك ملف النشاط التجاري أو يديره.",
+  "No Google Business locations were found. Confirm this account has at least one accessible Business Profile location.":
+    "لم يتم العثور على مواقع نشاط Google. تأكد من أن الحساب يملك صلاحية الوصول إلى موقع واحد على الأقل.",
+  "New password must be different from current password.":
+    "يجب أن تختلف كلمة المرور الجديدة عن الحالية.",
+  "Unable to update password. Check your current password.":
+    "تعذر تحديث كلمة المرور. تحقق من كلمة المرور الحالية.",
+  "Invalid language": "اللغة غير صالحة.",
+  "Failed to save language preference": "فشل حفظ تفضيل اللغة.",
+  "GOOGLE_MAPS_API_KEY is not configured.": "مفتاح خرائط Google غير مهيأ.",
+  "Invalid place id.": "معرّف الموقع غير صالح.",
+  "Failed to load business reviews.": "فشل تحميل تقييمات النشاط.",
+  "Invalid search query.": "عبارة البحث غير صالحة.",
+  "Invalid review id.": "معرّف التقييم غير صالح.",
+  "Review not found.": "لم يتم العثور على التقييم.",
+  "Failed to save draft reply.": "فشل حفظ مسودة الرد.",
+  "Reply content is required.": "محتوى الرد مطلوب.",
+  "Review is not linked to Google Business Profile.":
+    "التقييم غير مرتبط بملف نشاط Google.",
+  "Failed to generate reply.": "فشل إنشاء الرد.",
+  "No reply content available.": "لا يتوفر محتوى للرد.",
+  "No subscription found.": "لم يتم العثور على اشتراك.",
+  "Only active or past_due subscriptions can be cancelled.":
+    "يمكن إلغاء الاشتراكات النشطة أو المتأخرة فقط.",
+  "Payment provider not configured or no active subscription.":
+    "مزود الدفع غير مهيأ أو لا يوجد اشتراك نشط.",
+  "Failed to cancel subscription. Please try again or contact support.":
+    "فشل إلغاء الاشتراك. حاول مرة أخرى أو تواصل مع الدعم.",
+  "Payment provider credentials are not configured.": "بيانات اعتماد مزود الدفع غير مهيأة.",
+  "Invalid plan or billing interval.": "الخطة أو فترة الفوترة غير صالحة.",
+  "Payment is not configured for this plan. Please contact support.":
+    "الدفع غير مهيأ لهذه الخطة. تواصل مع الدعم.",
+  "Invalid target plan.": "الخطة المستهدفة غير صالحة.",
+  "Only active subscriptions can be downgraded.": "يمكن تخفيض الاشتراكات النشطة فقط.",
+  "Target plan is not lower than the current plan. Use upgrade for plan changes to higher tiers.":
+    "الخطة المستهدفة ليست أقل من الحالية. استخدم الترقية للانتقال إلى خطة أعلى.",
+  "Payment is not configured for the target plan. Please contact support.":
+    "الدفع غير مهيأ للخطة المستهدفة. تواصل مع الدعم.",
+  "Unable to find current subscription item.": "تعذر العثور على عنصر الاشتراك الحالي.",
+  "Failed to schedule downgrade. Please try again or contact support.":
+    "فشلت جدولة تخفيض الخطة. حاول مرة أخرى أو تواصل مع الدعم.",
+  "Payment provider not configured.": "مزود الدفع غير مهيأ.",
+  "No billing account found. Please subscribe first.":
+    "لم يتم العثور على حساب فوترة. اشترك أولًا.",
+  "Use POST /api/subscription/checkout to upgrade your plan.":
+    "استخدم مسار ترقية الخطة لإتمام الترقية.",
+  "Stripe not configured.": "خدمة Stripe غير مهيأة.",
+  "Webhook secret not configured.": "سر Webhook غير مهيأ.",
+  "Invalid signature.": "التوقيع غير صالح.",
+  "Invitation not found.": "لم يتم العثور على الدعوة.",
+  "Invitation is invalid or expired.": "الدعوة غير صالحة أو منتهية.",
+  "Sign in with the invited email address to accept this invitation.":
+    "سجّل الدخول بالبريد الإلكتروني المدعو لقبول الدعوة.",
+  "You cannot invite yourself.": "لا يمكنك دعوة نفسك.",
+  "Selected business was not found in this workspace.":
+    "لم يتم العثور على النشاط المحدد في مساحة العمل هذه.",
+  "Select at least one profile or use All profiles.":
+    "اختر ملفًا واحدًا على الأقل أو استخدم جميع الملفات.",
+  "An invitation is already pending for this email.":
+    "توجد دعوة معلقة بالفعل لهذا البريد الإلكتروني.",
+  "Invitation email is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.":
+    "بريد الدعوات غير مهيأ. اضبط RESEND_API_KEY وRESEND_FROM_EMAIL.",
+  "Failed to send the invitation email.": "فشل إرسال بريد الدعوة.",
+  "Owner always has access to all profiles.": "يمتلك المالك صلاحية الوصول إلى جميع الملفات دائمًا.",
+  "Member not found.": "لم يتم العثور على العضو.",
+  "Invitation not found": "لم يتم العثور على الدعوة.",
+  "Member not found": "لم يتم العثور على العضو.",
+  "Owner role cannot be changed.": "لا يمكن تغيير دور المالك.",
+  "Invalid memberId": "معرّف العضو غير صالح.",
+  "Owner cannot be removed.": "لا يمكن إزالة المالك.",
+  "Unknown tour id.": "معرّف الجولة غير معروف.",
+  "Name must be between 1 and 100 characters.": "يجب أن يتراوح الاسم بين حرف واحد و100 حرف.",
+  "The workspace owner cannot leave. Transfer ownership first or delete the workspace.":
+    "لا يمكن لمالك مساحة العمل مغادرتها. انقل الملكية أولًا أو احذف مساحة العمل.",
+  "Unable to create workspace.": "تعذر إنشاء مساحة العمل.",
 };

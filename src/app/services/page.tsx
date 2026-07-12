@@ -13,30 +13,30 @@ const NAV_LINKS = [
 const SERVICES = [
   {
     slug: "google-maps-listing",
-    title: "اضافة وتوثيق موقع نشاطك التجاري في خرائط جوجل",
-    subtitle: "ارفع حضور نشاطك الرقمي وامنح عملاءك وصولاً أسهل لموقعك",
-    price: "499 ريال",
+    title: "Add and verify your business location on Google Maps",
+    subtitle: "Strengthen your digital presence and make your location easier for customers to find",
+    price: "SAR 499",
     image: "/assets/service/google-maps-listing.jpg",
     features: [
-      "إضافة النشاط التجاري باحترافية",
-      "توثيق العنوان",
-      "تحسين الظهور المحلي",
-      "وصف وصور معتمدة",
-      "تفعيل التقييمات",
+      "Professional business listing setup",
+      "Address verification",
+      "Improved local visibility",
+      "Approved description and photos",
+      "Review activation",
     ],
   },
   {
     slug: "google-maps-unsuspend",
-    title: "رفع التعليق عن الملف التجاري المعلّق في خرائط جوجل",
-    subtitle: "هل تم تعليق ملف نشاطك على خرائط جوجل فجأة؟ نحن نتولى المهمة بالكامل.",
-    price: "تواصل معنا",
+    title: "Restore a suspended Google Maps Business Profile",
+    subtitle: "Was your Google Maps Business Profile suddenly suspended? We handle the full recovery process.",
+    price: "Contact us",
     image: null,
     features: [
-      "تحليل سبب التعليق بدقة",
-      "مراجعة بيانات النشاط",
-      "تصحيح المخالفات الفنية",
-      "تقديم طلب الاستئناف الرسمي",
-      "المتابعة حتى استعادة الملف",
+      "Detailed suspension-cause analysis",
+      "Business information review",
+      "Technical violation correction",
+      "Official appeal submission",
+      "Follow-up until the profile is restored",
     ],
   },
 ];
@@ -45,7 +45,7 @@ export default function ServicesPage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F6F4FF] text-[#040404]" dir="rtl">
+    <div className="min-h-screen bg-[#F6F4FF] text-[#040404]">
       {/* Navbar */}
       <nav
         className="landing-glass-panel fixed left-1/2 top-4 z-50 w-[92vw] max-w-[1120px] -translate-x-1/2 rounded-full px-4 py-3 md:px-6 md:py-4 lg:px-8"
@@ -54,7 +54,7 @@ export default function ServicesPage() {
             "0 12px 34px rgba(4, 4, 4, 0.1), 0 0 0 1px rgba(95, 48, 235, 0.14) inset",
         }}
       >
-        <div className="relative flex items-center justify-between" dir="ltr">
+        <div className="relative flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -136,14 +136,14 @@ export default function ServicesPage() {
       <section className="pt-40 pb-16 px-4 text-center">
         <div className="max-w-3xl mx-auto">
           <span className="inline-block text-xs font-semibold tracking-widest uppercase text-[#5F30EB] bg-[#5F30EB15] border border-[#5F30EB30] rounded-full px-4 py-1.5 mb-6">
-            خدماتنا
+            Our Services
           </span>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-            خدمات متخصصة في
-            <span className="text-[#5F30EB]"> خرائط جوجل</span>
+            Specialized services for
+            <span className="text-[#5F30EB]"> Google Maps</span>
           </h1>
           <p className="text-lg text-[#6A6A82] leading-relaxed">
-            نقدم لك حلولاً احترافية لتعزيز حضورك على خرائط جوجل وحماية ملفك التجاري
+            Professional solutions that strengthen your Google Maps presence and protect your Business Profile
           </p>
         </div>
       </section>
@@ -200,9 +200,9 @@ export default function ServicesPage() {
                 ))}
               </ul>
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#5F30EB] group-hover:gap-3 transition-all">
-                اعرف المزيد
+                Learn more
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="rotate-180 rtl:rotate-0">
                   <path d="m15 18-6-6 6-6" />
                 </svg>
               </span>
@@ -212,7 +212,7 @@ export default function ServicesPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative overflow-hidden text-[#040404] pt-20 pb-10 border-t border-[#5F30EB]/20" dir="ltr">
+      <footer className="relative overflow-hidden text-[#040404] pt-20 pb-10 border-t border-[#5F30EB]/20">
         <div className="absolute inset-0 pointer-events-none -z-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/assets/effects/footer-effect.svg" alt="" className="w-full h-full object-cover opacity-20" />

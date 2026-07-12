@@ -135,19 +135,27 @@ function panelStyle() {
   };
 }
 
-function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
+function getGoogleConnectBlockMessage(status: GoogleStatus | null, language: "en" | "ar") {
   if (!status) return null;
   if (status.linkedAccount && status.hasRequiredScopes === false) {
-    return "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.";
+    return language === "ar"
+      ? "حساب Google مرتبط، لكن إذن ملف النشاط التجاري مفقود. أعد ربط Google ووافق على صلاحية الوصول."
+      : "Your Google account is linked, but Business Profile permission is missing. Reconnect Google and approve Business Profile access.";
   }
   if (status.subscriptionAllowed === false) {
     if (status.subscriptionReason === "trial_expired") {
-      return "Your free trial has expired. Upgrade your plan before connecting Google Business.";
+      return language === "ar"
+        ? "انتهت تجربتك المجانية. رقِّ خطتك قبل ربط نشاط Google."
+        : "Your free trial has expired. Upgrade your plan before connecting Google Business.";
     }
     if (status.subscriptionReason === "subscription_expired") {
-      return "Your subscription has expired. Renew your plan before connecting Google Business.";
+      return language === "ar"
+        ? "انتهى اشتراكك. جدّد خطتك قبل ربط نشاط Google."
+        : "Your subscription has expired. Renew your plan before connecting Google Business.";
     }
-    return "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
+    return language === "ar"
+      ? "اشتراكك غير نشط. جدّد خطتك أو رقِّها قبل ربط نشاط Google."
+      : "Your subscription is not active. Renew or upgrade your plan before connecting Google Business.";
   }
 
   if (
@@ -157,7 +165,9 @@ function getGoogleConnectBlockMessage(status: GoogleStatus | null) {
     status.connectedAccounts >= status.maxAccounts
   ) {
     const planName = status.plan === "free" ? "Free" : status.plan || "current";
-    return `Your ${planName} plan allows up to ${status.maxAccounts} connected account(s). Upgrade your plan to add more.`;
+    return language === "ar"
+      ? `تسمح خطة ${planName} بربط ${status.maxAccounts} حساب كحد أقصى. رقِّ خطتك لإضافة المزيد.`
+      : `Your ${planName} plan allows up to ${status.maxAccounts} connected account(s). Upgrade your plan to add more.`;
   }
 
   return null;
@@ -540,7 +550,7 @@ export default function SettingsPage() {
     if (!googleStatus) return;
     if (!googleStatus.configured) return setGoogleError("Google OAuth is not configured.");
     if (mode === "add" && googleStatus.subscriptionAllowed === false) {
-      const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+      const blockedMessage = getGoogleConnectBlockMessage(googleStatus, language);
       setGoogleError(blockedMessage || "Google Business connection is not available for this workspace.");
       return;
     }
@@ -549,7 +559,7 @@ export default function SettingsPage() {
       return startGoogleLinkFlow();
     }
     if (mode === "add") {
-      const blockedMessage = getGoogleConnectBlockMessage(googleStatus);
+      const blockedMessage = getGoogleConnectBlockMessage(googleStatus, language);
       if (blockedMessage) {
         setGoogleError(blockedMessage);
         return;
@@ -708,7 +718,11 @@ export default function SettingsPage() {
       return;
     }
     setSubscription((s) => ({ ...s, cancelAtPeriodEnd: true }));
-    setBillingNotice(`Your subscription will end on ${subscription.nextBillingAt}. Full access continues until then.`);
+    setBillingNotice(
+      language === "ar"
+        ? `سينتهي اشتراكك في ${subscription.nextBillingAt}. سيستمر الوصول الكامل حتى ذلك الحين.`
+        : `Your subscription will end on ${subscription.nextBillingAt}. Full access continues until then.`
+    );
     setShowCancelDialog(false);
   }
 
@@ -722,7 +736,9 @@ export default function SettingsPage() {
     const newMax = planMap[targetPlan] ?? 1;
     const warning =
       count > newMax
-        ? `You have ${count} connected profile(s). ${targetPlan} allows ${newMax}. You'll need to disconnect ${count - newMax} profile(s) after the downgrade takes effect.`
+        ? language === "ar"
+          ? `لديك ${count} ملف متصل. تسمح خطة ${targetPlan} بعدد ${newMax}. ستحتاج إلى قطع اتصال ${count - newMax} ملف بعد سريان تخفيض الخطة.`
+          : `You have ${count} connected profile(s). ${targetPlan} allows ${newMax}. You'll need to disconnect ${count - newMax} profile(s) after the downgrade takes effect.`
         : null;
 
     setDowngradeTarget(targetPlan);
@@ -751,7 +767,9 @@ export default function SettingsPage() {
       scheduledDowngradePlan: downgradeTarget,
     }));
     setBillingNotice(
-      `Downgrade to ${downgradeTarget} scheduled. You'll receive an email when your current period ends on ${subscription.nextBillingAt}.`
+      language === "ar"
+        ? `تمت جدولة التخفيض إلى ${downgradeTarget}. ستتلقى رسالة بريد إلكتروني عند انتهاء فترتك الحالية في ${subscription.nextBillingAt}.`
+        : `Downgrade to ${downgradeTarget} scheduled. You'll receive an email when your current period ends on ${subscription.nextBillingAt}.`
     );
     setShowDowngradeDialog(false);
     setDowngradeTarget(null);
@@ -1239,8 +1257,8 @@ export default function SettingsPage() {
             {/* Messages */}
             {googleError && <p className="mt-4 rounded-2xl bg-red-500/8 px-4 py-3 text-sm text-red-500">{googleError}</p>}
             {googleNotice && <p className="mt-4 rounded-2xl bg-[#5F30EB]/8 px-4 py-3 text-sm text-[#5F30EB]">{googleNotice}</p>}
-            {!googleError && getGoogleConnectBlockMessage(googleStatus) && (
-              <p className="mt-4 rounded-2xl bg-orange-500/8 px-4 py-3 text-sm text-orange-600">{getGoogleConnectBlockMessage(googleStatus)}</p>
+            {!googleError && getGoogleConnectBlockMessage(googleStatus, language) && (
+              <p className="mt-4 rounded-2xl bg-orange-500/8 px-4 py-3 text-sm text-orange-600">{getGoogleConnectBlockMessage(googleStatus, language)}</p>
             )}
 
             {/* Location picker (shown while picking a new location to connect) */}

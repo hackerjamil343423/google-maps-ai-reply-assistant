@@ -15,6 +15,7 @@ import { useTour } from "@/components/tour/tour-provider";
 
 type NavItem = {
   title: string;
+  titleAr: string;
   href: string;
   icon: React.ReactNode;
 };
@@ -22,6 +23,7 @@ type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   {
     title: "Dashboard",
+    titleAr: "لوحة التحكم",
     href: "/dashboard/analytics",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -32,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     title: "Reviews",
+    titleAr: "التقييمات",
     href: "/dashboard/reviews",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -41,6 +44,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     title: "AI Reports",
+    titleAr: "تقارير الذكاء الاصطناعي",
     href: "/dashboard/reports",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -53,6 +57,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     title: "Review Link",
+    titleAr: "رابط التقييم",
     href: "/dashboard/review-link",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -63,6 +68,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     title: "Settings",
+    titleAr: "الإعدادات",
     href: "/dashboard/settings",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -87,12 +93,13 @@ function SidebarSection({
     <nav data-tour="sidebar-nav" className="mt-6 flex flex-col gap-2">
       {NAV_ITEMS.map((item) => {
         const isActive = activeHref === item.href;
+        const title = language === "ar" ? item.titleAr : item.title;
         const link = (
           <Link
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            title={collapsed ? item.title : undefined}
+            title={collapsed ? title : undefined}
             className={`group relative flex items-center rounded-2xl px-3 py-3 text-sm transition-all ${
               collapsed ? "justify-center" : "gap-3"
             } ${
@@ -102,14 +109,14 @@ function SidebarSection({
             }`}
           >
             <span className={`${isActive ? "text-white" : "text-current"}`}>{item.icon}</span>
-            {!collapsed && <span className="truncate font-medium">{item.title}</span>}
+            {!collapsed && <span className="truncate font-medium">{title}</span>}
           </Link>
         );
         if (!collapsed) return link;
         return (
           <Tooltip key={item.href}>
             <TooltipTrigger asChild>{link}</TooltipTrigger>
-            <TooltipContent side={language === "ar" ? "left" : "right"}>{item.title}</TooltipContent>
+            <TooltipContent side={language === "ar" ? "left" : "right"}>{title}</TooltipContent>
           </Tooltip>
         );
       })}
@@ -219,7 +226,7 @@ function WorkspaceSelector({
                 <path d="M14 14h7v7h-7z" />
                 <path d="M3 14h7v7H3z" />
               </svg>
-              <span>Back to workspaces</span>
+              <span>{isArabic ? "العودة إلى مساحات العمل" : "Back to workspaces"}</span>
             </Link>
           </div>
       </DropdownMenuContent>
@@ -267,7 +274,7 @@ function SidebarContent({
             variant="outline"
             size="icon"
             onClick={onToggle}
-            aria-label="Collapse sidebar"
+            aria-label={language === "ar" ? "طي الشريط الجانبي" : "Collapse sidebar"}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF] cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -285,7 +292,7 @@ function SidebarContent({
             variant="outline"
             size="icon"
             onClick={onToggle}
-            aria-label="Expand sidebar"
+            aria-label={language === "ar" ? "توسيع الشريط الجانبي" : "Expand sidebar"}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF] cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -315,11 +322,11 @@ function SidebarContent({
       <div className={`${collapsed ? "px-3 pb-3" : "px-4 pb-4"} mt-auto`}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button type="button" variant="ghost" size={collapsed ? "icon" : "default"} onClick={startTour} className={collapsed ? "mb-2 w-full" : "mb-2 w-full justify-start"} aria-label="Show product tour">
-              <span className="flex size-5 items-center justify-center rounded-full border border-current text-xs font-bold">?</span>{!collapsed && <span>Show tour</span>}
+            <Button type="button" variant="ghost" size={collapsed ? "icon" : "default"} onClick={startTour} className={collapsed ? "mb-2 w-full" : "mb-2 w-full justify-start"} aria-label={language === "ar" ? "عرض الجولة التعريفية" : "Show product tour"}>
+              <span className="flex size-5 items-center justify-center rounded-full border border-current text-xs font-bold">?</span>{!collapsed && <span>{language === "ar" ? "عرض الجولة" : "Show tour"}</span>}
             </Button>
           </TooltipTrigger>
-          {collapsed && <TooltipContent side={language === "ar" ? "left" : "right"}>Show tour</TooltipContent>}
+          {collapsed && <TooltipContent side={language === "ar" ? "left" : "right"}>{language === "ar" ? "عرض الجولة" : "Show tour"}</TooltipContent>}
         </Tooltip>
         <div className={`rounded-2xl border border-[#E6E1FA] bg-[#F8F7FF] ${collapsed ? "px-0 py-3" : "px-3 py-3"}`}>
           <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
@@ -338,7 +345,7 @@ function SidebarContent({
                   onClick={() => void onLogout()}
                   className="rounded-xl border border-[#E6E1FA] px-3 py-2 text-xs font-medium text-[#5F30EB] hover:bg-[#F0EBFF] cursor-pointer"
                 >
-                  Logout
+                  {language === "ar" ? "تسجيل الخروج" : "Logout"}
                 </Button>
               </>
             )}
@@ -350,7 +357,7 @@ function SidebarContent({
                 variant="outline"
                 size="icon-lg"
                 onClick={() => void onLogout()}
-                title="Logout"
+                title={language === "ar" ? "تسجيل الخروج" : "Logout"}
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E6E1FA] text-[#5F30EB] hover:bg-[#F0EBFF] cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -369,10 +376,16 @@ function SidebarContent({
 
 function BusinessSelector() {
   const { businesses, activeBusiness, setActiveBusiness } = useBusinessContext();
+  const { language } = useLanguage();
+  const isArabic = language === "ar";
 
   if (businesses.length <= 1) return null;
 
-  const label = activeBusiness ? activeBusiness.name : "All Profiles";
+  const label = activeBusiness
+    ? activeBusiness.name
+    : isArabic
+      ? "جميع الملفات"
+      : "All Profiles";
 
   return (
     <div data-tour="business-selector" className="relative">
@@ -398,7 +411,7 @@ function BusinessSelector() {
             className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm text-start transition-colors hover:bg-[#F0EBFF] cursor-pointer ${activeBusiness === null ? "bg-[#F0EBFF] font-semibold text-[#5F30EB]" : "text-[#040404]"}`}
           >
             <span className="h-2 w-2 rounded-full bg-[#5F30EB] shrink-0" />
-            All Profiles
+            {isArabic ? "جميع الملفات" : "All Profiles"}
           </DropdownMenuItem>
           {businesses.map((b) => (
             <DropdownMenuItem
@@ -525,7 +538,7 @@ function DashboardShellInner({
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side={language === "ar" ? "right" : "left"} showCloseButton={false} className="w-auto border-0 bg-transparent p-4 md:hidden">
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <SheetTitle className="sr-only">{language === "ar" ? "التنقل" : "Navigation"}</SheetTitle>
             <SidebarContent
               activeHref={activeHref}
               collapsed={false}
@@ -549,7 +562,7 @@ function DashboardShellInner({
             size="icon-lg"
             onClick={() => setMobileOpen(true)}
             className="md:hidden flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white/70 text-[#5F30EB] shadow-sm cursor-pointer shrink-0"
-            aria-label="Open menu"
+            aria-label={language === "ar" ? "فتح القائمة" : "Open menu"}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M4 6h16" />
