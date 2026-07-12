@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt } from "drizzle-orm";
 
 import { generateBusinessComparisonReport } from "@/lib/ai/generate-comparison-report";
 import { getRequestSession } from "@/lib/api/session";
@@ -155,7 +155,11 @@ export async function POST(req: NextRequest) {
   const periodEndExclusive = new Date(periodBounds.end.getTime() + 86400000);
 
   const reviewRows = await db.query.reviews.findMany({
-    where: inArray(reviewsTable.businessId, uniqueBusinessIds),
+    where: and(
+      inArray(reviewsTable.businessId, uniqueBusinessIds),
+      gte(reviewsTable.reviewedAt, periodBounds.start),
+      lt(reviewsTable.reviewedAt, periodEndExclusive)
+    ),
     orderBy: [desc(reviewsTable.reviewedAt)],
     columns: {
       id: true,
@@ -173,13 +177,7 @@ export async function POST(req: NextRequest) {
   }
 
   for (const review of reviewRows) {
-    const reviewedAt = review.reviewedAt.getTime();
-    if (
-      reviewedAt >= periodBounds.start.getTime() &&
-      reviewedAt < periodEndExclusive.getTime()
-    ) {
-      reviewsByBusiness.get(review.businessId)?.push(review);
-    }
+    reviewsByBusiness.get(review.businessId)?.push(review);
   }
 
   const businessesWithoutReviews = orderedBusinesses.filter(

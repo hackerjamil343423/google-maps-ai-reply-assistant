@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getClientIp } from "@/lib/api/client-ip";
+import { consumeRateLimitDurable } from "@/lib/api/rate-limit";
 import { env } from "@/lib/env";
 
 const querySchema = z.object({
@@ -47,6 +49,18 @@ export async function GET(req: NextRequest) {
 
   if (!parsedQuery.success) {
     return NextResponse.json({ error: "Invalid search query." }, { status: 400 });
+  }
+
+  const rate = await consumeRateLimitDurable(
+    `places-search:${getClientIp(req)}`,
+    10,
+    60 * 1000
+  );
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again shortly." },
+      { status: 429 }
+    );
   }
 
   try {

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next build",
+    "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
@@ -16,9 +16,9 @@
     "@aws-sdk/client-s3": "^3.1048.0",
     "@neondatabase/serverless": "^1.0.2",
     "better-auth": "^1.4.19",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "marked": "^18.0.3",
-    "next": "16.1.6",
+    "next": "^16.2.10",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zod": "^4.3.6"
@@ -30,6 +30,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.9",
+    "eslint-config-next": "^16.2.10",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

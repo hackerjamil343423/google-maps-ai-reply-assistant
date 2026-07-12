@@ -4,7 +4,7 @@
  * Stripe's invoice.payment_failed webhook is the primary signal, but this
  * cron fires once per day as a backstop for any missed webhooks.
  *
- * Authorization: Bearer ${CRON_SECRET}  (skipped when CRON_SECRET is unset)
+ * Authorization: Bearer ${CRON_SECRET}  (required; requests are rejected when CRON_SECRET is unset)
  */
 
 import { and, eq, lt } from "drizzle-orm";
@@ -16,7 +16,7 @@ import { sendRenewalFailedEmail } from "@/lib/emails";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+  if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

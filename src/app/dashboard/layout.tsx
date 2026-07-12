@@ -5,6 +5,7 @@ import { getServerSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { userProfiles } from "@/lib/db/schema";
 import { getWorkspaceIdForUser } from "@/lib/workspace";
+import { TourProvider } from "@/components/tour/tour-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -38,5 +39,5 @@ export default async function DashboardLayout({
     }
   }
 
-  return children;
+  return <TourProvider>{children}</TourProvider>;
 }

@@ -146,11 +146,12 @@ export async function POST(req: NextRequest) {
       await postGoogleReviewReply(req.headers, review.googleReviewId, content);
       await markReplyPosted({
         reviewId,
+        replyId: latestReply?.id,
         content,
         source,
         userId: session.user.id,
       });
-      void incrementUsageCounter(workspaceId, "reviewsManaged");
+      await incrementUsageCounter(workspaceId, "reviewsManaged");
       approved += 1;
     } catch (error) {
       failed.push({

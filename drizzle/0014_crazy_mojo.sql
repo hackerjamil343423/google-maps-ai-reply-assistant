@@ -1,0 +1,1 @@
+ALTER TABLE "user_profiles" ADD COLUMN "tours_completed" jsonb DEFAULT '[]'::jsonb NOT NULL;

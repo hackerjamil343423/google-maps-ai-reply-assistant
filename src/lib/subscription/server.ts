@@ -117,11 +117,15 @@ export async function incrementUsageCounter(
           updatedAt: new Date(),
         };
 
-  await db
-    .insert(usageCounters)
-    .values(initialValues)
-    .onConflictDoUpdate({
-      target: [usageCounters.workspaceId, usageCounters.month],
-      set: incrementSet,
-    });
+  try {
+    await db
+      .insert(usageCounters)
+      .values(initialValues)
+      .onConflictDoUpdate({
+        target: [usageCounters.workspaceId, usageCounters.month],
+        set: incrementSet,
+      });
+  } catch {
+    // Usage accounting must not break the main product flow.
+  }
 }

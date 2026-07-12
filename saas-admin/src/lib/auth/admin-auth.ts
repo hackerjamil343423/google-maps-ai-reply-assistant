@@ -8,6 +8,16 @@ import { env } from "@/lib/env";
 
 const DEV_SECRET = "admin-dev-secret-change-in-production-9876543210";
 
+const isProductionRuntime =
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PHASE !== "phase-production-build";
+
+if (isProductionRuntime && !env.ADMIN_BETTER_AUTH_SECRET) {
+  throw new Error(
+    "ADMIN_BETTER_AUTH_SECRET must be set in production. Refusing to start with the dev fallback secret."
+  );
+}
+
 const database = env.DATABASE_URL
   ? drizzleAdapter(drizzle(env.DATABASE_URL, { schema }), {
       provider: "pg",

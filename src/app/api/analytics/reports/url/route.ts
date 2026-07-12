@@ -4,7 +4,7 @@ import { userCanAccessBusiness } from "@/lib/business-access";
 import { db } from "@/lib/db";
 import { businesses, reviewAnalysisReports, reviews as reviewsTable } from "@/lib/db/schema";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { generateAnalysisReportFromUrl } from "@/lib/ai/generate-analysis-report";
 import { getResponseStatsForBusiness } from "@/lib/reviews/analysis";
@@ -106,18 +106,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Fetch ALL synced reviews from DB for this business
+  const periodEndInclusive = new Date(periodBounds.end.getTime() + 86400000);
   const dbReviews = await db.query.reviews.findMany({
-    where: eq(reviewsTable.businessId, businessId),
+    where: and(
+      eq(reviewsTable.businessId, businessId),
+      gte(reviewsTable.reviewedAt, periodBounds.start),
+      lte(reviewsTable.reviewedAt, periodEndInclusive)
+    ),
     orderBy: [desc(reviewsTable.reviewedAt)],
     columns: { id: true, authorName: true, rating: true, text: true, reviewedAt: true },
   });
 
-  // Filter by selected period
-  const reviewsData = dbReviews.filter((review) => {
-    const t = review.reviewedAt.getTime();
-    return t >= periodBounds.start.getTime() && t <= periodBounds.end.getTime() + 86400000;
-  });
+  const reviewsData = dbReviews;
 
   if (reviewsData.length === 0) {
     return NextResponse.json(
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
   const responseStatsResult = await getResponseStatsForBusiness(
     businessId,
     periodBounds.start,
-    new Date(periodBounds.end.getTime() + 86400000)
+    periodEndInclusive
   );
   const responseStats = {
     totalReplied: responseStatsResult.repliedCount,

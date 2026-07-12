@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { z } from "zod";
 
+import { getClientIp } from "@/lib/api/client-ip";
 import { getRequestSession } from "@/lib/api/session";
-import { consumeRateLimit } from "@/lib/api/rate-limit";
+import { consumeRateLimitDurable } from "@/lib/api/rate-limit";
 import { buildAssistantContext } from "@/lib/assistant/context";
 import { PLATFORM_KNOWLEDGE } from "@/lib/assistant/platform-knowledge";
 import { db } from "@/lib/db";
@@ -155,12 +156,9 @@ export async function POST(req: NextRequest) {
 
   const message = parsed.data.message;
   const session = await getRequestSession(req);
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown";
+  const ip = getClientIp(req);
   const rateKey = session ? `assistant:${session.user.id}` : `assistant:guest:${ip}`;
-  const rate = consumeRateLimit(rateKey, 30, 5 * 60 * 1000);
+  const rate = await consumeRateLimitDurable(rateKey, 30, 5 * 60 * 1000);
   if (!rate.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please try again shortly." },

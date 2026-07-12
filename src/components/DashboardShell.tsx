@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
 import { useBusinessContext } from "@/lib/business-context";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTour } from "@/components/tour/tour-provider";
 
 type NavItem = {
   title: string;
@@ -77,11 +82,12 @@ function SidebarSection({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
+  const { language } = useLanguage();
   return (
-    <nav className="mt-6 flex flex-col gap-2">
+    <nav data-tour="sidebar-nav" className="mt-6 flex flex-col gap-2">
       {NAV_ITEMS.map((item) => {
         const isActive = activeHref === item.href;
-        return (
+        const link = (
           <Link
             key={item.href}
             href={item.href}
@@ -97,12 +103,14 @@ function SidebarSection({
           >
             <span className={`${isActive ? "text-white" : "text-current"}`}>{item.icon}</span>
             {!collapsed && <span className="truncate font-medium">{item.title}</span>}
-            {collapsed && (
-              <span className="pointer-events-none absolute start-full top-1/2 z-20 ms-3 -translate-y-1/2 whitespace-nowrap rounded-xl bg-[#5F30EB] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-                {item.title}
-              </span>
-            )}
           </Link>
+        );
+        if (!collapsed) return link;
+        return (
+          <Tooltip key={item.href}>
+            <TooltipTrigger asChild>{link}</TooltipTrigger>
+            <TooltipContent side={language === "ar" ? "left" : "right"}>{item.title}</TooltipContent>
+          </Tooltip>
         );
       })}
     </nav>
@@ -134,17 +142,7 @@ function WorkspaceSelector({
 }) {
   const { language } = useLanguage();
   const isArabic = language === "ar";
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const active = workspaces.find((w) => w.isActive) ?? workspaces[0];
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   if (!active) return null;
 
@@ -156,10 +154,11 @@ function WorkspaceSelector({
   }
 
   return (
-    <div ref={ref} className={`relative ${collapsed ? "flex justify-center" : ""}`}>
+    <div data-tour="workspace-selector" className={`relative ${collapsed ? "flex justify-center" : ""}`}>
+      <DropdownMenu>
+      <DropdownMenuTrigger asChild>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
         title={collapsed ? active.name : undefined}
         className={`flex items-center gap-2.5 rounded-2xl border border-[#E6E1FA] bg-[#F8F7FF] transition-colors hover:bg-[#F0EBFF] cursor-pointer ${
           collapsed ? "h-10 w-10 justify-center" : "w-full px-3 py-2.5"
@@ -179,22 +178,16 @@ function WorkspaceSelector({
           </>
         )}
       </button>
-
-      {open && (
-        <div
-          className={`absolute z-50 min-w-[220px] rounded-2xl border border-[#E6E1FA] bg-white shadow-[0_8px_24px_rgba(95,48,235,0.12)] overflow-hidden ${
-            collapsed ? "start-full ms-3 top-0" : "top-full mt-2 start-0 end-0"
-          }`}
-        >
-          <p className="px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9490A8]">
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" side={collapsed ? (isArabic ? "left" : "right") : "bottom"} className="min-w-[220px] rounded-2xl border-[#E6E1FA] p-0 shadow-[0_8px_24px_rgba(95,48,235,0.12)]">
+          <DropdownMenuLabel className="px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9490A8]">
             {isArabic ? "مساحات العمل" : "Workspaces"}
-          </p>
+          </DropdownMenuLabel>
           {workspaces.map((w) => (
-            <button
+            <DropdownMenuItem
               key={w.id}
-              type="button"
-              onClick={() => { onSwitch(w.id); setOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-start transition-colors hover:bg-[#F0EBFF] cursor-pointer border-t border-[#F4F2FC] ${
+              onSelect={() => onSwitch(w.id)}
+              className={`w-full flex items-center gap-3 rounded-none px-4 py-3 text-sm text-start border-t border-[#F4F2FC] ${
                 w.isActive ? "bg-[#F0EBFF]" : ""
               }`}
             >
@@ -212,12 +205,12 @@ function WorkspaceSelector({
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               )}
-            </button>
+            </DropdownMenuItem>
           ))}
-          <div className="border-t border-[#F4F2FC] p-2">
+          <DropdownMenuSeparator className="m-0" />
+          <div className="p-2">
             <Link
               href="/workspaces"
-              onClick={() => setOpen(false)}
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5F30EB] transition-colors hover:bg-[#F0EBFF]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
@@ -229,8 +222,8 @@ function WorkspaceSelector({
               <span>Back to workspaces</span>
             </Link>
           </div>
-        </div>
-      )}
+      </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -256,6 +249,8 @@ function SidebarContent({
   initials: string;
   workspaces: WorkspaceEntry[];
 }) {
+  const { startTour } = useTour();
+  const { language } = useLanguage();
   return (
     <div className={`flex h-full flex-col rounded-[28px] border border-[#E6E1FA] bg-white text-[#040404] shadow-[0_4px_24px_rgba(95,48,235,0.08)] transition-all ${collapsed ? "w-[88px]" : "w-[272px]"}`}>
 
@@ -267,8 +262,10 @@ function SidebarContent({
             <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni" width={34} height={34} className="h-8 w-8 object-contain" />
             <p className="text-sm font-semibold text-[#040404]">Wakkelni</p>
           </Link>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={onToggle}
             aria-label="Collapse sidebar"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF] cursor-pointer"
@@ -276,15 +273,17 @@ function SidebarContent({
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" />
             </svg>
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Collapsed header: toggle on top, logo below */}
       {collapsed && (
         <div className="flex flex-col items-center gap-3 px-3 pt-4">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={onToggle}
             aria-label="Expand sidebar"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6E1FA] bg-white text-[#5F30EB] transition-colors hover:bg-[#F0EBFF] cursor-pointer"
@@ -292,7 +291,7 @@ function SidebarContent({
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" />
             </svg>
-          </button>
+          </Button>
           <Link href="/dashboard/analytics" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F0EBFF]" onClick={onNavigate}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/brand/wakkelni-logo.png" alt="Wakkelni" width={26} height={26} className="h-6 w-6 object-contain" />
@@ -314,6 +313,14 @@ function SidebarContent({
       </div>
 
       <div className={`${collapsed ? "px-3 pb-3" : "px-4 pb-4"} mt-auto`}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="ghost" size={collapsed ? "icon" : "default"} onClick={startTour} className={collapsed ? "mb-2 w-full" : "mb-2 w-full justify-start"} aria-label="Show product tour">
+              <span className="flex size-5 items-center justify-center rounded-full border border-current text-xs font-bold">?</span>{!collapsed && <span>Show tour</span>}
+            </Button>
+          </TooltipTrigger>
+          {collapsed && <TooltipContent side={language === "ar" ? "left" : "right"}>Show tour</TooltipContent>}
+        </Tooltip>
         <div className={`rounded-2xl border border-[#E6E1FA] bg-[#F8F7FF] ${collapsed ? "px-0 py-3" : "px-3 py-3"}`}>
           <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0EBFF] text-xs font-semibold text-[#5F30EB]">
@@ -324,20 +331,24 @@ function SidebarContent({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-[#040404]">{profile.name}</p>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => void onLogout()}
                   className="rounded-xl border border-[#E6E1FA] px-3 py-2 text-xs font-medium text-[#5F30EB] hover:bg-[#F0EBFF] cursor-pointer"
                 >
                   Logout
-                </button>
+                </Button>
               </>
             )}
           </div>
           {collapsed && (
             <div className="mt-3 flex justify-center">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="icon-lg"
                 onClick={() => void onLogout()}
                 title="Logout"
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E6E1FA] text-[#5F30EB] hover:bg-[#F0EBFF] cursor-pointer"
@@ -347,7 +358,7 @@ function SidebarContent({
                   <path d="M21 12H9" />
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 </svg>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -358,28 +369,17 @@ function SidebarContent({
 
 function BusinessSelector() {
   const { businesses, activeBusiness, setActiveBusiness } = useBusinessContext();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   if (businesses.length <= 1) return null;
 
   const label = activeBusiness ? activeBusiness.name : "All Profiles";
 
   return (
-    <div ref={ref} className="relative">
+    <div data-tour="business-selector" className="relative">
+      <DropdownMenu>
+      <DropdownMenuTrigger asChild>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 rounded-2xl border border-[#E6E1FA] bg-white px-3 py-2 text-sm font-medium text-[#040404] shadow-sm hover:bg-[#F0EBFF] hover:text-[#5F30EB] transition-colors cursor-pointer max-w-[200px]"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-[#5F30EB]">
@@ -391,30 +391,27 @@ function BusinessSelector() {
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
-
-      {open && (
-        <div className="absolute top-full mt-2 start-0 z-50 min-w-[200px] rounded-2xl border border-[#E6E1FA] bg-white shadow-[0_8px_24px_rgba(95,48,235,0.12)] overflow-hidden">
-          <button
-            type="button"
-            onClick={() => { setActiveBusiness(null); setOpen(false); }}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[200px] rounded-2xl p-0 shadow-[0_8px_24px_rgba(95,48,235,0.12)]">
+          <DropdownMenuItem
+            onSelect={() => setActiveBusiness(null)}
             className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm text-start transition-colors hover:bg-[#F0EBFF] cursor-pointer ${activeBusiness === null ? "bg-[#F0EBFF] font-semibold text-[#5F30EB]" : "text-[#040404]"}`}
           >
             <span className="h-2 w-2 rounded-full bg-[#5F30EB] shrink-0" />
             All Profiles
-          </button>
+          </DropdownMenuItem>
           {businesses.map((b) => (
-            <button
+            <DropdownMenuItem
               key={b.id}
-              type="button"
-              onClick={() => { setActiveBusiness(b); setOpen(false); }}
+              onSelect={() => setActiveBusiness(b)}
               className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm text-start transition-colors hover:bg-[#F0EBFF] cursor-pointer border-t border-[#F0EBFF] ${activeBusiness?.id === b.id ? "bg-[#F0EBFF] font-semibold text-[#5F30EB]" : "text-[#040404]"}`}
             >
               <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
               <span className="truncate">{b.name}</span>
-            </button>
+            </DropdownMenuItem>
           ))}
-        </div>
-      )}
+      </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -427,7 +424,7 @@ function DashboardShellInner({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  useLanguage(); // ensures LanguageProvider sets dir on <html> before first paint
+  const { language } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -526,10 +523,9 @@ function DashboardShellInner({
         />
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 flex justify-start md:hidden rtl:justify-end">
-          <div className="absolute inset-0 bg-[#130F1D]/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="relative z-50 p-4">
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side={language === "ar" ? "right" : "left"} showCloseButton={false} className="w-auto border-0 bg-transparent p-4 md:hidden">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
             <SidebarContent
               activeHref={activeHref}
               collapsed={false}
@@ -541,15 +537,16 @@ function DashboardShellInner({
               initials={initials}
               workspaces={workspaceList}
             />
-          </div>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
 
       {/* ps-* = padding-inline-start — also follows dir automatically */}
       <main className={`min-h-screen px-4 pb-8 pt-4 md:px-8 md:pb-10 md:pt-6 ${desktopOffset}`}>
         <div className="mb-4 flex items-center gap-3">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon-lg"
             onClick={() => setMobileOpen(true)}
             className="md:hidden flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E6E1FA] bg-white/70 text-[#5F30EB] shadow-sm cursor-pointer shrink-0"
             aria-label="Open menu"
@@ -559,7 +556,7 @@ function DashboardShellInner({
               <path d="M4 12h16" />
               <path d="M4 18h16" />
             </svg>
-          </button>
+          </Button>
           <BusinessSelector />
         </div>
 
@@ -576,5 +573,5 @@ export default function DashboardShell({
   activeHref: string;
   children: React.ReactNode;
 }) {
-  return <DashboardShellInner activeHref={activeHref}>{children}</DashboardShellInner>;
+  return <TooltipProvider><DashboardShellInner activeHref={activeHref}>{children}</DashboardShellInner></TooltipProvider>;
 }

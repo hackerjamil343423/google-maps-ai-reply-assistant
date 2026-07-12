@@ -123,6 +123,7 @@ export async function saveDraftReplyForReview(args: {
 
 export async function markReplyPosted(args: {
   reviewId: string;
+  replyId?: string;
   content: string;
   source: "ai" | "manual";
   userId: string | null;
@@ -131,11 +132,13 @@ export async function markReplyPosted(args: {
     throw new Error("DATABASE_URL is not configured.");
   }
 
-  const existingLatest = await db.query.reviewReplies.findFirst({
-    where: eq(reviewReplies.reviewId, args.reviewId),
-    orderBy: [desc(reviewReplies.createdAt)],
-    columns: { id: true },
-  });
+  const existingLatest = args.replyId
+    ? { id: args.replyId }
+    : await db.query.reviewReplies.findFirst({
+        where: eq(reviewReplies.reviewId, args.reviewId),
+        orderBy: [desc(reviewReplies.createdAt)],
+        columns: { id: true },
+      });
 
   if (existingLatest?.id) {
     const [updated] = await db

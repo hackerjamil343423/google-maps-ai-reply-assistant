@@ -221,3 +221,6 @@ CRON_SECRET=                  # protects /api/cron/* (recommended)
 - `src/app/api/subscription/webhook/route.ts` (+ migration) — B6
 - `src/app/dashboard/settings/page.tsx` — §6 polish
 - Geidea merchant portal — §7 (no code)
+> **SUPERSEDED (2026-06)**: Billing migrated to Stripe (see `docs/stripe-migration-plan.md`
+> and commit `149125b1`). This document is retained as history only; the Geidea
+> integration code has been removed from the codebase.

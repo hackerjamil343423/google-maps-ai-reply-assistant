@@ -8,7 +8,7 @@ import { enqueueJob } from "@/lib/jobs/queue";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+  if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ total: 0, enqueued: 0, skipped: 0 });
   }
 
-  // Single query to find all workspace IDs that already have a pending sync job
+  // Single query to find all workspace IDs that already have a pending or running sync job
   const alreadyPending = await db
     .select({ workspaceId: backgroundJobs.workspaceId })
     .from(backgroundJobs)
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       and(
         inArray(backgroundJobs.workspaceId, uniqueWorkspaceIds),
         eq(backgroundJobs.type, "sync_reviews"),
-        eq(backgroundJobs.status, "pending")
+        inArray(backgroundJobs.status, ["pending", "running"])
       )
     );
 

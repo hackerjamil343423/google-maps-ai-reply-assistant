@@ -109,10 +109,10 @@ export async function POST(
   }
 
   // Increment usage counter (fire-and-forget — don't block response)
-  void incrementUsageCounter(workspaceId, "aiRepliesGenerated");
+  await incrementUsageCounter(workspaceId, "aiRepliesGenerated");
 
   // Record analytics event
-  void recordReplyEvent({
+  await recordReplyEvent({
     workspaceId,
     reviewId,
     replyId: draft.id,
@@ -135,12 +135,13 @@ export async function POST(
         );
         await markReplyPosted({
           reviewId,
+          replyId: draft.id,
           content: draft.content,
           source: "ai",
           userId: session.user.id,
         });
-        void incrementUsageCounter(workspaceId, "reviewsManaged");
-        void recordReplyEvent({
+        await incrementUsageCounter(workspaceId, "reviewsManaged");
+        await recordReplyEvent({
           workspaceId,
           reviewId,
           replyId: draft.id,

@@ -132,14 +132,15 @@ export async function POST(
 
   const postedReply = await markReplyPosted({
     reviewId,
+    replyId: latestReply?.id,
     content,
     source,
     userId: session.user.id,
   });
 
-  void incrementUsageCounter(workspaceId, "reviewsManaged");
+  await incrementUsageCounter(workspaceId, "reviewsManaged");
 
-  void recordReplyEvent({
+  await recordReplyEvent({
     workspaceId,
     reviewId,
     replyId: postedReply?.id,

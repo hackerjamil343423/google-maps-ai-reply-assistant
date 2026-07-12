@@ -260,7 +260,7 @@ function ReviewCard({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 mt-4">
+      <div data-tour="review-actions" className="flex flex-wrap gap-2 mt-4">
         {review.status === "pending" && (
           <>
             <button
@@ -462,7 +462,7 @@ export default function ReviewsPage() {
 
         {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
 
-        <div className="space-y-4">
+        <div data-tour="reviews-list" className="space-y-4">
             {loading ? (
               <p className="text-sm text-[#6A6A82]">Loading reviews...</p>
             ) : data && data.reviews.length > 0 ? (

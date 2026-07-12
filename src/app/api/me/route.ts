@@ -41,6 +41,8 @@ export async function GET(req: NextRequest) {
       company: "",
       website: "",
       bio: "",
+      onboardingCompleted: false,
+      toursCompleted: [],
     });
   }
 
@@ -57,6 +59,7 @@ export async function GET(req: NextRequest) {
     website: profile?.website ?? "",
     bio: profile?.bio ?? "",
     onboardingCompleted: profile?.onboardingCompleted ?? false,
+    toursCompleted: profile?.toursCompleted ?? [],
   });
 }
 

@@ -2,13 +2,13 @@
  * Cron endpoint: send trial-expiry warning emails.
  *
  * Call this once per day (e.g. via Vercel Cron or an external scheduler).
- * It finds every workspace whose trial ends within the next 3 days (or
- * exactly 1 day) and emails the workspace owner.
+ * It finds every workspace whose trial ends within the next 2 days and emails
+ * the workspace owner once.
  *
- * Authorization: Bearer ${CRON_SECRET}  (skipped when CRON_SECRET is unset)
+ * Authorization: Bearer ${CRON_SECRET}  (required; requests are rejected when CRON_SECRET is unset)
  */
 
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { db, dbSchema } from "@/lib/db";
@@ -17,7 +17,7 @@ import { sendTrialExpiryEmail } from "@/lib/emails";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+  if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   // Warn when trial ends within 2 days
   const warningWindowEnd = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
-  // Find subscriptions that are still trialing and expire in the next 3 days
+  // Find subscriptions that are still trialing and expire in the next 2 days
   if (!db) {
     return NextResponse.json({ error: "Database not configured" }, { status: 500 });
   }
@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
     .where(
       and(
         eq(dbSchema.subscriptions.status, "trialing"),
+        isNull(dbSchema.subscriptions.trialWarningSentAt),
         gte(dbSchema.subscriptions.trialEndsAt, now),
         lte(dbSchema.subscriptions.trialEndsAt, warningWindowEnd)
       )
@@ -73,6 +74,10 @@ export async function GET(req: NextRequest) {
         trialEndsAt: row.trialEndsAt,
         lang: (row.ownerLanguage === "ar" ? "ar" : "en"),
       });
+      await db
+        .update(dbSchema.subscriptions)
+        .set({ trialWarningSentAt: new Date(), updatedAt: new Date() })
+        .where(eq(dbSchema.subscriptions.workspaceId, row.workspaceId));
       results.push({ workspaceId: row.workspaceId, sent: true });
     } catch (err) {
       results.push({

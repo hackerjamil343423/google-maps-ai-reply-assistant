@@ -9,7 +9,7 @@ const MAX_JOBS_PER_INVOCATION = 10;
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+  if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

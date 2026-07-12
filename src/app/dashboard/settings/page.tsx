@@ -1161,7 +1161,7 @@ export default function SettingsPage() {
         )}
 
         {currentTab === "ai" && (
-          <section className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
+          <section data-tour="ai-settings" className="rounded-[30px] border border-[#E6E9F8] p-6 md:p-8" style={panelStyle()}>
             <h2 className="text-xl font-semibold text-[#040404]">{language === "ar" ? "إعدادات الرد بالذكاء الاصطناعي" : "AI Reply Settings"}</h2>
             {settingsError && <p className="mt-4 text-sm text-red-500">{settingsError}</p>}
             <form onSubmit={saveSettings} className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">

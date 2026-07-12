@@ -48,14 +48,17 @@ export async function POST(
     return NextResponse.json({ error: "Review not found." }, { status: 404 });
   }
 
-  void recordReplyEvent({
+  await recordReplyEvent({
     workspaceId,
     reviewId,
     eventType: "rejected",
     rating: review.rating,
   });
 
-  await db.delete(reviews).where(eq(reviews.id, reviewId));
+  await db
+    .update(reviews)
+    .set({ dismissedAt: new Date(), updatedAt: new Date() })
+    .where(eq(reviews.id, reviewId));
 
   return NextResponse.json({ success: true });
 }

@@ -10,7 +10,7 @@ npm run dev        # Start dev server (http://localhost:3000)
 npm run build      # Build for production
 npm start          # Start production server
 npm run lint       # Run ESLint on the codebase
-npm run typecheck  # TypeScript type checking (runs next build)
+npm run typecheck  # TypeScript type checking (tsc --noEmit)
 ```
 
 **Database:**
@@ -29,7 +29,7 @@ npm run db:studio     # Open Drizzle Studio (web UI for database at localhost:55
 
 ## Project Architecture
 
-**Five Star Reply** is a SaaS for AI-powered Google Business Profile review management. Users connect their Google Business accounts, AI generates responses to reviews, and users approve/post replies.
+**Wakkelni Stars** (formerly Five Star Reply) is a SaaS for AI-powered Google Business Profile review management. Users connect their Google Business accounts, AI generates responses to reviews, and users approve/post replies.
 
 ### Core Stack
 - **Framework:** Next.js 16 (App Router) + React 19 + TypeScript 5
@@ -41,13 +41,21 @@ npm run db:studio     # Open Drizzle Studio (web UI for database at localhost:55
 
 ### Key Environment Variables
 ```
-DATABASE_URL           # Neon Postgres connection string
-OPENAI_API_KEY         # OpenAI API key (optional, templates used as fallback)
-BETTER_AUTH_SECRET     # Session secret
-GOOGLE_CLIENT_ID       # Google OAuth credentials
+DATABASE_URL              # Neon Postgres connection string
+OPENAI_API_KEY            # OpenAI API key (optional, templates used as fallback)
+OPENAI_MODEL              # Model override (default: gpt-4o-mini)
+BETTER_AUTH_SECRET        # Session secret (min 32 chars)
+BETTER_AUTH_URL           # App base URL for better-auth
+NEXT_PUBLIC_APP_URL       # Public app URL
+GOOGLE_CLIENT_ID          # Google OAuth credentials
 GOOGLE_CLIENT_SECRET
-RESEND_API_KEY         # Email service
-STRIPE_SECRET_KEY      # Payment (live billing pending)
+GOOGLE_MAPS_API_KEY       # For Maps/Places API
+RESEND_API_KEY            # Email service
+RESEND_FROM_EMAIL         # Sender address
+STRIPE_SECRET_KEY         # Stripe billing
+STRIPE_WEBHOOK_SECRET     # Stripe webhook signature verification
+CRON_SECRET               # Shared secret for cron endpoint auth
+MINIMAX_API_KEY           # Optional: MiniMax AI model
 ```
 
 ## Codebase Structure
@@ -84,8 +92,10 @@ STRIPE_SECRET_KEY      # Payment (live billing pending)
 ### Background Jobs
 - `src/lib/jobs/queue.ts` — Job queue with neon serverless-compatible polling
 - `src/lib/jobs/worker.ts` — Worker that processes queued jobs
-- `src/lib/jobs/handlers/post-reply.ts` — Posts approved replies to Google
 - `src/lib/jobs/handlers/sync-reviews.ts` — Syncs reviews from Google API
+- `src/lib/jobs/handlers/generate-reply.ts` — Generates AI reply; if `approvalMode === "auto"` in aiSettings, immediately posts to Google (else saves draft)
+- `src/lib/jobs/handlers/post-reply.ts` — Posts an already-drafted reply to Google
+- Pipeline: `sync-reviews` → enqueues `generate_reply` → optionally enqueues `post_reply`
 - Cron endpoints hit `/api/cron/*` on an interval to trigger job enqueuing
 
 ### AI Assistant
@@ -157,9 +167,11 @@ return NextResponse.json({ data: result });
 - Set session expiry in better-auth config if needed
 
 **Subscription/Billing:**
-- Subscription records in database (persistence layer done)
-- Live Stripe checkout/webhooks in progress
-- Fallback UI uses mock subscription flow for demos
+- Stripe Checkout + Customer Portal + webhooks are fully wired (`api/subscription/*`)
+- Plans: `free`, `Local Business` (149/mo), `Multi-Location` (349/mo), `Agency Max` (999/mo); defined in `src/lib/subscription/plans.ts`
+- Stripe Price IDs are bootstrapped once via `scripts/stripe-bootstrap.ts` and stored in `platformSettings` under key `billing.stripe_price_ids.v1`
+- `src/lib/subscription/pricing.ts` — dynamic pricing layer; reads overrides from `platformSettings`, falls back to hardcoded defaults
+- `src/lib/stripe/client.ts` — Stripe SDK singleton + `getOrCreateStripeCustomer()`
 
 ## Testing & Validation
 

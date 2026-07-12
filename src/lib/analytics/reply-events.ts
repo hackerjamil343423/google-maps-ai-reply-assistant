@@ -19,9 +19,8 @@ export async function recordReplyEvent(args: {
   rating?: number;
 }) {
   if (!db) return;
-  // Fire-and-forget — never block the main response
-  db.insert(replyAnalyticsEvents)
-    .values({
+  try {
+    await db.insert(replyAnalyticsEvents).values({
       workspaceId: args.workspaceId,
       reviewId: args.reviewId,
       replyId: args.replyId ?? null,
@@ -30,8 +29,8 @@ export async function recordReplyEvent(args: {
       wasEdited: args.wasEdited ?? null,
       timeToPostMs: args.timeToPostMs ?? null,
       rating: args.rating ?? null,
-    })
-    .catch(() => {
-      // Intentionally swallowed — analytics must never break the main flow
     });
+  } catch {
+    // Intentionally swallowed - analytics must never break the main flow.
+  }
 }

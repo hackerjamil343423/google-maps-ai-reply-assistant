@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { generateReviewReply } from "@/lib/ai/generate-review-reply";
+import { getClientIp } from "@/lib/api/client-ip";
+import { consumeRateLimitDurable } from "@/lib/api/rate-limit";
 
 const generateReplySchema = z.object({
   review: z.string().trim().min(1).max(4000),
@@ -23,6 +25,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Invalid request payload" },
         { status: 400 }
+      );
+    }
+
+    const ip = getClientIp(req);
+    const shortRate = await consumeRateLimitDurable(
+      `demo-reply:${ip}`,
+      5,
+      10 * 60 * 1000
+    );
+    const dailyRate = await consumeRateLimitDurable(
+      `demo-reply-day:${ip}`,
+      20,
+      24 * 60 * 60 * 1000
+    );
+    if (!shortRate.allowed || !dailyRate.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again shortly." },
+        { status: 429 }
       );
     }
 

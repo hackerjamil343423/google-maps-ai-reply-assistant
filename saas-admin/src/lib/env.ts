@@ -15,7 +15,7 @@ const optionalSecretString = z.preprocess(
     const trimmed = value.trim();
     return trimmed === "" ? undefined : trimmed;
   },
-  z.string().min(8).optional()
+  z.string().min(32).optional()
 );
 
 const serverEnvSchema = z.object({

@@ -10,6 +10,16 @@ import { sendWelcomeEmail } from "@/lib/emails";
 const DEV_AUTH_SECRET =
   "dev-only-secret-change-before-production-1234567890";
 
+const isProductionRuntime =
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PHASE !== "phase-production-build";
+
+if (isProductionRuntime && !env.BETTER_AUTH_SECRET) {
+  throw new Error(
+    "BETTER_AUTH_SECRET must be set in production. Refusing to start with the dev fallback secret."
+  );
+}
+
 const socialProviders =
   env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
     ? {

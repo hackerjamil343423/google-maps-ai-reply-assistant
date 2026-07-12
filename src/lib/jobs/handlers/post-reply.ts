@@ -45,6 +45,7 @@ export async function handlePostReply(
 
   await markReplyPosted({
     reviewId: payload.reviewId,
+    replyId: payload.replyId,
     content: reply.content,
     source: reply.source,
     userId: null, // system-originated retry

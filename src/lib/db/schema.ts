@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -125,6 +126,7 @@ export const userProfiles = pgTable("user_profiles", {
   website: text("website"),
   bio: text("bio"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  toursCompleted: jsonb("tours_completed").$type<string[]>().notNull().default([]),
   language: text("language").default("en"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -232,6 +234,7 @@ export const reviews = pgTable(
     text: text("text").notNull(),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }).notNull(),
     syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow(),
+    dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -372,12 +375,28 @@ export const subscriptions = pgTable("subscriptions", {
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  trialWarningSentAt: timestamp("trial_warning_sent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+});
+
+export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
+  id: text("id").primaryKey(),
+  type: text("type").notNull(),
+  eventCreatedAt: timestamp("event_created_at", { withTimezone: true }).notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const rateLimitBuckets = pgTable("rate_limit_buckets", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
 });
 
 export const platformSettings = pgTable(

@@ -21,6 +21,50 @@ type BuildContextInput = {
   threadId?: string;
 };
 
+const countCache = new Map<
+  string,
+  { reviewCount: number; repliedCount: number; expiresAt: number }
+>();
+const COUNT_CACHE_TTL_MS = 60_000;
+
+async function getWorkspaceCounts(workspaceId: string) {
+  const cached = countCache.get(workspaceId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return {
+      reviewCount: cached.reviewCount,
+      repliedCount: cached.repliedCount,
+    };
+  }
+
+  if (!db) {
+    return { reviewCount: 0, repliedCount: 0 };
+  }
+
+  const [reviewStatsRow, repliedStatsRow] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(reviews)
+      .innerJoin(businesses, eq(reviews.businessId, businesses.id))
+      .where(eq(businesses.workspaceId, workspaceId)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(reviewReplies)
+      .innerJoin(reviews, eq(reviewReplies.reviewId, reviews.id))
+      .innerJoin(businesses, eq(reviews.businessId, businesses.id))
+      .where(eq(businesses.workspaceId, workspaceId)),
+  ]);
+
+  const counts = {
+    reviewCount: reviewStatsRow[0]?.count ?? 0,
+    repliedCount: repliedStatsRow[0]?.count ?? 0,
+  };
+  countCache.set(workspaceId, {
+    ...counts,
+    expiresAt: Date.now() + COUNT_CACHE_TTL_MS,
+  });
+  return counts;
+}
+
 export async function buildAssistantContext(input: BuildContextInput) {
   const fallback = {
     summary: [
@@ -59,24 +103,7 @@ export async function buildAssistantContext(input: BuildContextInput) {
       }),
     ]);
 
-  const [reviewStatsRow, repliedStatsRow] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(reviews)
-      .innerJoin(businesses, eq(reviews.businessId, businesses.id))
-      .where(eq(businesses.workspaceId, input.workspaceId))
-      .limit(1),
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(reviewReplies)
-      .innerJoin(reviews, eq(reviewReplies.reviewId, reviews.id))
-      .innerJoin(businesses, eq(reviews.businessId, businesses.id))
-      .where(eq(businesses.workspaceId, input.workspaceId))
-      .limit(1),
-  ]);
-
-  const reviewCount = reviewStatsRow[0]?.count ?? 0;
-  const repliedCount = repliedStatsRow[0]?.count ?? 0;
+  const { reviewCount, repliedCount } = await getWorkspaceCounts(input.workspaceId);
 
   let history: Array<{ role: "user" | "assistant"; content: string }> = [];
   if (input.threadId) {

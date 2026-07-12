@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wakkelni Stars
 
-## Getting Started
+Wakkelni Stars is an AI-powered Google Business Profile review management SaaS for the KSA market. Businesses connect Google profiles, sync reviews, generate AI replies, and post replies back to Google.
 
-First, run the development server:
+This repo contains two Next.js apps:
+
+- Root app: main product, runs on port 3000.
+- `saas-admin/`: platform admin panel, runs on port 3001 and has its own `package.json`.
+
+## Prerequisites
+
+- Node.js 20+
+- Neon Postgres `DATABASE_URL`
+- Google OAuth and Places API credentials
+- OpenAI API key for generated replies
+- Stripe keys and webhook secret for billing
+- `CRON_SECRET` for `/api/cron/*` endpoints
+
+Copy `.env.example` to `.env` and fill the required values.
+
+## Setup
 
 ```bash
+npm install
+npm run db:push
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+For the admin app:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd saas-admin
+npm install
+npm run dev
+```
 
-## Learn More
+Open `http://localhost:3001`.
 
-To learn more about Next.js, take a look at the following resources:
+## Stripe
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Stripe price IDs are bootstrapped with `scripts/stripe-bootstrap.ts` and stored in `platformSettings`. For local webhook testing:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+stripe listen --forward-to localhost:3000/api/subscription/webhook
+```
 
-## Deploy on Vercel
+Copy the printed `whsec_...` value to `STRIPE_WEBHOOK_SECRET`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Background Jobs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Cron routes live under `/api/cron/*` and require:
+
+```text
+Authorization: Bearer $CRON_SECRET
+```
+
+Missing `CRON_SECRET` is treated as unauthorized.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start the main app locally |
+| `npm run build` | Production Next.js build |
+| `npm run start` | Start the production build |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run `tsc --noEmit` |
+| `npm test` | Run Vitest unit tests |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:push` | Push schema changes to Postgres |
+| `npm run db:studio` | Open Drizzle Studio |
+
+See `CLAUDE.md` for architecture details and `plans/README.md` for the improvement backlog.

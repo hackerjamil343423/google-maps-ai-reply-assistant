@@ -1,13 +1,12 @@
-# Five Star Reply - Project Documentation
+# Wakkelni Stars (formerly Five Star Reply) - Project Documentation
 
 ## What This Project Is
-Five Star Reply is an AI-powered SaaS that helps businesses manage and respond to Google Business Profile reviews using AI.
+
+Wakkelni Stars is an AI-powered SaaS that helps businesses manage and respond to Google Business Profile reviews using AI.
 
 Primary users:
 - Local businesses that want faster review response and better local SEO.
 - Agencies that manage multiple client profiles.
-
----
 
 ## Routes
 
@@ -20,7 +19,7 @@ Primary users:
 | `/GetStarted` | Login/signup page |
 | `/profile` | User profile page |
 
-### Dashboard (Authenticated)
+### Dashboard
 | Route | Description |
 |---|---|
 | `/dashboard` | Google connection status + connect/sync flow |
@@ -28,114 +27,51 @@ Primary users:
 | `/dashboard/reviews` | Status tabs, bulk approve, dismiss |
 | `/dashboard/analytics` | Analytics based on real review data |
 | `/dashboard/team` | Team member and invitation management |
-| `/dashboard/subscription` | Subscription data and plan change simulation |
+| `/dashboard/subscription` | Subscription and plan management |
 | `/dashboard/settings` | AI prompt/tone/approval settings |
 
----
-
-## API Routes
-| Route | Description |
-|---|---|
-| `/api/auth/[...all]` | Better Auth endpoints (session, sign in/out, social auth) |
-| `/api/me` | GET/PATCH user profile |
-| `/api/me/change-password` | POST password change |
-| `/api/settings` | GET/PUT workspace AI settings |
-| `/api/team/members` | GET/DELETE members |
-| `/api/team/members/role` | PATCH member role |
-| `/api/team/invitations` | POST invitation |
-| `/api/subscription` | GET/PATCH subscription persistence |
-| `/api/google/status` | GET Google integration status |
-| `/api/google/connect` | POST connect Google Business location |
-| `/api/google/sync-reviews` | POST sync Google reviews |
-| `/api/reviews` | GET reviews list with filtering/pagination |
-| `/api/reviews/[id]/reply/generate` | POST generate AI reply |
-| `/api/reviews/[id]/reply/save` | POST save reply |
-| `/api/reviews/[id]/reply/post` | POST post reply to Google |
-| `/api/reviews/[id]/dismiss` | POST dismiss review |
-| `/api/reviews/bulk/approve` | POST bulk approve/post |
-| `/api/generate-reply` | POST standalone AI endpoint (OpenAI-first with fallback) |
-
----
-
-## Backend Implementation Status (2026-02-27)
+## Backend Implementation Status
 
 ### Completed
-- [x] Better Auth integration (email/password + Google OAuth)
-- [x] Route protection for dashboard/profile/auth flow redirects
-- [x] Neon Postgres + Drizzle ORM wiring
-- [x] Production tables for auth, workspaces, members, businesses, reviews, replies, settings, invitations, subscriptions
-- [x] Google Business Profile integration (connect, sync, post replies)
-- [x] OpenAI integration for reply generation
-- [x] Template fallback when OpenAI key is missing
-- [x] Dashboard pages switched from mock data to backend APIs
-- [x] Settings/profile/team/subscription persistence
-- [x] Env validation with Zod
+- Better Auth integration with email/password and Google OAuth.
+- Route protection for dashboard/profile/auth flow redirects.
+- Neon Postgres + Drizzle ORM wiring.
+- Production tables for auth, workspaces, members, businesses, reviews, replies, settings, invitations, subscriptions, jobs, analytics, and admin/blog data.
+- Google Business Profile integration for connect, sync, and reply posting.
+- OpenAI reply generation with template fallback when OpenAI is unavailable.
+- Stripe checkout and live webhook billing flow.
+- Dashboard pages backed by real APIs.
+- Env validation with Zod.
 
-### Pending
-- [ ] Stripe checkout + live webhook billing flow
-- [ ] Email invite acceptance by token link
-- [ ] Full audit log coverage and endpoint-level rate limiting
-
----
+### Pending / In Progress
+- Email invite acceptance by token link.
+- Full audit log coverage.
+- Continued endpoint-level rate-limit coverage and billing webhook hardening.
 
 ## Tech Stack
 
-### Framework
-- Next.js 16 (App Router)
+- Next.js 16 App Router
 - React 19
 - TypeScript 5
-- Node.js runtime
-
-### Auth
 - better-auth
-
-### Database
 - Neon Postgres
-- drizzle-orm
-- drizzle-kit
-- @neondatabase/serverless
-
-### AI
-- openai (default model: `gpt-4.1-mini`, configurable with `OPENAI_MODEL`)
-
-### Frontend
+- drizzle-orm / drizzle-kit
+- OpenAI
+- Stripe
+- Resend
 - Tailwind CSS v4
-- PostCSS
-
----
-
-## Key Dependencies
-```json
-{
-  "next": "16.1.6",
-  "react": "19.2.3",
-  "react-dom": "19.2.3",
-  "better-auth": "installed",
-  "drizzle-orm": "installed",
-  "drizzle-kit": "installed",
-  "@neondatabase/serverless": "installed",
-  "openai": "installed",
-  "zod": "installed",
-  "tailwindcss": "^4",
-  "@tailwindcss/postcss": "^4",
-  "typescript": "^5"
-}
-```
-
----
 
 ## Architecture Notes
-- Auth is live with Better Auth and server-side session checks.
+
+- The root app is the main product.
+- `saas-admin/` is a separate admin app with its own package and build.
 - Data persistence is live on Neon for core product flows.
 - Google OAuth + Google Business review sync/posting are implemented.
-- AI uses OpenAI when available, and falls back to templates if API key is missing.
-- Billing UI is connected to backend persistence, but live Stripe checkout/webhooks are still pending.
+- Billing is Stripe-based. Plan 006 tracks additional webhook correctness hardening.
+- AI uses OpenAI when available and falls back to templates if the API key is missing.
 
----
+## Pricing
 
-## Business Model
-| Plan | Price | Profiles |
-|---|---|---|
-| Local Business | $15/mo | 1 Google Business Profile |
-| Multi-Location | $49/mo | Up to 5 profiles |
-| Agency Max | $199/mo | Up to 60 profiles |
+Pricing source of truth: `src/lib/subscription/plans.ts` for defaults plus `platformSettings` overrides managed through `saas-admin`.
+
+As of 2026-07, default monthly prices are SAR 149, SAR 349, and SAR 999 for Local Business, Multi-Location, and Agency Max.

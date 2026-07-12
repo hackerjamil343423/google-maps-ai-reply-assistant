@@ -69,8 +69,8 @@ export async function handleGenerateReply(
 
   if (!draft) throw new Error("Failed to save draft reply.");
 
-  void incrementUsageCounter(workspaceId, "aiRepliesGenerated");
-  void recordReplyEvent({
+  await incrementUsageCounter(workspaceId, "aiRepliesGenerated");
+  await recordReplyEvent({
     workspaceId,
     reviewId,
     replyId: draft.id,
@@ -92,12 +92,13 @@ export async function handleGenerateReply(
       );
       await markReplyPosted({
         reviewId,
+        replyId: draft.id,
         content: draft.content,
         source: "ai",
         userId: null,
       });
-      void incrementUsageCounter(workspaceId, "reviewsManaged");
-      void recordReplyEvent({
+      await incrementUsageCounter(workspaceId, "reviewsManaged");
+      await recordReplyEvent({
         workspaceId,
         reviewId,
         replyId: draft.id,
@@ -106,8 +107,8 @@ export async function handleGenerateReply(
         wasEdited: false,
         rating: review.rating,
       });
-    } catch (error) {
-      // Mark failed and enqueue a post_reply retry so the user can see it
+    } catch {
+      // Mark failed and let the post_reply job own retrying this exact row.
       await markReplyFailed(draft.id);
       await enqueueJob({
         workspaceId,
@@ -116,7 +117,7 @@ export async function handleGenerateReply(
         runAt: computeBackoff(1),
         maxAttempts: 3,
       });
-      throw error; // Re-throw so the job is also retried at the generate level
+      return;
     }
   }
 }

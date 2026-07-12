@@ -146,7 +146,7 @@ export default function ReviewLinkPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6">
-            <div
+            <div data-tour="review-link-card"
               className="rounded-[28px] border border-[#5F30EB22] p-6 md:p-8 space-y-6"
               style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,244,255,0.88))" }}
             >
